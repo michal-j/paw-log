@@ -1,0 +1,7 @@
+[
+  { "id": "item-kibble", "dogId": "dog-demo", "kind": "food", "name": "Sample kibble", "colour": "food-farm", "defaultDayPart": 2, "activeFrom": "2026-09-01", "activeTo": null },
+  { "id": "item-wet", "dogId": "dog-demo", "kind": "food", "name": "Sample wet food", "colour": "food-ocean", "defaultDayPart": 4, "activeFrom": "2026-09-01", "activeTo": null },
+  { "id": "item-med-a", "dogId": "dog-demo", "kind": "medication", "name": "Medicine A", "colour": "med-arvelin", "defaultDayPart": 2, "activeFrom": "2026-09-01", "activeTo": null },
+  { "id": "item-med-b", "dogId": "dog-demo", "kind": "medication", "name": "Medicine B", "colour": "med-gastrelle", "defaultDayPart": 6, "activeFrom": "2026-09-01", "activeTo": null },
+  { "id": "item-treat", "dogId": "dog-demo", "kind": "treat", "name": "Sample treat", "colour": "treat", "defaultDayPart": 7, "activeFrom": "2026-09-01", "activeTo": null }
+]

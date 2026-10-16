@@ -1,0 +1,29 @@
+[
+ {
+  "id": "event-001",
+  "dogId": "dog-demo",
+  "date": "2026-10-11",
+  "type": "symptom",
+  "title": "Sample symptom",
+  "detail": "Restless in the evening. Fictional demo data.",
+  "issueId": null
+ },
+ {
+  "id": "event-002",
+  "dogId": "dog-demo",
+  "date": "2026-10-13",
+  "type": "vet",
+  "title": "Sample vet visit",
+  "detail": "Routine check at a fictional clinic.",
+  "issueId": null
+ },
+ {
+  "id": "event-003",
+  "dogId": "dog-demo",
+  "date": "2026-10-14",
+  "type": "frontline",
+  "title": "Monthly flea and tick treatment",
+  "detail": "",
+  "issueId": null
+ }
+]
