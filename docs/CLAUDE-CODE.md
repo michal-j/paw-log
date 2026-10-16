@@ -1,5 +1,7 @@
 # Running PawLog in Claude Code
 
+**Quick start:** open this folder in Claude Code and type `/pm`. The PM session runs Linear, reviews and the Developer, QA and Designer subagents itself. See `docs/PM.md`. The sections below are the manual fallback.
+
 PawLog is built by several agents. The **PM** is a Claude chat (planning, Linear, reviews, design). The **Developer** and **QA** run as Claude Code sessions opened on this folder. Linear, GitHub and `docs/` carry the context between them; no agent relies on another's chat history.
 
 ## Setup (once)
