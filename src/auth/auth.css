@@ -50,9 +50,33 @@
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-mint) 22%, transparent);
 }
 .auth__input[aria-invalid='true'] { border-color: var(--color-danger); }
-.auth__input--code {
-  letter-spacing: 0.3em;
-  font-variant-numeric: tabular-nums;
+/* Password field with a Show/Hide toggle inside its right edge (44px hit area). */
+.auth__password {
+  position: relative;
+  /* The label sits outside this wrapper; pull it as close as the e-mail label is to its input. */
+  margin-top: calc(var(--space-2) - var(--space-3));
+}
+.auth__password .auth__input { margin-top: 0; }
+.auth__input--password { padding-right: calc(var(--space-6) * 3); }
+.auth__toggle {
+  position: absolute;
+  top: 50%;
+  right: var(--space-1);
+  transform: translateY(-50%);
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0 var(--space-3);
+  background: none;
+  border: 0;
+  border-radius: var(--radius-md);
+  color: var(--color-mint-deep);
+  font: var(--type-button-weight) var(--type-button-size) / var(--type-button-line) var(--type-button-family);
+  cursor: pointer;
+}
+.auth__hint {
+  margin: 0;
+  color: var(--color-ink-3);
+  font: var(--type-small-weight) var(--type-small-size) / var(--type-small-line) var(--type-small-family);
 }
 .auth__error,
 .auth__info {
@@ -98,4 +122,3 @@
 .auth__ghost--wide { width: 100%; }
 .auth__primary:disabled,
 .auth__ghost:disabled { cursor: default; opacity: 0.6; }
-.auth__secondary { display: flex; flex-wrap: wrap; gap: var(--space-2); }

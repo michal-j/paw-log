@@ -2,7 +2,7 @@
 --
 -- 1. Copy this text into the Supabase SQL editor (do NOT save a filled-in copy in the repo).
 -- 2. Replace every <PLACEHOLDER>. Both e-mail addresses must already exist under
---    Authentication > Users (created in step 4 of the runbook).
+--    Authentication > Users (created in step 3 of the runbook).
 -- 3. Run it once. It stops with an error, and changes nothing, if a placeholder is left
 --    or a user is missing.
 --
@@ -35,7 +35,7 @@ begin
   );
   get diagnostics added = row_count;
   if added <> array_length(member_emails, 1) then
-    raise exception 'Expected % members but found % matching users. Create the users first (runbook step 4).',
+    raise exception 'Expected % members but found % matching users. Create the users first (runbook step 3).',
       array_length(member_emails, 1), added;
   end if;
 

@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { readSupabaseConfig } from '../src/auth/config';
-import { AuthFailure, cleanCode, isValidEmail, type AuthService, type AuthUser } from '../src/auth/authService';
+import { AuthFailure, isValidEmail, type AuthService, type AuthUser } from '../src/auth/authService';
 import { classifyAuthError, createSupabaseAuth } from '../src/auth/supabaseAuth';
 import { AuthGate } from '../src/auth/AuthGate';
 import { ConfigError } from '../src/auth/ConfigError';
@@ -14,6 +14,10 @@ vi.mock('@supabase/supabase-js', () => ({ createClient: (...args: unknown[]) => 
 
 beforeEach(() => localStorage.clear());
 afterEach(cleanup);
+
+// Fictional test values only.
+const EMAIL = 'a1@example.test';
+const PASSWORD = 'test-password-1';
 
 describe('config', () => {
   it('accepts an https URL and a key', () => {
@@ -47,18 +51,17 @@ describe('Supabase client', () => {
 });
 
 describe('helpers', () => {
-  it('validates e-mail and cleans codes', () => {
+  it('validates e-mail', () => {
     expect(isValidEmail(' a@b.co ')).toBe(true);
     expect(isValidEmail('a@b')).toBe(false);
-    expect(cleanCode('12 34-56 7')).toBe('123456');
   });
   it('classifies Supabase auth errors', () => {
-    expect(classifyAuthError({ code: 'otp_disabled', status: 422 }, 'send')).toBe('no_account');
-    expect(classifyAuthError({ code: 'over_email_send_rate_limit', status: 429 }, 'send')).toBe('rate_limited');
-    expect(classifyAuthError({ name: 'AuthRetryableFetchError', status: 0 }, 'send')).toBe('network');
-    expect(classifyAuthError({ code: 'otp_expired', status: 403 }, 'verify')).toBe('invalid_code');
-    expect(classifyAuthError({ code: 'email_address_invalid', status: 400 }, 'send')).toBe('invalid_email');
-    expect(classifyAuthError({ code: 'unexpected_failure', status: 500 }, 'verify')).toBe('unknown');
+    expect(classifyAuthError({ code: 'invalid_credentials', status: 400 })).toBe('invalid_credentials');
+    expect(classifyAuthError({ status: 400 })).toBe('invalid_credentials');
+    expect(classifyAuthError({ code: 'over_request_rate_limit', status: 429 })).toBe('rate_limited');
+    expect(classifyAuthError({ name: 'AuthRetryableFetchError', status: 0 })).toBe('network');
+    expect(classifyAuthError({ code: 'email_address_invalid', status: 422 })).toBe('invalid_email');
+    expect(classifyAuthError({ code: 'unexpected_failure', status: 500 })).toBe('unknown');
   });
 });
 
@@ -67,8 +70,7 @@ describe('createSupabaseAuth', () => {
     let emit: (event: string, session: { user: { id: string; email?: string } } | null) => void = () => {};
     const unsubscribe = vi.fn();
     const auth = {
-      signInWithOtp: vi.fn<(args: unknown) => Promise<{ error: unknown }>>(async () => ({ error: null })),
-      verifyOtp: vi.fn<(args: unknown) => Promise<{ error: unknown }>>(async () => ({ error: null })),
+      signInWithPassword: vi.fn<(args: unknown) => Promise<{ error: unknown }>>(async () => ({ error: null })),
       signOut: vi.fn<(args: unknown) => Promise<{ error: null }>>(async () => ({ error: null })),
       onAuthStateChange: vi.fn((cb: typeof emit) => {
         emit = cb;
@@ -79,20 +81,18 @@ describe('createSupabaseAuth', () => {
     return { auth, service, unsubscribe, emit: (...a: Parameters<typeof emit>) => emit(...a) };
   };
 
-  it('sends a code without creating accounts and verifies it as an e-mail OTP', async () => {
+  it('signs in with e-mail and password', async () => {
     const { auth, service } = setup();
-    await service.sendCode(' Someone@Example.test ');
-    expect(auth.signInWithOtp).toHaveBeenCalledWith({ email: 'someone@example.test', options: { shouldCreateUser: false } });
-    await service.verifyCode('someone@example.test', '123456');
-    expect(auth.verifyOtp).toHaveBeenCalledWith({ email: 'someone@example.test', token: '123456', type: 'email' });
+    await service.signIn(' A1@Example.test ', PASSWORD);
+    expect(auth.signInWithPassword).toHaveBeenCalledWith({ email: EMAIL, password: PASSWORD });
   });
 
   it('throws AuthFailure with the right kind', async () => {
     const { auth, service } = setup();
-    auth.signInWithOtp.mockResolvedValueOnce({ error: { code: 'otp_disabled', status: 422, message: 'Signups not allowed for otp' } });
-    await expect(service.sendCode('x@example.test')).rejects.toMatchObject({ kind: 'no_account' });
-    auth.verifyOtp.mockResolvedValueOnce({ error: { code: 'otp_expired', status: 403, message: 'Token has expired or is invalid' } });
-    await expect(service.verifyCode('x@example.test', '000000')).rejects.toMatchObject({ kind: 'invalid_code' });
+    auth.signInWithPassword.mockResolvedValueOnce({ error: { code: 'invalid_credentials', status: 400, message: 'Invalid login credentials' } });
+    await expect(service.signIn(EMAIL, 'wrong')).rejects.toMatchObject({ kind: 'invalid_credentials' });
+    auth.signInWithPassword.mockResolvedValueOnce({ error: { name: 'AuthRetryableFetchError', status: 0, message: 'Failed to fetch' } });
+    await expect(service.signIn(EMAIL, PASSWORD)).rejects.toMatchObject({ kind: 'network' });
   });
 
   it('reports session changes and signs out this device only', async () => {
@@ -100,8 +100,8 @@ describe('createSupabaseAuth', () => {
     const seen: (AuthUser | null)[] = [];
     const stop = service.subscribe((u) => seen.push(u));
     emit('INITIAL_SESSION', null);
-    emit('SIGNED_IN', { user: { id: 'u1', email: 'a@example.test' } });
-    expect(seen).toEqual([null, { id: 'u1', email: 'a@example.test' }]);
+    emit('SIGNED_IN', { user: { id: 'u1', email: EMAIL } });
+    expect(seen).toEqual([null, { id: 'u1', email: EMAIL }]);
     stop();
     expect(unsubscribe).toHaveBeenCalled();
     await service.signOut();
@@ -109,12 +109,15 @@ describe('createSupabaseAuth', () => {
   });
 });
 
-/** In-memory AuthService: code 123456 works for a1@example.test only. */
+/** In-memory AuthService: only EMAIL with PASSWORD signs in. */
 class FakeAuth implements AuthService {
   private listeners = new Set<(u: AuthUser | null) => void>();
-  sent: string[] = [];
+  attempts = 0;
   /** 'restoring' = the stored session is not known yet (no event until emit). */
-  constructor(private user: AuthUser | null | 'restoring' = null) {}
+  constructor(
+    private user: AuthUser | null | 'restoring' = null,
+    private failWith: AuthFailure | null = null,
+  ) {}
   subscribe(listener: (u: AuthUser | null) => void) {
     this.listeners.add(listener);
     if (this.user !== 'restoring') listener(this.user);
@@ -124,12 +127,10 @@ class FakeAuth implements AuthService {
     this.user = user;
     this.listeners.forEach((l) => l(user));
   }
-  async sendCode(email: string) {
-    if (email.trim() !== 'a1@example.test') throw new AuthFailure('no_account');
-    this.sent.push(email);
-  }
-  async verifyCode(email: string, code: string) {
-    if (code !== '123456') throw new AuthFailure('invalid_code');
+  async signIn(email: string, password: string) {
+    this.attempts++;
+    if (this.failWith) throw this.failWith;
+    if (email.trim() !== EMAIL || password !== PASSWORD) throw new AuthFailure('invalid_credentials');
     this.emit({ id: 'u1', email });
   }
   async signOut() {
@@ -145,75 +146,78 @@ const mount = (auth: AuthService, opts: { lang?: Lang; repo?: () => Repository; 
   );
 
 const type = (label: RegExp, value: string) => fireEvent.change(screen.getByLabelText(label), { target: { value } });
+const submit = () => fireEvent.click(screen.getByRole('button', { name: 'Sign in' }));
 
 describe('sign-in flow', () => {
   it('shows loading until the stored session is known, then the timeline for a restored session', async () => {
     const auth = new FakeAuth('restoring');
     mount(auth);
     expect(screen.getByRole('status').textContent).toBe('Loading…');
-    act(() => auth.emit({ id: 'u1', email: 'a1@example.test' }));
+    act(() => auth.emit({ id: 'u1', email: EMAIL }));
     expect(await screen.findByText('October 2026')).toBeTruthy();
   });
 
-  it('goes from e-mail to code to the timeline, then signs out', async () => {
+  it('has Keychain-friendly fields and a show/hide toggle', () => {
+    mount(new FakeAuth());
+    const email = screen.getByLabelText(/E-mail/);
+    const password = screen.getByLabelText('Password') as HTMLInputElement;
+    expect(email.getAttribute('autocomplete')).toBe('username');
+    expect(password.getAttribute('autocomplete')).toBe('current-password');
+    expect(password.type).toBe('password');
+    const toggle = screen.getByRole('button', { name: 'Show password' });
+    expect(toggle.textContent).toBe('Show');
+    fireEvent.click(toggle);
+    expect(password.type).toBe('text');
+    expect(toggle.getAttribute('aria-pressed')).toBe('true');
+    expect(toggle.textContent).toBe('Hide');
+  });
+
+  it('checks the fields, explains wrong credentials, then signs in and out', async () => {
     const auth = new FakeAuth();
     mount(auth);
     expect(screen.getByRole('heading', { name: 'Sign in' })).toBeTruthy();
 
     type(/E-mail/, 'nope');
-    fireEvent.click(screen.getByRole('button', { name: 'Send code' }));
+    submit();
     expect(screen.getByRole('alert').textContent).toBe('Enter a valid e-mail address.');
 
-    type(/E-mail/, 'b2@example.test');
-    fireEvent.click(screen.getByRole('button', { name: 'Send code' }));
-    expect((await screen.findByRole('alert')).textContent).toBe('This e-mail has no PawLog account.');
+    type(/E-mail/, EMAIL);
+    submit();
+    expect(screen.getByRole('alert').textContent).toBe('Enter your password.');
+    expect(auth.attempts).toBe(0);
 
-    type(/E-mail/, 'a1@example.test');
-    fireEvent.click(screen.getByRole('button', { name: 'Send code' }));
-    expect(await screen.findByText('Enter the code we sent to a1@example.test.')).toBeTruthy();
-    expect(auth.sent).toEqual(['a1@example.test']);
+    type(/^Password$/, 'wrong');
+    submit();
+    expect((await screen.findByRole('alert')).textContent).toBe('Wrong e-mail or password.');
 
-    const code = screen.getByLabelText(/6-digit code/) as HTMLInputElement;
-    expect(code.getAttribute('autocomplete')).toBe('one-time-code');
-    expect(code.getAttribute('inputmode')).toBe('numeric');
-
-    type(/6-digit code/, '12');
-    fireEvent.click(screen.getByRole('button', { name: 'Sign in' }));
-    expect(screen.getByRole('alert').textContent).toBe('The code has 6 digits.');
-
-    type(/6-digit code/, '000 000');
-    expect((await screen.findByRole('alert')).textContent).toMatch(/Wrong or expired code/);
-
-    fireEvent.click(screen.getByRole('button', { name: 'Send a new code' }));
-    expect(await screen.findByText('New code sent.')).toBeTruthy();
-
-    type(/6-digit code/, '123456'); // a full code signs in without pressing the button
+    type(/^Password$/, PASSWORD);
+    submit();
     expect(await screen.findByText('October 2026')).toBeTruthy();
 
     fireEvent.click(screen.getByRole('button', { name: 'Sign out' }));
     expect(await screen.findByRole('heading', { name: 'Sign in' })).toBeTruthy();
   });
 
+  it('explains a network failure', async () => {
+    mount(new FakeAuth(null, new AuthFailure('network')));
+    type(/E-mail/, EMAIL);
+    type(/^Password$/, PASSWORD);
+    submit();
+    expect((await screen.findByRole('alert')).textContent).toBe('No connection. Check the internet and try again.');
+  });
+
   it('keeps the session when sign-out is not confirmed', async () => {
-    const auth = new FakeAuth({ id: 'u1', email: 'a1@example.test' });
+    const auth = new FakeAuth({ id: 'u1', email: EMAIL });
     const signOut = vi.spyOn(auth, 'signOut');
     mount(auth, { confirm: () => false });
     fireEvent.click(await screen.findByRole('button', { name: 'Sign out' }));
     expect(signOut).not.toHaveBeenCalled();
   });
 
-  it('can switch back to another e-mail', async () => {
-    mount(new FakeAuth());
-    type(/E-mail/, 'a1@example.test');
-    fireEvent.click(screen.getByRole('button', { name: 'Send code' }));
-    fireEvent.click(await screen.findByRole('button', { name: 'Use another e-mail' }));
-    expect(screen.getByRole('button', { name: 'Send code' })).toBeTruthy();
-  });
-
   it('explains an account that sees no dog instead of an empty timeline', async () => {
     const repo = new DemoRepository(null);
     repo.getDog = () => Promise.reject(new NoDogError());
-    mount(new FakeAuth({ id: 'u1', email: 'a1@example.test' }), { repo: () => repo });
+    mount(new FakeAuth({ id: 'u1', email: EMAIL }), { repo: () => repo });
     expect(await screen.findByText(/not linked to a dog yet/)).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Sign out' })).toBeTruthy();
   });
@@ -221,7 +225,8 @@ describe('sign-in flow', () => {
   it('renders in Polish', () => {
     mount(new FakeAuth(), { lang: 'pl' });
     expect(screen.getByRole('heading', { name: 'Zaloguj się' })).toBeTruthy();
-    expect(screen.getByRole('button', { name: 'Wyślij kod' })).toBeTruthy();
+    expect(screen.getByLabelText('Hasło')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Pokaż hasło' }).textContent).toBe('Pokaż');
   });
 });
 

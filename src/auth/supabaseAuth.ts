@@ -9,24 +9,19 @@ interface AuthErrorLike {
 }
 
 /** Turn a Supabase auth error into one of the few cases the sign-in screen explains. */
-export function classifyAuthError(error: AuthErrorLike, step: 'send' | 'verify'): AuthFailureKind {
+export function classifyAuthError(error: AuthErrorLike): AuthFailureKind {
   const code = error.code ?? '';
   if (error.name === 'AuthRetryableFetchError' || error.status === 0) return 'network';
   if (error.status === 429 || code.startsWith('over_')) return 'rate_limited';
   if (code === 'email_address_invalid') return 'invalid_email';
-  if (step === 'send' && ['otp_disabled', 'signup_disabled', 'user_not_found'].includes(code)) return 'no_account';
-  if (step === 'verify' && (code === 'otp_expired' || code === 'invalid_credentials' || error.status === 403)) {
-    return 'invalid_code';
-  }
+  // Wrong password and unknown e-mail look the same on purpose (Supabase does not say which).
+  if (code === 'invalid_credentials' || code === 'user_not_found' || error.status === 400) return 'invalid_credentials';
   return 'unknown';
 }
 
-const fail = (error: AuthErrorLike, step: 'send' | 'verify') =>
-  new AuthFailure(classifyAuthError(error, step), error.message);
-
 /**
- * Email + one-time code sign-in. No magic link: a link opens Safari, not the installed iPhone PWA.
- * `shouldCreateUser: false` means only accounts the CEO created can sign in.
+ * E-mail + password sign-in for the two accounts the CEO created in the Supabase dashboard.
+ * Sign-ups are disabled there, and the app has no sign-up or password-reset screen.
  */
 export function createSupabaseAuth(client: SupabaseClient): AuthService {
   return {
@@ -40,17 +35,9 @@ export function createSupabaseAuth(client: SupabaseClient): AuthService {
       return () => data.subscription.unsubscribe();
     },
 
-    async sendCode(email) {
-      const { error } = await client.auth.signInWithOtp({
-        email: normaliseEmail(email),
-        options: { shouldCreateUser: false },
-      });
-      if (error) throw fail(error, 'send');
-    },
-
-    async verifyCode(email, code) {
-      const { error } = await client.auth.verifyOtp({ email: normaliseEmail(email), token: code, type: 'email' });
-      if (error) throw fail(error, 'verify');
+    async signIn(email, password) {
+      const { error } = await client.auth.signInWithPassword({ email: normaliseEmail(email), password });
+      if (error) throw new AuthFailure(classifyAuthError(error), error.message);
     },
 
     async signOut() {

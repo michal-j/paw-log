@@ -12,8 +12,8 @@ Format: [Keep a Changelog](https://keepachangelog.com). "Unreleased" means not y
 - Schema for the logging design: `schedule_slot` (an item in several day parts, each with its own dose), `entry.schedule_slot_id` with one entry per slot per day, `updated_by` on entry and event, event type `note`, event `intensity` (small, medium, large). `Repository.listScheduleSlots`, `DuplicateSlotEntryError`.
 - `npm run test:db`: applies the migrations to PGlite and runs 48 pgTAP-style RLS checks. Not yet in CI: adding the step to `.github/workflows/ci.yml` needs a push with the GitHub `workflow` scope.
 - `SupabaseRepository` implementing the whole `Repository` interface (paged reads, upserts, database-set `created_by`/`updated_by`), with unit tests against a mocked client.
-- Sign-in with e-mail and a 6-digit code (no magic link, no sign-up), session kept across app restarts, sign-out (this device only, with a confirmation), a "not connected" screen when the build has no Supabase settings, and a message for an account not yet linked to a dog.
-- Runbook `docs/runbooks/supabase-setup.md`, bootstrap template `supabase/bootstrap.example.sql`, sign-in e-mail template.
+- Sign-in with e-mail and password on one screen (Show/Hide toggle, Keychain-friendly `username`/`current-password` autocomplete; no sign-up, no in-app password reset: the CEO manages both accounts in the Supabase dashboard), session kept across app restarts, sign-out (this device only, with a confirmation), a "not connected" screen when the build has no Supabase settings, and a message for an account not yet linked to a dog.
+- Runbook `docs/runbooks/supabase-setup.md`, bootstrap template `supabase/bootstrap.example.sql`.
 - Draft EN/PL copy for sign-in in `docs/copy/copy-proposal-auth.csv` (pending CEO review), merged into the generated catalogues.
 
 ### Changed

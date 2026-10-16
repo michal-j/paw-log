@@ -14,7 +14,7 @@ export function createSupabaseClient(config: SupabaseConfig): SupabaseClient {
     auth: {
       persistSession: true,
       autoRefreshToken: true,
-      detectSessionInUrl: false, // sign-in is by typed code, never by a link back to the app
+      detectSessionInUrl: false, // sign-in is by password, never by a link back to the app
       storageKey: AUTH_STORAGE_KEY,
     },
   });
