@@ -23,4 +23,4 @@ You are working inside a multi-agent setup. Read `docs/AGENTS.md` first to see w
 - Quality over quantity. Short explanations. Ask a clarifying question before a long answer when the request is ambiguous.
 - Every user-facing string exists in EN and PL (`docs/copy/pawlog-copy-en-pl.csv` is the reviewed source). Polish runs about 20% longer; check fit.
 - Never hard-code a colour, radius or shadow: use design tokens from `docs/design-system/tokens.json`.
-- Track work in Linear (team JCBK, project "Dog Health Timeline"). One issue per unit of work; update status as you go.
+- Track work in Linear (team JCBK, project "PawLog"). One issue per unit of work; update status as you go.
