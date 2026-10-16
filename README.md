@@ -9,7 +9,7 @@ Node 22+.
 
 ```bash
 npm ci
-npm run dev        # http://localhost:5173/demo  (demo mode, no backend)
+npm run dev        # http://localhost:5173/demo  (demo mode, no backend): the read-only Timeline
 ```
 
 | Command | What it does |
@@ -19,6 +19,8 @@ npm run dev        # http://localhost:5173/demo  (demo mode, no backend)
 | `npm run build` | Type-check, then production build with the service worker |
 | `npm run check:secrets` | Fails on service-key or real-project-URL patterns (the repo is public) |
 
-Copy `.env.example` to `.env` for local settings. `VITE_DEMO_MODE=true` forces demo mode; otherwise demo mode is on whenever the path is `/demo`. Demo data lives in `data/demo/` and is fictional; visitor changes stay in `localStorage`.
+Copy `.env.example` to `.env` for local settings. `VITE_DEMO_MODE=true` forces demo mode; otherwise demo mode is on whenever the path is `/demo`. Demo data lives in `data/demo/` and is fictional (1 Sep to 15 Oct 2026, "today" frozen at 15 Oct); visitor changes stay in `localStorage`.
+
+Code map: `src/data/` (repository interface and implementations), `src/i18n/`, `src/timeline/` (Timeline screen: pure model, geometry constants, component, CSS), `src/components/` (design-system components: `DoseMark`, `EventBadge`).
 
 Manual test cases: [docs/TEST-CASES.md](docs/TEST-CASES.md). Architecture notes: [docs/ENGINEERING.md](docs/ENGINEERING.md).

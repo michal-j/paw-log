@@ -1,7 +1,94 @@
 [
-  { "id": "item-kibble", "dogId": "dog-demo", "kind": "food", "name": "Sample kibble", "colour": "food-farm", "defaultDayPart": 2, "activeFrom": "2026-09-01", "activeTo": null },
-  { "id": "item-wet", "dogId": "dog-demo", "kind": "food", "name": "Sample wet food", "colour": "food-ocean", "defaultDayPart": 4, "activeFrom": "2026-09-01", "activeTo": null },
-  { "id": "item-med-a", "dogId": "dog-demo", "kind": "medication", "name": "Medicine A", "colour": "med-arvelin", "defaultDayPart": 2, "activeFrom": "2026-09-01", "activeTo": null },
-  { "id": "item-med-b", "dogId": "dog-demo", "kind": "medication", "name": "Medicine B", "colour": "med-gastrelle", "defaultDayPart": 6, "activeFrom": "2026-09-01", "activeTo": null },
-  { "id": "item-treat", "dogId": "dog-demo", "kind": "treat", "name": "Sample treat", "colour": "treat", "defaultDayPart": 7, "activeFrom": "2026-09-01", "activeTo": null }
+ {
+  "id": "item-cooked",
+  "dogId": "dog-demo",
+  "kind": "food",
+  "name": "Cooked meal",
+  "colour": "food-cooked",
+  "defaultDayPart": 2,
+  "activeFrom": "2026-09-01",
+  "activeTo": null
+ },
+ {
+  "id": "item-farm",
+  "dogId": "dog-demo",
+  "kind": "food",
+  "name": "Farm Fresh, turkey",
+  "colour": "food-farm",
+  "defaultDayPart": 4,
+  "activeFrom": "2026-09-01",
+  "activeTo": "2026-10-11"
+ },
+ {
+  "id": "item-ocean",
+  "dogId": "dog-demo",
+  "kind": "food",
+  "name": "Ocean Blend, salmon",
+  "colour": "food-ocean",
+  "defaultDayPart": 4,
+  "activeFrom": "2026-10-12",
+  "activeTo": null
+ },
+ {
+  "id": "item-arvelin",
+  "dogId": "dog-demo",
+  "kind": "medication",
+  "name": "Arvelin",
+  "colour": "med-arvelin",
+  "defaultDayPart": 1,
+  "activeFrom": "2026-09-20",
+  "activeTo": null
+ },
+ {
+  "id": "item-bellavet",
+  "dogId": "dog-demo",
+  "kind": "medication",
+  "name": "Bellavet",
+  "colour": "med-bellavet",
+  "defaultDayPart": 2,
+  "activeFrom": "2026-09-25",
+  "activeTo": null
+ },
+ {
+  "id": "item-biomend",
+  "dogId": "dog-demo",
+  "kind": "supplement",
+  "name": "Biomend",
+  "colour": "med-biomend",
+  "defaultDayPart": 2,
+  "activeFrom": "2026-09-01",
+  "activeTo": null
+ },
+ {
+  "id": "item-gastrelle",
+  "dogId": "dog-demo",
+  "kind": "medication",
+  "name": "Gastrelle",
+  "colour": "med-gastrelle",
+  "defaultDayPart": 3,
+  "activeFrom": "2026-10-14",
+  "activeTo": "2026-10-20"
+ },
+ {
+  "id": "item-treat",
+  "dogId": "dog-demo",
+  "kind": "treat",
+  "name": "Treat",
+  "colour": "treat",
+  "defaultDayPart": 3,
+  "activeFrom": "2026-09-01",
+  "activeTo": null,
+  "hiddenByDefault": true
+ },
+ {
+  "id": "item-calmora",
+  "dogId": "dog-demo",
+  "kind": "medication",
+  "name": "Calmora",
+  "colour": "med-calmora",
+  "defaultDayPart": 7,
+  "activeFrom": "2026-09-01",
+  "activeTo": "2026-09-19",
+  "hiddenByDefault": true
+ }
 ]

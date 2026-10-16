@@ -31,6 +31,8 @@ export interface Item {
   defaultDayPart: DayPart;
   activeFrom: PlainDate;
   activeTo: PlainDate | null;
+  /** Off in the default filter set (the prototype hides treats and Calmora until the filters sheet turns them on). */
+  hiddenByDefault?: boolean;
 }
 
 export interface Entry {

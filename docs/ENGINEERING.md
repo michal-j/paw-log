@@ -54,3 +54,11 @@ Everything here is a proposal from the PM for the Developer to refine. Items mar
 - Fonts (Onest, Instrument Sans) are named in the tokens but not yet shipped; the system font stack renders until the Designer and PM decide how to host them.
 - Placeholder icons are flat mint squares generated for the scaffold; replace with the real mark once designed.
 - Vercel project and Supabase project are not created (CEO approval pending); `SupabaseRepository` is a stub.
+
+## Timeline notes (slice 2a, JCB-29)
+- `src/timeline/model.ts` derives everything from repository data and is pure: rows (month bands + day rows, newest first, from the first record to `today`), columns and lanes, circle state, badges, rail ticks, scroll lookups. `Timeline.tsx` only renders it. Unit tests: `tests/timeline.test.ts`.
+- Geometry lives in `src/timeline/geometry.ts` (day row 44, month band 28, rail 20, tail 120, column minimums, circle sizes). Row `top` offsets and the rail maths come from these constants; change them together with `timeline.css`.
+- Lanes come from logged entries: all food items in one day part share one lane (so Farm Fresh and Ocean Blend sit in the same Dinner column), other items get one lane each, in item order. Items with `hiddenByDefault` (treats, Calmora) are left out until the filters sheet exists. The last day part collapses to width 0 when empty.
+- Circles: `DoseMark` takes an item's colour token name (validated against `[a-z0-9-]`) and sets `--mark`; the ring is `color-mix(--mark 80%, ink)`. Badges: `EventBadge`, one component, tokens `badge-<kind>-*`. Event types without a designed badge (anal glands, nails, other) are not shown yet.
+- Rows are not interactive yet (day view is a later slice); each row carries a visually hidden summary for screen readers. The rail is 20px wide with a 44px hit area that overlaps the Events column edge.
+- Months with no records (the prototype's 44px "Backfill" bands) are not shown: backfill is part of the add flow.

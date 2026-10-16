@@ -14,19 +14,33 @@ const mount = () =>
 beforeEach(() => localStorage.clear());
 afterEach(cleanup);
 
-describe('placeholder home', () => {
-  it('renders from the demo repository without sign-in', async () => {
+describe('timeline home', () => {
+  it('renders the timeline from the demo repository without sign-in', async () => {
     mount();
-    expect(await screen.findByText(/Pip/)).toBeTruthy();
+    expect(await screen.findByText('October 2026')).toBeTruthy();
+    expect(screen.getByText('September 2026')).toBeTruthy();
+    expect(screen.getByText(/Wednesday 14 October: Vet visit ×2/)).toBeTruthy();
     expect(screen.getByText('Demo with sample data. Changes stay in this browser.')).toBeTruthy();
   });
 
   it('switches language EN to PL and remembers it', async () => {
     mount();
-    await screen.findByText(/Pip/);
+    await screen.findByText('October 2026');
     fireEvent.click(screen.getByRole('button', { name: 'PL' }));
     expect(screen.getByText(/Demo z przykładowymi danymi/)).toBeTruthy();
+    expect(screen.getByText('październik 2026')).toBeTruthy();
+    expect(screen.getByRole('button', { name: /Klucz dla dnia poniżej/ })).toBeTruthy();
     expect(localStorage.getItem('pawlog.lang')).toBe('pl');
+  });
+
+  it('opens the Key legend', async () => {
+    mount();
+    const key = await screen.findByRole('button', { name: /Key for the day below/ });
+    expect(key.getAttribute('aria-expanded')).toBe('false');
+    fireEvent.click(key);
+    expect(key.getAttribute('aria-expanded')).toBe('true');
+    expect(screen.getByText('Skipped / refused')).toBeTruthy();
+    expect(screen.getByText('Frontline (monthly)')).toBeTruthy();
   });
 });
 

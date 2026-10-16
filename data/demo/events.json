@@ -2,28 +2,154 @@
  {
   "id": "event-001",
   "dogId": "dog-demo",
-  "date": "2026-10-11",
-  "type": "symptom",
-  "title": "Sample symptom",
-  "detail": "Restless in the evening. Fictional demo data.",
+  "date": "2026-09-08",
+  "type": "frontline",
+  "title": "Frontline",
+  "detail": "Monthly flea and tick treatment given. Time of day not tracked.",
   "issueId": null
  },
  {
   "id": "event-002",
   "dogId": "dog-demo",
-  "date": "2026-10-13",
-  "type": "vet",
-  "title": "Sample vet visit",
-  "detail": "Routine check at a fictional clinic.",
+  "date": "2026-09-12",
+  "type": "deworming",
+  "title": "Deworming pill",
+  "detail": "Given every 6 months. Next one due in March.",
   "issueId": null
  },
  {
   "id": "event-003",
   "dogId": "dog-demo",
-  "date": "2026-10-14",
-  "type": "frontline",
-  "title": "Monthly flea and tick treatment",
+  "date": "2026-09-20",
+  "type": "symptom",
+  "title": "Reflux",
+  "detail": "medium",
+  "issueId": null
+ },
+ {
+  "id": "event-004",
+  "dogId": "dog-demo",
+  "date": "2026-09-20",
+  "type": "symptom",
+  "title": "Panting",
+  "detail": "small",
+  "issueId": null
+ },
+ {
+  "id": "event-005",
+  "dogId": "dog-demo",
+  "date": "2026-09-28",
+  "type": "symptom",
+  "title": "Fear",
+  "detail": "a lot",
+  "issueId": null
+ },
+ {
+  "id": "event-006",
+  "dogId": "dog-demo",
+  "date": "2026-10-03",
+  "type": "symptom",
+  "title": "Leakage",
+  "detail": "small amount · small",
+  "issueId": null
+ },
+ {
+  "id": "event-007",
+  "dogId": "dog-demo",
+  "date": "2026-10-03",
+  "type": "photo",
+  "title": "Lump A photo",
   "detail": "",
+  "issueId": "issue-lump-a"
+ },
+ {
+  "id": "event-008",
+  "dogId": "dog-demo",
+  "date": "2026-10-06",
+  "type": "symptom",
+  "title": "Poo",
+  "detail": "diarrhea · dark · medium amount",
+  "issueId": null
+ },
+ {
+  "id": "event-009",
+  "dogId": "dog-demo",
+  "date": "2026-10-08",
+  "type": "frontline",
+  "title": "Frontline",
+  "detail": "Monthly flea and tick treatment given. Time of day not tracked.",
+  "issueId": null
+ },
+ {
+  "id": "event-010",
+  "dogId": "dog-demo",
+  "date": "2026-10-09",
+  "type": "symptom",
+  "title": "Heartburn",
+  "detail": "medium",
+  "issueId": null
+ },
+ {
+  "id": "event-011",
+  "dogId": "dog-demo",
+  "date": "2026-10-10",
+  "type": "photo",
+  "title": "Lump A photo",
+  "detail": "",
+  "issueId": "issue-lump-a"
+ },
+ {
+  "id": "event-012",
+  "dogId": "dog-demo",
+  "date": "2026-10-12",
+  "type": "symptom",
+  "title": "Stomach rumbling",
+  "detail": "small",
+  "issueId": null
+ },
+ {
+  "id": "event-013",
+  "dogId": "dog-demo",
+  "date": "2026-10-12",
+  "type": "symptom",
+  "title": "Poo",
+  "detail": "soft · normal colour · small",
+  "issueId": null
+ },
+ {
+  "id": "event-014",
+  "dogId": "dog-demo",
+  "date": "2026-10-14",
+  "type": "symptom",
+  "title": "Restlessness",
+  "detail": "a lot. Restless night and day. Refused breakfast. Weak and confused on walks, lay down a few times.",
+  "issueId": null
+ },
+ {
+  "id": "event-015",
+  "dogId": "dog-demo",
+  "date": "2026-10-14",
+  "type": "symptom",
+  "title": "Vomit",
+  "detail": "1× in the morning",
+  "issueId": null
+ },
+ {
+  "id": "event-016",
+  "dogId": "dog-demo",
+  "date": "2026-10-14",
+  "type": "vet",
+  "title": "Maple Vet",
+  "detail": "Symptom consultation, stomach ultrasound, limb check (X-ray of front paws recommended). Gastrelle prescribed.",
+  "issueId": null
+ },
+ {
+  "id": "event-017",
+  "dogId": "dog-demo",
+  "date": "2026-10-14",
+  "type": "vet",
+  "title": "Riverside Vet",
+  "detail": "Blood pressure check: high, 150–160. Further consultation. Also done: anal glands expressed, nail trimming.",
   "issueId": null
  }
 ]
