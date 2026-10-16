@@ -9,7 +9,7 @@ Node 22+.
 
 ```bash
 npm ci
-npm run dev        # http://localhost:5173/demo  (demo mode, no backend): the read-only Timeline
+npm run dev        # http://localhost:5173/demo  (demo mode, no backend): the read-only Timeline; tap a row for its Day view (/demo/day/2026-10-14)
 ```
 
 | Command | What it does |
@@ -21,6 +21,6 @@ npm run dev        # http://localhost:5173/demo  (demo mode, no backend): the re
 
 Copy `.env.example` to `.env` for local settings. `VITE_DEMO_MODE=true` forces demo mode; otherwise demo mode is on whenever the path is `/demo`. Demo data lives in `data/demo/` and is fictional (1 Sep to 15 Oct 2026, "today" frozen at 15 Oct); visitor changes stay in `localStorage`.
 
-Code map: `src/data/` (repository interface and implementations), `src/i18n/`, `src/timeline/` (Timeline screen: pure model, geometry constants, component, CSS), `src/components/` (design-system components: `DoseMark`, `EventBadge`).
+Code map: `src/data/` (repository interface and implementations), `src/i18n/`, `src/timeline/` (Timeline screen: pure model, geometry constants, component, CSS), `src/day/` (Day view: pure model, component, CSS), `src/routes.ts` (path router), `src/components/` (design-system components: `DoseMark`, `EventBadge`, `MealIcon`, shared `marks.css`).
 
 Manual test cases: [docs/TEST-CASES.md](docs/TEST-CASES.md). Architecture notes: [docs/ENGINEERING.md](docs/ENGINEERING.md).

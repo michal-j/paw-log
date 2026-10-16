@@ -1,4 +1,5 @@
 import type { BadgeKind } from '../timeline/model';
+import './marks.css';
 
 /**
  * The chip that marks a health event on a day (docs/design-system/components/EventBadge).

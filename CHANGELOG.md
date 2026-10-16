@@ -4,6 +4,14 @@ Format: [Keep a Changelog](https://keepachangelog.com). "Unreleased" means not y
 
 ## Unreleased
 
+### Added
+- Read-only Day view in demo mode (JCB-30): tap a Timeline row (whole 44px row is a link) to open `/demo/day/YYYY-MM-DD`; date header with Today/Yesterday, previous/next day stopping at the first record and today (disabled state shown and announced), "What happened" cards (vet visits, symptoms, Frontline, deworming, photo) with `EventBadge`, the seven day parts with `DoseMark`, name, dose and Refused / Half eaten tags, empty-day state. Shows everything, including treats and Calmora.
+- `src/day/model.ts` (day grouping, bounds, prev/next) and `src/routes.ts` (path router), with unit tests; Day view app tests.
+
+### Changed
+- Back from a day (in-app or browser) returns to the Timeline at the same scroll position; reload keeps the day; invalid or out-of-range day URLs fall back to the Timeline.
+- `DoseMark`/`EventBadge` styles moved to `src/components/marks.css`, `MealIcon` to `src/components/`, `.sr-only` to `global.css` (shared by Timeline and Day view; no visual change).
+
 ## 2026-10-16
 
 ### Added
