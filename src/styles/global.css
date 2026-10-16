@@ -71,5 +71,16 @@ body {
   cursor: pointer;
 }
 .lang-btn[aria-pressed='true'] { border-color: var(--color-mint-deep); color: var(--color-mint-deep); }
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
 :focus-visible { outline: 2px solid var(--color-mint-deep); outline-offset: 2px; }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }

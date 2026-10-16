@@ -1,9 +1,10 @@
-import { useEffect, useMemo, useRef, useState, type PointerEvent, type ReactNode } from 'react';
-import type { HealthEvent, Item, Repository } from '../data';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type MouseEvent, type PointerEvent, type ReactNode } from 'react';
+import type { HealthEvent, Item, PlainDate, Repository } from '../data';
 import { useI18n, type Lang, type MessageKey } from '../i18n';
 import { symptomLabel } from './labels';
 import { DoseMark, colourVar } from '../components/DoseMark';
 import { EventBadge } from '../components/EventBadge';
+import { MealIcon } from '../components/MealIcon';
 import { DATE_COL_W, EVENTS_MIN_W, PART_TICK_INSET, PART_TICK_MAX, RAIL_W, ROW_INSET, SCRUB_GAP, SCRUB_LIFT, TICK, TICK_H } from './geometry';
 import {
   activeTickOffset,
@@ -59,8 +60,18 @@ async function load(repository: Repository): Promise<Loaded> {
   return { timeline: buildTimeline({ today, items, entries, events }), items: new Map(items.map((i) => [i.id, i])) };
 }
 
-/** Read-only timeline (slice 2a): one row per day, newest first, Key bar, tick rail. */
-export function Timeline({ repository }: { repository: Repository }) {
+interface Props {
+  repository: Repository;
+  /** List scroll position to restore once the rows are laid out (coming back from a day). */
+  initialScrollTop?: number;
+  /** Path of a day, so each row is a real link (open in new tab, long-press preview). */
+  dayHref?: (date: PlainDate) => string;
+  /** A row was tapped; `scrollTop` is the list position to come back to. */
+  onOpenDay?: (date: PlainDate, scrollTop: number) => void;
+}
+
+/** Read-only timeline (slice 2a): one row per day, newest first, Key bar, tick rail. Rows open the Day view (3a). */
+export function Timeline({ repository, initialScrollTop = 0, dayHref, onOpenDay }: Props) {
   const { lang, t } = useI18n();
   const [data, setData] = useState<Loaded | null>(null);
   const [topIndex, setTopIndex] = useState(0);
@@ -92,6 +103,18 @@ export function Timeline({ repository }: { repository: Repository }) {
       live = false;
     };
   }, [repository]);
+
+  // Restore the scroll position once, after the rows and the tail (which needs the list height) exist.
+  const restored = useRef(false);
+  useLayoutEffect(() => {
+    const el = listRef.current;
+    if (restored.current || !data || !el || !viewport) return;
+    restored.current = true;
+    if (initialScrollTop > 0) {
+      el.scrollTop = initialScrollTop;
+      setTopIndex(rowIndexAt(data.timeline.rows, el.scrollTop));
+    }
+  }, [data, viewport, initialScrollTop]);
 
   const fmt = useMemo(() => {
     const make = (o: Intl.DateTimeFormatOptions) => new Intl.DateTimeFormat(LOCALE[lang], { timeZone: 'UTC', ...o });
@@ -139,6 +162,13 @@ export function Timeline({ repository }: { repository: Repository }) {
   const summary = (row: DayRow) => {
     const flags = flagsFor(row.events, row.anySkipped, t);
     return `${fmt.long(row.date)}: ${flags.length ? flags.join(', ') : t('copy.95')}`;
+  };
+
+  const openDay = (date: PlainDate) => (e: MouseEvent<HTMLAnchorElement>) => {
+    // Let the browser handle new-tab and new-window clicks.
+    if (!onOpenDay || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+    e.preventDefault();
+    onOpenDay(date, listRef.current?.scrollTop ?? 0);
   };
 
   return (
@@ -226,7 +256,13 @@ export function Timeline({ repository }: { repository: Repository }) {
                   style={{ height: row.height, paddingLeft: ROW_INSET }}
                   data-date={row.date}
                 >
-                  <span className="sr-only">{summary(row)}</span>
+                  {dayHref ? (
+                    <a className="tl-row__link" href={dayHref(row.date)} onClick={openDay(row.date)}>
+                      <span className="sr-only">{summary(row)}</span>
+                    </a>
+                  ) : (
+                    <span className="sr-only">{summary(row)}</span>
+                  )}
                   <span className="tl-row__date" style={{ width: DATE_COL_W }} aria-hidden="true">
                     <span className="tl-row__num">{Number(row.date.slice(8))}</span>
                     <span className="tl-row__wd">{row.isToday ? t('wd') : fmt.weekday(row.date)}</span>
@@ -337,29 +373,4 @@ function flagsFor(events: HealthEvent[], anySkipped: boolean, t: (k: MessageKey)
   if (events.some((e) => e.type === 'deworming')) out.push(t('copy.102'));
   if (anySkipped) out.push(t('copy.93'));
   return out;
-}
-
-/** Breakfast (sunrise), dinner (sun), supper (sunset); glyphs from the R10 prototype. */
-function MealIcon({ part }: { part: number }) {
-  const common = { width: 22, height: 22, viewBox: '0 0 40 40', fill: 'none', stroke: 'currentColor', strokeWidth: 2.2, strokeLinecap: 'round' as const };
-  if (part === 2)
-    return (
-      <svg {...common}>
-        <path d="M11 28a9 9 0 0 1 18 0z" fill="currentColor" />
-        <path d="M5 31h30M20 8v5M8.5 14l3.5 3.5M31.5 14L28 17.5M3 24h4M33 24h4" />
-      </svg>
-    );
-  if (part === 4)
-    return (
-      <svg {...common}>
-        <circle cx="20" cy="20" r="7" fill="currentColor" />
-        <path d="M20 4v5M20 31v5M4 20h5M31 20h5M8.7 8.7l3.5 3.5M27.8 27.8l3.5 3.5M31.3 8.7l-3.5 3.5M12.2 27.8l-3.5 3.5" />
-      </svg>
-    );
-  return (
-    <svg {...common}>
-      <path d="M7 22a13 13 0 0 1 26 0z" fill="currentColor" stroke="none" />
-      <path d="M7 26.5h26M10 30.5h20M14 34.5h12" />
-    </svg>
-  );
 }

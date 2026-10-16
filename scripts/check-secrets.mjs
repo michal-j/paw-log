@@ -1,6 +1,11 @@
 // CI guard: the repo is public, so fail on anything that looks like a service key or a real project URL.
+// Extra blocked words (e.g. real names that must never be committed) come from a git-ignored
+// `.secret-words` file (one per line, `#` comments) and/or PAWLOG_BLOCKED_WORDS (comma-separated).
+// They are matched case-insensitively and never printed, so CI logs cannot leak them.
 import { execSync } from 'node:child_process';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
+
+const WORDS_FILE = '.secret-words';
 
 const files = execSync('git ls-files -co --exclude-standard', { encoding: 'utf8' })
   .split('\n')
@@ -11,8 +16,26 @@ const patterns = [
   [/eyJ[A-Za-z0-9_-]{20,}\.[A-Za-z0-9_-]{20,}\./, 'JWT-looking token'],
   [/sb_secret_[A-Za-z0-9_-]{8,}/, 'Supabase secret key'],
 ];
+
+const escape = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+const fileWords = existsSync(WORDS_FILE)
+  ? readFileSync(WORDS_FILE, 'utf8')
+      .split('\n')
+      .filter((l) => !l.trim().startsWith('#'))
+  : [];
+const envWords = (process.env.PAWLOG_BLOCKED_WORDS ?? '').split(',');
+const blocked = [...new Set([...fileWords, ...envWords].map((w) => w.trim()).filter(Boolean))];
+const blockedPatterns = blocked.map((w, i) => [new RegExp(escape(w), 'i'), `blocked word #${i + 1}`]);
+patterns.push(...blockedPatterns);
+
 let bad = 0;
 for (const f of files) {
+  for (const [re, label] of blockedPatterns) {
+    if (re.test(f)) {
+      console.error(`${f}: ${label} in file path`);
+      bad++;
+    }
+  }
   let text;
   try {
     text = readFileSync(f, 'utf8');
@@ -28,4 +51,4 @@ for (const f of files) {
   }
 }
 if (bad) process.exit(1);
-console.log(`secret scan clean (${files.length} files)`);
+console.log(`secret scan clean (${files.length} files, ${blocked.length} blocked words)`);
