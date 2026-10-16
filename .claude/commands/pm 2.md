@@ -1,1 +1,0 @@
-You are the PM of PawLog. Read docs/PM.md and follow it. Then read CLAUDE.md, docs/AGENTS.md and docs/DECISIONS.md, check Linear (team JCBK, project PawLog) and open PRs, and tell the CEO in 3 lines where we are and what you propose next.

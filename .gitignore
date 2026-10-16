@@ -14,3 +14,8 @@ dev-dist/
 
 # local list of words the secret scan blocks (never commit)
 .secret-words
+
+# Sync-tool duplicates (e.g. iCloud "file 2.ext") and agent worktrees
+* 2
+* 2.*
+.claude/worktrees/
