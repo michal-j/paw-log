@@ -12,6 +12,11 @@ export type EventType =
   | 'other';
 /** How strong a symptom (or similar event) was; stored as a key, shown through the i18n layer. */
 export type Intensity = 'small' | 'medium' | 'large';
+/** How an amount is counted. Stored as a key; shown through the i18n layer (`u_*`). */
+export type Unit = 'pill' | 'capsule' | 'sachet' | 'ml' | 'drop' | 'can' | 'tray' | 'g' | 'piece';
+export const UNITS: readonly Unit[] = ['pill', 'capsule', 'sachet', 'ml', 'drop', 'can', 'tray', 'g', 'piece'];
+/** Done at a vet visit besides the visit itself. */
+export type AlsoDone = 'anal_glands' | 'nails';
 
 /** ISO date `YYYY-MM-DD` in the household timezone. */
 export type PlainDate = string;
@@ -36,18 +41,37 @@ export interface Item {
   activeTo: PlainDate | null;
   /** Off in the default filter set (the prototype hides treats and Calmora until the filters sheet turns them on). */
   hiddenByDefault?: boolean;
+  /** The unit it is usually given in; null or absent when not set. */
+  defaultUnit?: Unit | null;
+  /** Flavours to pick from (food), in the household's words. */
+  flavours?: string[];
+  /** A second unit shown after the amount: 1 `unit` = `size` of the default unit (Bellavet: 1 bar = 0.1 ml). */
+  conversion?: { unit: 'bars'; size: number } | null;
+  /** List and lane order, smallest first. */
+  position?: number;
 }
 
-/** The plan: an item in one day part with its usual dose, for a period. One item can have several slots. */
+/**
+ * The usual day: an item in one day part with its usual amount, for a period (a course is just
+ * `activeTo`). One item can have several slots. A change from a date ends the old slot the day
+ * before and starts a new one, so days already logged keep theirs.
+ */
 export interface ScheduleSlot {
   id: string;
   dogId: string;
   itemId: string;
   dayPart: DayPart;
-  doseText: string;
+  flavour: string;
+  amount: number | null;
+  unit: Unit | null;
   activeFrom: PlainDate;
   activeTo: PlainDate | null;
+  /** A course set with "How long" (7 days, 14 days, an end date): the Day view shows "day n of m". Absent = not a course. */
+  course?: boolean;
 }
+
+/** Usual time `HH:MM` of each part of the day. */
+export type DayPartTimes = Record<DayPart, string>;
 
 export interface Entry {
   id: string;
@@ -57,7 +81,13 @@ export interface Entry {
   itemId: string;
   /** The slot this entry fills, or null/absent for an unplanned entry. At most one entry per slot per day. */
   scheduleSlotId?: string | null;
-  doseText: string;
+  /** Structured amount; null on rows logged before amounts existed (those show `doseText`). */
+  amount: number | null;
+  unit: Unit | null;
+  /** Empty when the item has no flavours. */
+  flavour: string;
+  /** Free-text dose of rows written before JCB-39; new entries leave it empty. */
+  doseText?: string;
   state: EntryState;
   note: string;
   /** Set by the database; ignored on save. */
@@ -75,6 +105,10 @@ export interface HealthEvent {
   detail: string;
   /** Optional strength, for symptoms; null/absent when it does not apply. */
   intensity?: Intensity | null;
+  /** Symptom properties by name (consistency, colour, quantity, times, when); values are keys. */
+  props?: Record<string, string>;
+  /** Vet visit: what else was done. */
+  alsoDone?: AlsoDone[];
   issueId: string | null;
 }
 

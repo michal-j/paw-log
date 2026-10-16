@@ -10,7 +10,7 @@ export const colourVar = (token: string) => `var(--color-${TOKEN_NAME.test(token
  * The circle for one meal, medication or treat (docs/design-system/components/DoseMark).
  * Size is meaning (food = big), state is shape (filled, hollow, half from the bottom), colour is the item.
  */
-export function DoseMark({ colour, size, state }: { colour: string; size: MarkSize; state: MarkState }) {
+export function DoseMark({ colour, size, state }: { colour: string; size: MarkSize; state: MarkState | 'planned' }) {
   const style = { '--mark': colourVar(colour) } as CSSProperties;
   return <span className={`dose-mark dose-mark--${size} dose-mark--${state}`} style={style} aria-hidden="true" />;
 }

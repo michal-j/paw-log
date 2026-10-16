@@ -200,7 +200,8 @@ describe('sign-in flow', () => {
     submit();
     expect(await screen.findByText('October 2026')).toBeTruthy();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Sign out' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Menu' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Sign out' }));
     expect(await screen.findByRole('heading', { name: 'Sign in' })).toBeTruthy();
   });
 
@@ -216,6 +217,7 @@ describe('sign-in flow', () => {
     const auth = new FakeAuth({ id: 'u1', email: EMAIL });
     const signOut = vi.spyOn(auth, 'signOut');
     mount(auth, { confirm: () => false });
+    fireEvent.click(await screen.findByRole('button', { name: 'Menu' }));
     fireEvent.click(await screen.findByRole('button', { name: 'Sign out' }));
     expect(signOut).not.toHaveBeenCalled();
   });

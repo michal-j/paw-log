@@ -1,9 +1,12 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { DuplicateSlotEntryError, NoDogError, RepositoryError } from './errors';
 import type { Repository } from './repository';
+import { DEFAULT_DAY_PART_TIMES } from './repository';
 import type {
+  AlsoDone,
   DateRange,
   DayPart,
+  DayPartTimes,
   Dog,
   Entry,
   EntryState,
@@ -14,6 +17,7 @@ import type {
   ItemKind,
   PlainDate,
   ScheduleSlot,
+  Unit,
 } from './types';
 
 export { DuplicateSlotEntryError, NoDogError, RepositoryError };
@@ -34,15 +38,27 @@ interface ItemRow {
   active_from: string;
   active_to: string | null;
   hidden_by_default: boolean;
+  position: number;
+  default_unit: Unit | null;
+  flavours: string[] | null;
+  conversion_unit: 'bars' | null;
+  conversion_size: number | string | null;
 }
 interface ScheduleSlotRow {
   id: string;
   dog_id: string;
   item_id: string;
   day_part: number;
-  dose_text: string;
+  flavour: string;
+  amount: number | string | null;
+  unit: Unit | null;
   active_from: string;
   active_to: string | null;
+  is_course: boolean | null;
+}
+interface DayPartRow {
+  part: number;
+  usual_time: string;
 }
 interface EntryRow {
   id: string;
@@ -51,6 +67,9 @@ interface EntryRow {
   day_part: number;
   item_id: string;
   schedule_slot_id: string | null;
+  amount: number | string | null;
+  unit: Unit | null;
+  flavour: string;
   dose_text: string;
   state: EntryState;
   note: string;
@@ -65,15 +84,18 @@ interface EventRow {
   title: string;
   detail: string;
   intensity: Intensity | null;
+  props: Record<string, string> | null;
+  also_done: AlsoDone[] | null;
   issue_id: string | null;
 }
 
 const DOG_COLUMNS = 'id, household_id, name';
-const ITEM_COLUMNS = 'id, dog_id, kind, name, colour, default_day_part, active_from, active_to, hidden_by_default';
-const SLOT_COLUMNS = 'id, dog_id, item_id, day_part, dose_text, active_from, active_to';
+const ITEM_COLUMNS =
+  'id, dog_id, kind, name, colour, default_day_part, active_from, active_to, hidden_by_default, position, default_unit, flavours, conversion_unit, conversion_size';
+const SLOT_COLUMNS = 'id, dog_id, item_id, day_part, flavour, amount, unit, active_from, active_to, is_course';
 const ENTRY_COLUMNS =
-  'id, dog_id, date, day_part, item_id, schedule_slot_id, dose_text, state, note, created_by, updated_by';
-const EVENT_COLUMNS = 'id, dog_id, date, type, title, detail, intensity, issue_id';
+  'id, dog_id, date, day_part, item_id, schedule_slot_id, amount, unit, flavour, dose_text, state, note, created_by, updated_by';
+const EVENT_COLUMNS = 'id, dog_id, date, type, title, detail, intensity, props, also_done, issue_id';
 /** Postgres unique_violation: on entry, the one-entry-per-slot-per-day index. */
 const UNIQUE_VIOLATION = '23505';
 
@@ -97,6 +119,9 @@ export function localDate(now: Date): PlainDate {
   return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
 }
 
+/** numeric columns may arrive as strings; null stays null. */
+const num = (v: number | string | null): number | null => (v === null || v === undefined ? null : Number(v));
+
 export const toDog = (r: DogRow): Dog => ({ id: r.id, householdId: r.household_id, name: r.name });
 
 export const toItem = (r: ItemRow): Item => ({
@@ -109,6 +134,27 @@ export const toItem = (r: ItemRow): Item => ({
   activeFrom: r.active_from,
   activeTo: r.active_to,
   ...(r.hidden_by_default ? { hiddenByDefault: true } : {}),
+  defaultUnit: r.default_unit ?? null,
+  flavours: r.flavours ?? [],
+  conversion: r.conversion_unit && r.conversion_size !== null ? { unit: r.conversion_unit, size: Number(r.conversion_size) } : null,
+  position: r.position ?? 0,
+});
+
+export const fromItem = (i: Item) => ({
+  id: i.id,
+  dog_id: i.dogId,
+  kind: i.kind,
+  name: i.name,
+  colour: i.colour,
+  default_day_part: i.defaultDayPart,
+  active_from: i.activeFrom,
+  active_to: i.activeTo,
+  hidden_by_default: !!i.hiddenByDefault,
+  position: i.position ?? 0,
+  default_unit: i.defaultUnit ?? null,
+  flavours: i.flavours ?? [],
+  conversion_unit: i.conversion?.unit ?? null,
+  conversion_size: i.conversion?.size ?? null,
 });
 
 export const toScheduleSlot = (r: ScheduleSlotRow): ScheduleSlot => ({
@@ -116,9 +162,25 @@ export const toScheduleSlot = (r: ScheduleSlotRow): ScheduleSlot => ({
   dogId: r.dog_id,
   itemId: r.item_id,
   dayPart: r.day_part as DayPart,
-  doseText: r.dose_text,
+  flavour: r.flavour ?? '',
+  amount: num(r.amount),
+  unit: r.unit ?? null,
   activeFrom: r.active_from,
   activeTo: r.active_to,
+  course: !!r.is_course,
+});
+
+export const fromScheduleSlot = (s: ScheduleSlot) => ({
+  id: s.id,
+  dog_id: s.dogId,
+  item_id: s.itemId,
+  day_part: s.dayPart,
+  flavour: s.flavour,
+  amount: s.amount,
+  unit: s.unit,
+  active_from: s.activeFrom,
+  active_to: s.activeTo,
+  is_course: !!s.course && s.activeTo !== null,
 });
 
 export const toEntry = (r: EntryRow): Entry => ({
@@ -128,7 +190,10 @@ export const toEntry = (r: EntryRow): Entry => ({
   dayPart: r.day_part as DayPart,
   itemId: r.item_id,
   scheduleSlotId: r.schedule_slot_id,
-  doseText: r.dose_text,
+  amount: num(r.amount),
+  unit: r.unit ?? null,
+  flavour: r.flavour ?? '',
+  doseText: r.dose_text ?? '',
   state: r.state,
   note: r.note,
   createdBy: r.created_by ?? '',
@@ -143,6 +208,8 @@ export const toEvent = (r: EventRow): HealthEvent => ({
   title: r.title,
   detail: r.detail,
   intensity: r.intensity,
+  props: r.props ?? {},
+  alsoDone: r.also_done ?? [],
   issueId: r.issue_id,
 });
 
@@ -154,7 +221,10 @@ export const fromEntry = (e: Entry) => ({
   day_part: e.dayPart,
   item_id: e.itemId,
   schedule_slot_id: e.scheduleSlotId ?? null,
-  dose_text: e.doseText,
+  amount: e.amount,
+  unit: e.unit,
+  flavour: e.flavour,
+  dose_text: e.doseText ?? '',
   state: e.state,
   note: e.note,
 });
@@ -167,6 +237,8 @@ export const fromEvent = (e: HealthEvent) => ({
   title: e.title,
   detail: e.detail,
   intensity: e.intensity ?? null,
+  props: e.props ?? {},
+  also_done: e.alsoDone ?? [],
   issue_id: e.issueId,
 });
 
@@ -192,6 +264,11 @@ export class SupabaseRepository implements Repository {
     return localDate(this.now());
   }
 
+  nowTime(): string {
+    const d = this.now();
+    return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+  }
+
   /** The household's dog (the first one, while the app shows a single dog). Cached after the first success. */
   getDog(): Promise<Dog> {
     this.dog ??= this.loadDog().catch((err: unknown) => {
@@ -215,6 +292,11 @@ export class SupabaseRepository implements Repository {
     return rows.map(toItem);
   }
 
+  async saveItem(item: Item): Promise<void> {
+    requireUuid('saveItem', item.id);
+    unwrap('saveItem', await this.client.from('item').upsert(fromItem(item), { onConflict: 'id' }));
+  }
+
   async listScheduleSlots(range?: DateRange): Promise<ScheduleSlot[]> {
     const dog = await this.getDog();
     const rows = await this.pages<ScheduleSlotRow>('listScheduleSlots', (from, to) => {
@@ -225,6 +307,36 @@ export class SupabaseRepository implements Repository {
       return q.order('day_part').order('active_from').order('id').range(from, to);
     });
     return rows.map(toScheduleSlot);
+  }
+
+  async saveScheduleSlot(slot: ScheduleSlot): Promise<void> {
+    requireUuid('saveScheduleSlot', slot.id);
+    unwrap('saveScheduleSlot', await this.client.from('schedule_slot').upsert(fromScheduleSlot(slot), { onConflict: 'id' }));
+  }
+
+  /** Entries that filled the slot keep their row; the foreign key clears their schedule_slot_id. */
+  async deleteScheduleSlot(id: string): Promise<void> {
+    unwrap('deleteScheduleSlot', await this.client.from('schedule_slot').delete().eq('id', id));
+  }
+
+  async getDayPartTimes(): Promise<DayPartTimes> {
+    const dog = await this.getDog();
+    const rows = unwrap<DayPartRow[]>(
+      'getDayPartTimes',
+      await this.client.from('day_part').select('part, usual_time').eq('dog_id', dog.id),
+    );
+    const times: DayPartTimes = { ...DEFAULT_DAY_PART_TIMES };
+    for (const r of rows) times[r.part as DayPart] = r.usual_time.slice(0, 5);
+    return times;
+  }
+
+  async saveDayPartTime(part: DayPart, time: string): Promise<void> {
+    if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(time)) throw new RepositoryError('saveDayPartTime', undefined, `"${time}" is not HH:MM`);
+    const dog = await this.getDog();
+    unwrap(
+      'saveDayPartTime',
+      await this.client.from('day_part').upsert({ dog_id: dog.id, part, usual_time: time }, { onConflict: 'dog_id,part' }),
+    );
   }
 
   async listEntries(range?: DateRange): Promise<Entry[]> {
@@ -258,8 +370,27 @@ export class SupabaseRepository implements Repository {
     unwrap('saveEntry', result);
   }
 
+  async addPlannedEntries(entries: Entry[]): Promise<string[]> {
+    if (!entries.length) return [];
+    entries.forEach((e) => requireUuid('addPlannedEntries', e.id));
+    // ON CONFLICT DO NOTHING on the one-entry-per-slot-per-day index: a slot someone else filled is skipped.
+    const rows = unwrap<{ id: string }[]>(
+      'addPlannedEntries',
+      await this.client
+        .from('entry')
+        .upsert(entries.map(fromEntry), { onConflict: 'dog_id,date,schedule_slot_id', ignoreDuplicates: true })
+        .select('id'),
+    );
+    return (rows ?? []).map((r) => r.id);
+  }
+
   async deleteEntry(id: string): Promise<void> {
     unwrap('deleteEntry', await this.client.from('entry').delete().eq('id', id));
+  }
+
+  async deleteEntries(ids: string[]): Promise<void> {
+    if (!ids.length) return;
+    unwrap('deleteEntries', await this.client.from('entry').delete().in('id', ids));
   }
 
   async saveEvent(event: HealthEvent): Promise<void> {

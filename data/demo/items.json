@@ -7,27 +7,43 @@
   "colour": "food-cooked",
   "defaultDayPart": 2,
   "activeFrom": "2026-09-01",
-  "activeTo": null
+  "activeTo": null,
+  "defaultUnit": "tray",
+  "flavours": [],
+  "position": 10
  },
  {
   "id": "item-farm",
   "dogId": "dog-demo",
   "kind": "food",
-  "name": "Farm Fresh, turkey",
+  "name": "Farm Fresh",
   "colour": "food-farm",
   "defaultDayPart": 4,
   "activeFrom": "2026-09-01",
-  "activeTo": "2026-10-11"
+  "activeTo": "2026-10-11",
+  "defaultUnit": "can",
+  "flavours": [
+   "turkey",
+   "salmon",
+   "chicken"
+  ],
+  "position": 20
  },
  {
   "id": "item-ocean",
   "dogId": "dog-demo",
   "kind": "food",
-  "name": "Ocean Blend, salmon",
+  "name": "Ocean Blend",
   "colour": "food-ocean",
   "defaultDayPart": 4,
   "activeFrom": "2026-10-12",
-  "activeTo": null
+  "activeTo": null,
+  "defaultUnit": "can",
+  "flavours": [
+   "salmon",
+   "whitefish"
+  ],
+  "position": 30
  },
  {
   "id": "item-arvelin",
@@ -37,7 +53,10 @@
   "colour": "med-arvelin",
   "defaultDayPart": 1,
   "activeFrom": "2026-09-20",
-  "activeTo": null
+  "activeTo": null,
+  "defaultUnit": "pill",
+  "flavours": [],
+  "position": 40
  },
  {
   "id": "item-bellavet",
@@ -47,7 +66,14 @@
   "colour": "med-bellavet",
   "defaultDayPart": 2,
   "activeFrom": "2026-09-25",
-  "activeTo": null
+  "activeTo": null,
+  "defaultUnit": "ml",
+  "flavours": [],
+  "conversion": {
+   "unit": "bars",
+   "size": 0.1
+  },
+  "position": 50
  },
  {
   "id": "item-biomend",
@@ -57,7 +83,10 @@
   "colour": "med-biomend",
   "defaultDayPart": 2,
   "activeFrom": "2026-09-01",
-  "activeTo": null
+  "activeTo": null,
+  "defaultUnit": "pill",
+  "flavours": [],
+  "position": 60
  },
  {
   "id": "item-gastrelle",
@@ -67,7 +96,10 @@
   "colour": "med-gastrelle",
   "defaultDayPart": 3,
   "activeFrom": "2026-10-14",
-  "activeTo": "2026-10-20"
+  "activeTo": "2026-10-20",
+  "defaultUnit": "sachet",
+  "flavours": [],
+  "position": 70
  },
  {
   "id": "item-treat",
@@ -78,7 +110,14 @@
   "defaultDayPart": 3,
   "activeFrom": "2026-09-01",
   "activeTo": null,
-  "hiddenByDefault": true
+  "hiddenByDefault": true,
+  "defaultUnit": "piece",
+  "flavours": [
+   "chicken",
+   "beef",
+   "fish"
+  ],
+  "position": 80
  },
  {
   "id": "item-calmora",
@@ -89,6 +128,9 @@
   "defaultDayPart": 7,
   "activeFrom": "2026-09-01",
   "activeTo": "2026-09-19",
-  "hiddenByDefault": true
+  "hiddenByDefault": true,
+  "defaultUnit": "capsule",
+  "flavours": [],
+  "position": 90
  }
 ]

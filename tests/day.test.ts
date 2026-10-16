@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { Entry, HealthEvent, Item } from '../src/data';
 import { DemoRepository } from '../src/data';
 import { buildDay, dayBounds, groupDayEvents, groupDayParts, inBounds, isPlainDate, stepDay } from '../src/day/model';
-import { dayPath, parseRoute, routePath, timelinePath } from '../src/routes';
+import { dayPath, parseRoute, routePath, timelinePath, usualPath } from '../src/routes';
 
 const repo = new DemoRepository(null);
 const load = async () => {
@@ -15,7 +15,7 @@ const item = (id: string, kind: Item['kind'], extra: Partial<Item> = {}): Item =
   id, dogId: 'd', kind, name: id, colour: 'mark-neutral', defaultDayPart: 2, activeFrom: '2026-01-01', activeTo: null, ...extra,
 });
 const entry = (id: string, date: string, dayPart: Entry['dayPart'], itemId: string, state: Entry['state'] = 'given'): Entry => ({
-  id, dogId: 'd', date, dayPart, itemId, doseText: '1', state, note: '', createdBy: 'm',
+  id, dogId: 'd', date, dayPart, itemId, amount: 1, unit: 'pill', flavour: '', state, note: '', createdBy: 'm',
 });
 const event = (id: string, date: string, type: HealthEvent['type']): HealthEvent => ({
   id, dogId: 'd', date, type, title: id, detail: '', issueId: null,
@@ -63,12 +63,13 @@ describe('day grouping', () => {
       ['Arvelin'],
       ['Cooked meal', 'Bellavet', 'Biomend'],
       ['Gastrelle', 'Treat'],
-      ['Ocean Blend, salmon', 'Bellavet'],
+      ['Ocean Blend', 'Bellavet'],
       ['Arvelin'],
-      ['Ocean Blend, salmon', 'Bellavet'],
+      ['Ocean Blend', 'Bellavet'],
       [],
     ]);
-    expect(day.parts[1]?.entries[0]).toMatchObject({ state: 'skipped', size: 'food', colour: 'food-cooked', doseText: '⅓ tray' });
+    expect(day.parts[1]?.entries[0]).toMatchObject({ state: 'skipped', size: 'food', colour: 'food-cooked', amount: 1 / 3, unit: 'tray' });
+    expect(day.parts[3]?.entries[0]).toMatchObject({ flavour: 'salmon', unit: 'can', amount: 0.5 });
     expect(day.parts[3]?.entries[0]).toMatchObject({ state: 'partial', size: 'food' });
     expect(day.parts[2]?.entries[1]).toMatchObject({ size: 'small', colour: 'treat' });
     expect(day.empty).toBe(false);
@@ -134,6 +135,14 @@ describe('routes', () => {
     expect(parseRoute('/demo/day/today')).toEqual({ base: '/demo', view: 'timeline' });
     expect(parseRoute('/demo/day/2026-10-14/x')).toEqual({ base: '/demo', view: 'timeline' });
     expect(parseRoute('/demonstration')).toEqual({ base: '', view: 'timeline' });
+  });
+
+  it('parses and builds the usual-day paths', () => {
+    expect(parseRoute('/demo/usual')).toEqual({ base: '/demo', view: 'usual' });
+    expect(parseRoute('/usual/2026-10-14')).toEqual({ base: '', view: 'usual', date: '2026-10-14' });
+    expect(parseRoute('/usual/2026-02-30')).toEqual({ base: '', view: 'timeline' });
+    expect(usualPath('/demo')).toBe('/demo/usual');
+    expect(usualPath('', '2026-10-14')).toBe('/usual/2026-10-14');
   });
 
   it('builds paths', () => {

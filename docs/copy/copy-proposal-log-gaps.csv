@@ -1,0 +1,30 @@
+#,Where (code name),English,Polish,EN chars,PL chars,Fit note,Your notes
+G1,allGiven,All given,Wszystko podane,9,15,"DRAFT pending CEO review; button on a day part, narrow slot - check fit","JCB-39 gap: CEO asked for ""All given"" per part, the design has no string for it"
+G2,menu,Menu,Menu,4,4,"DRAFT pending CEO review; header button and sheet title, narrow slot - check fit","JCB-39 gap: settings menu from the header, not in the design proposal"
+G3,u_pill_few,pills,tabl.,5,5,DRAFT pending CEO review,"JCB-39 gap: unit forms. EN: plural above 1. PL: few = 2-4, many = 5+, frac = fractions. Taken from the prototype (PL_UNIT, EN -s)"
+G4,u_pill_many,pills,tabl.,5,5,DRAFT pending CEO review,JCB-39 gap: unit forms
+G5,u_pill_frac,pills,tabl.,5,5,DRAFT pending CEO review,JCB-39 gap: unit forms
+G6,u_capsule_few,capsules,kaps.,8,5,DRAFT pending CEO review,JCB-39 gap: unit forms
+G7,u_capsule_many,capsules,kaps.,8,5,DRAFT pending CEO review,JCB-39 gap: unit forms
+G8,u_capsule_frac,capsules,kaps.,8,5,DRAFT pending CEO review,JCB-39 gap: unit forms
+G9,u_sachet_few,sachets,saszetki,7,8,DRAFT pending CEO review,JCB-39 gap: unit forms
+G10,u_sachet_many,sachets,saszetek,7,8,DRAFT pending CEO review,JCB-39 gap: unit forms
+G11,u_sachet_frac,sachets,saszetki,7,8,DRAFT pending CEO review,JCB-39 gap: unit forms
+G12,u_ml_few,ml,ml,2,2,DRAFT pending CEO review,JCB-39 gap: unit forms
+G13,u_ml_many,ml,ml,2,2,DRAFT pending CEO review,JCB-39 gap: unit forms
+G14,u_ml_frac,ml,ml,2,2,DRAFT pending CEO review,JCB-39 gap: unit forms
+G15,u_drop_few,drops,krople,5,6,DRAFT pending CEO review,JCB-39 gap: unit forms
+G16,u_drop_many,drops,kropli,5,6,DRAFT pending CEO review,JCB-39 gap: unit forms
+G17,u_drop_frac,drops,kropli,5,6,DRAFT pending CEO review,JCB-39 gap: unit forms
+G18,u_can_few,cans,puszki,4,6,DRAFT pending CEO review,JCB-39 gap: unit forms
+G19,u_can_many,cans,puszek,4,6,DRAFT pending CEO review,JCB-39 gap: unit forms
+G20,u_can_frac,cans,puszki,4,6,DRAFT pending CEO review,JCB-39 gap: unit forms
+G21,u_tray_few,trays,tacki,5,5,DRAFT pending CEO review,JCB-39 gap: unit forms
+G22,u_tray_many,trays,tacek,5,5,DRAFT pending CEO review,JCB-39 gap: unit forms
+G23,u_tray_frac,trays,tacki,5,5,DRAFT pending CEO review,JCB-39 gap: unit forms
+G24,u_g_few,g,g,1,1,DRAFT pending CEO review,JCB-39 gap: unit forms
+G25,u_g_many,g,g,1,1,DRAFT pending CEO review,JCB-39 gap: unit forms
+G26,u_g_frac,g,g,1,1,DRAFT pending CEO review,JCB-39 gap: unit forms
+G27,u_piece_few,pieces,szt.,6,4,DRAFT pending CEO review,JCB-39 gap: unit forms
+G28,u_piece_many,pieces,szt.,6,4,DRAFT pending CEO review,JCB-39 gap: unit forms
+G29,u_piece_frac,pieces,szt.,6,4,DRAFT pending CEO review,JCB-39 gap: unit forms

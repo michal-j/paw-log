@@ -26,7 +26,9 @@ describe('timeline home', () => {
   it('switches language EN to PL and remembers it', async () => {
     mount();
     await screen.findByText('October 2026');
-    fireEvent.click(screen.getByRole('button', { name: 'PL' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Menu' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'PL' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Zamknij' }));
     expect(screen.getByText(/Demo z przykładowymi danymi/)).toBeTruthy();
     expect(screen.getByText('październik 2026')).toBeTruthy();
     expect(screen.getByText(/14 października: .*Niepokój, Wymioty/)).toBeTruthy();
@@ -63,21 +65,22 @@ describe('day view', () => {
     fireEvent.click(row);
     expect(window.location.pathname).toBe('/demo/day/2026-10-14');
     expect(await screen.findByRole('heading', { name: /Wed,? 14 October 2026/ })).toBeTruthy();
-    fireEvent.click(screen.getByRole('button', { name: 'Timeline' }));
+    // The Day view's Timeline button (the navbar has one too).
+    fireEvent.click(screen.getAllByRole('button', { name: 'Timeline' })[0] as HTMLElement);
     expect(await screen.findByText('October 2026')).toBeTruthy();
     expect(window.location.pathname).toBe('/demo');
   });
 
   it('shows every entry by day part, with states, and the events', async () => {
     at('/demo/day/2026-10-14');
-    expect(await screen.findByText('Treat')).toBeTruthy(); // hidden by default on the Timeline
+    expect(await screen.findByText('Treat, chicken')).toBeTruthy(); // hidden by default on the Timeline
     expect(screen.getByText('Before breakfast')).toBeTruthy();
     expect(screen.getByText('After supper')).toBeTruthy();
     expect(screen.getByText('Nothing scheduled')).toBeTruthy();
     expect(screen.getByText('Refused')).toBeTruthy();
-    expect(screen.getByText('Half eaten')).toBeTruthy();
+    expect(screen.getByText('Partly eaten')).toBeTruthy(); // one term for partial food
     expect(screen.getByText('What happened')).toBeTruthy();
-    expect(screen.getByRole('heading', { name: 'Vet visit · Maple Vet' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: /^Vet visit · Maple Vet/ })).toBeTruthy(); // tap to edit
     expect(screen.getByText('Restlessness')).toBeTruthy();
     expect(screen.getByText('Yesterday')).toBeTruthy();
   });
@@ -111,9 +114,10 @@ describe('day view', () => {
     expect(window.location.pathname).toBe('/demo');
   });
 
-  it('shows the empty-day state', async () => {
+  it('shows the empty-day state when nothing is logged or planned', async () => {
     const repository = new DemoRepository(null);
     for (const e of await repository.listEntries({ from: '2026-10-01', to: '2026-10-01' })) await repository.deleteEntry(e.id);
+    for (const s of await repository.listScheduleSlots()) await repository.deleteScheduleSlot(s.id);
     at('/demo/day/2026-10-01', repository);
     expect(await screen.findByText(/Nothing logged for this date yet/)).toBeTruthy();
     expect(screen.getAllByText('Nothing scheduled')).toHaveLength(7);
@@ -126,7 +130,7 @@ describe('day view', () => {
     expect(screen.getByText('Niepokój')).toBeTruthy();
     expect(screen.getByText('Odmowa')).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Poprzedni dzień' })).toBeTruthy();
-    expect(screen.getByRole('button', { name: 'Oś czasu' })).toBeTruthy();
+    expect(screen.getAllByRole('button', { name: 'Oś czasu' })).toHaveLength(2);
   });
 });
 

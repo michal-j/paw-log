@@ -1,0 +1,937 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>PawLog Logging</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800&family=Instrument+Sans:wght@500;600;700&display=swap">
+<style>
+/* Tokens: copied 1:1 from docs/design-system/tokens.json. Layout, sizes and type follow the R10 prototype (design/prototype/head.html). */
+:root{--ground:#f6f8f7;--surface:#ffffff;--surface-tint:#fafcfb;--ink:#0e1512;--ink-2:#46504b;--ink-3:#6b756f;--line:#e6ebe8;--line-strong:#d5dcd8;--mint:#1fd38a;--mint-top:#3be0a0;--mint-deep:#0a7a52;--mint-bg:#e8faf2;--mint-line:#bdebd6;--on-mint:#04251a;--meal-column:#1fd38a0f;--danger:#b3282f;--food-cooked:#bfe04a;--food-farm:#c99d6c;--food-ocean:#ff9585;--med-arvelin:#86b1f7;--med-bellavet:#ffb85c;--med-gastrelle:#b59bf2;--med-biomend:#5dcfc8;--med-calmora:#a8b3c0;--treat:#f486c3;--mark-neutral:#a3aea8;--badge-vet-top:#e9faf2;--badge-vet-bottom:#d3f3e4;--badge-vet-ink:#0a7a52;--badge-vet-line:#a8e6cb;--badge-sym-top:#ffeeec;--badge-sym-bottom:#ffdcd8;--badge-sym-ink:#b3282f;--badge-sym-line:#f4b5af;--badge-photo-top:#f3efff;--badge-photo-bottom:#e5deff;--badge-photo-ink:#5b3fb0;--badge-photo-line:#c9bcf2;--badge-front-top:#eaf3ff;--badge-front-bottom:#d8e8ff;--badge-front-ink:#2455a6;--badge-front-line:#b1cdf3;--badge-worm-top:#fff6e0;--badge-worm-bottom:#ffebc2;--badge-worm-ink:#8a5a00;--badge-worm-line:#f0d08c;--space-1:4px;--space-2:8px;--space-3:12px;--space-4:16px;--space-6:24px;--radius-xs:4px;--radius-sm:6px;--radius-md:8px;--radius-lg:10px;--radius-sheet:16px;--radius-full:999px;--shadow-button:0 1px 2px rgba(14,21,18,0.06);--shadow-primary:0 1px 2px rgba(10,122,82,0.35), 0 3px 8px -3px rgba(31,211,138,0.55), inset 0 1px 0 rgba(255,255,255,0.35);--shadow-card:0 1px 2px rgba(14,21,18,0.05), 0 4px 12px -6px rgba(14,21,18,0.08);--shadow-badge:0 1px 1.5px rgba(14,21,18,0.10), inset 0 1px 0 rgba(255,255,255,0.7);--shadow-bar-top:0 2px 5px -3px rgba(14,21,18,0.14);--shadow-bar-bottom:0 -3px 10px -6px rgba(14,21,18,0.16);--shadow-sheet:0 -6px 24px -8px rgba(14,21,18,0.2);--font-sans:"Onest", system-ui, sans-serif;--font-display:"Instrument Sans", "Onest", system-ui, sans-serif;
+  --ease:cubic-bezier(.2,.7,.2,1)}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--font-sans);font-size:13px;-webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:opacity .15s ease,background-color .15s ease,border-color .15s ease}
+input,select,textarea{font:inherit;color:var(--ink)}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--mint-deep);outline-offset:2px}
+.disp{font-family:var(--font-display);letter-spacing:-0.02em}
+.cap{font-size:11px;line-height:14px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)}
+.ink2{color:var(--ink-2)}.ink3{color:var(--ink-3)}.deep{color:var(--mint-deep)}
+.sm{position:relative}.sm::after{content:"";position:absolute;left:-4px;right:-4px;top:-5px;bottom:-5px}
+.ghost{border:1px solid var(--line-strong);background:linear-gradient(180deg,var(--surface),var(--surface-tint));color:var(--ink);box-shadow:var(--shadow-button)}
+.ghost:active{opacity:.55}
+.pri{border:0;color:var(--on-mint);background:linear-gradient(180deg,var(--mint-top),var(--mint));box-shadow:var(--shadow-primary)}
+.pri:active{opacity:.78}
+.pri[disabled]{opacity:.45}
+.card{background:linear-gradient(180deg,var(--surface),var(--surface-tint));border:1px solid var(--line);border-radius:var(--radius-lg);box-shadow:var(--shadow-card)}
+.tap:active{opacity:.6}
+
+/* page + flows panel (wide screens only) */
+.page{min-height:100vh;display:flex;justify-content:center;align-items:flex-start;gap:var(--space-6)}
+.flows{display:none}
+@media (min-width:820px){.page{padding:var(--space-6)}.flows{display:block;width:260px;position:sticky;top:var(--space-6)}.phone{border-radius:var(--radius-sheet);box-shadow:var(--shadow-card);border:1px solid var(--line)}}
+.flows .card{padding:var(--space-4)}
+.flows button{display:block;width:100%;text-align:left;min-height:40px;padding:0 var(--space-3);margin-top:var(--space-2);border-radius:var(--radius-md);font-size:13px;font-weight:600}
+.phone{position:relative;width:390px;max-width:100vw;height:844px;max-height:100vh;overflow:hidden;background:var(--ground);display:flex;flex-direction:column}
+@media (max-width:819px){.page{display:block}.phone{width:100%;height:100vh;height:100dvh;max-height:none}}
+.frame .phone{max-width:390px;height:844px}
+#screen{flex:1;min-height:0;display:flex;flex-direction:column}
+
+/* R10 top bar and day nav */
+.topbar{display:flex;align-items:center;padding:10px 12px 0;flex:none}
+.btn34{height:34px;border-radius:var(--radius-md);font-size:14px;font-weight:600;display:flex;align-items:center;gap:4px}
+.daynav{display:flex;align-items:center;gap:4px;padding:6px 10px 10px;flex:none}
+.sq36{flex:none;width:36px;height:36px;border-radius:var(--radius-md);padding:0;display:flex;align-items:center;justify-content:center}
+.sq36[disabled]{opacity:.3}
+.daytitle{font-family:var(--font-display);font-size:19px;font-weight:600;line-height:24px;letter-spacing:-0.025em}
+.body{flex:1;min-height:0;overflow-y:auto;padding:0 12px 20px;border-top:1px solid var(--line);scrollbar-width:none}
+.body::-webkit-scrollbar{display:none}
+.sec{display:flex;align-items:center;justify-content:space-between;margin:16px 4px 8px;min-height:20px}
+.seclink{border:0;background:none;padding:0 4px;min-height:44px;margin:-12px -4px;font-size:12px;font-weight:600;color:var(--mint-deep);display:flex;align-items:center;gap:2px}
+
+/* R10 cards in "What happened" */
+.ecard{display:block;width:100%;text-align:left;padding:13px;margin-bottom:8px}
+.ehead{display:flex;align-items:center;gap:9px}
+.etitle{font-size:15px;font-weight:600;letter-spacing:-0.01em}
+.etext{font-size:13px;line-height:19px;color:var(--ink-2);margin-top:6px}
+.echips{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px}
+.echip{font-size:12px;font-weight:600;padding:3px 9px;border-radius:var(--radius-sm);background:var(--mint-bg);border:1px solid var(--mint-line);color:var(--mint-deep)}
+.srow{display:flex;justify-content:space-between;gap:12px;width:100%;font-size:14px;line-height:20px;min-height:44px;align-items:center;border:0;background:transparent;padding:0;text-align:left}
+.srow + .srow{border-top:1px solid var(--line)}
+.srow .r{color:var(--ink-2);text-align:right}
+.srow:active{opacity:.6}
+
+/* EventBadge (copied, not restyled) */
+.badge{display:inline-flex;align-items:center;justify-content:center;gap:2px;height:18px;min-width:18px;padding:0 4px;border-radius:var(--radius-sm);font-size:11px;line-height:16px;font-weight:800;box-shadow:var(--shadow-badge);border:1px solid;flex:none}
+.badge svg{width:9px;height:9px}
+.b-vet{background:linear-gradient(180deg,var(--badge-vet-top),var(--badge-vet-bottom));color:var(--badge-vet-ink);border-color:var(--badge-vet-line)}
+.b-sym{background:linear-gradient(180deg,var(--badge-sym-top),var(--badge-sym-bottom));color:var(--badge-sym-ink);border-color:var(--badge-sym-line)}
+.b-photo{background:linear-gradient(180deg,var(--badge-photo-top),var(--badge-photo-bottom));color:var(--badge-photo-ink);border-color:var(--badge-photo-line)}
+.b-front{background:linear-gradient(180deg,var(--badge-front-top),var(--badge-front-bottom));color:var(--badge-front-ink);border-color:var(--badge-front-line)}
+.b-worm{background:linear-gradient(180deg,var(--badge-worm-top),var(--badge-worm-bottom));color:var(--badge-worm-ink);border-color:var(--badge-worm-line)}
+.plain-ic{width:18px;height:18px;flex:none;display:inline-flex;align-items:center;justify-content:center;color:var(--ink-2)}
+
+/* DoseMark */
+.markbox{width:18px;height:18px;flex:none;display:inline-flex;align-items:center;justify-content:center}
+.mark{display:inline-block;flex:none;border-radius:var(--radius-full);border:1.25px solid color-mix(in srgb,var(--mark) 80%,var(--ink));background:var(--mark)}
+.mark.food{width:16px;height:16px}.mark.med{width:11px;height:11px}
+.mark.skipped{background:var(--surface);border-width:1.5px}
+.mark.partial{background:linear-gradient(to top,var(--mark) 50%,var(--surface) 50%)}
+/* PROPOSED DoseMark state "planned": in the usual day, not logged yet. Day view and Usual day only, never on the timeline. */
+.mark.planned{background:var(--surface);border:1.5px dashed var(--ink-3)}
+
+/* R10 day-parts card */
+.parts{overflow:hidden}
+.part{display:flex;align-items:flex-start;gap:10px;padding:8px 4px 8px 12px;border-bottom:1px solid var(--line)}
+.part:last-child{border-bottom:0}
+.part.meal{background:var(--meal-column)}
+.pico{flex:none;width:26px;height:26px;display:flex;align-items:center;justify-content:center;margin-top:9px;color:var(--ink-2)}
+.pdot{width:6px;height:6px;border-radius:var(--radius-full);background:var(--line-strong)}
+.pdot.on{background:var(--ink-3)}
+.pmain{flex:1;min-width:0;padding-top:4px}
+.pname{line-height:18px}
+.pname .t{font-weight:500;letter-spacing:0;text-transform:none;color:var(--ink-3)}
+.irow{display:flex;align-items:center;gap:6px;min-height:44px;margin-right:-4px}
+.iopen{flex:1;min-width:0;display:flex;align-items:center;gap:9px;min-height:44px;border:0;background:transparent;padding:0;text-align:left;border-radius:var(--radius-md)}
+.iopen:active{opacity:.6}
+.iname{font-size:14px;font-weight:600;line-height:18px;letter-spacing:-0.005em}
+.iname .d{font-weight:400;color:var(--ink-3)}
+.iname.skip{text-decoration:line-through}
+.isub{display:block;font-size:12px;line-height:15px;color:var(--ink-3);font-weight:400;text-decoration:none}
+.irow.planned .iname{color:var(--ink-2)}
+.tag{flex:none;font-size:11px;font-weight:700;padding:1px 7px;border-radius:var(--radius-sm);border:1px solid}
+.tag.skipped{background:var(--badge-sym-top);color:var(--badge-sym-ink);border-color:var(--badge-sym-line)}
+.tag.partial{background:var(--badge-worm-top);color:var(--badge-worm-ink);border-color:var(--badge-worm-line)}
+.give{flex:none;height:28px;padding:0 10px 0 8px;border-radius:var(--radius-md);font-size:13px;font-weight:600;display:flex;align-items:center;gap:4px}
+.give::after{top:-8px;bottom:-8px}
+.pempty{font-size:13px;color:var(--ink-3);min-height:22px}
+.padd{flex:none;width:44px;height:44px;border:0;border-radius:var(--radius-md);background:transparent;padding:0;display:flex;align-items:center;justify-content:center}
+.padd span{width:26px;height:26px;border-radius:var(--radius-md);border:1px solid var(--mint-line);background:var(--mint-bg);display:inline-flex;align-items:center;justify-content:center;color:var(--mint-deep)}
+.padd:active{opacity:.55}
+
+/* Fill banner (new, R10 "no data" card pattern) */
+.fill{display:flex;gap:12px;align-items:flex-start;padding:14px;margin-top:12px;background:var(--mint-bg);border-color:var(--mint-line);box-shadow:none}
+.fill .ic{flex:none;width:30px;height:30px;border-radius:var(--radius-lg);background:var(--surface);border:1px solid var(--mint-line);display:inline-flex;align-items:center;justify-content:center;color:var(--mint-deep)}
+.fill .tx{flex:1;min-width:0}
+.fill .h{font-size:14px;font-weight:600;line-height:20px}
+.fill .s{font-size:13px;line-height:18px;color:var(--ink-2);margin-top:2px}
+.fill .pri{margin-top:10px;width:100%;min-height:44px;border-radius:var(--radius-md);font-size:14px;font-weight:600;padding:0 12px}
+.hint{font-size:13px;line-height:18px;color:var(--ink-3);margin:12px 4px 0}
+
+/* R10 navbar */
+.nav{display:flex;border-top:1px solid var(--line);background:linear-gradient(180deg,var(--surface),var(--surface-tint));box-shadow:var(--shadow-bar-bottom);padding:6px 8px 14px;flex:none;position:relative;z-index:7}
+.nav .ind{position:absolute;top:-1px;left:8px;width:calc((100% - 16px)/5);display:flex;justify-content:center;pointer-events:none}
+.nav .ind span{width:28px;height:2px;background:var(--mint)}
+.nav .it{flex:1;min-width:0;min-height:48px;border:0;border-radius:var(--radius-md);background:transparent;color:var(--ink-2);font-size:11px;font-weight:500;padding:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px}
+.nav .it.on{color:var(--mint-deep);font-weight:700}
+.nav .addw{flex:1;min-width:0;display:flex;align-items:center;justify-content:center}
+.nav .add{width:100%;max-width:68px;height:40px;border-radius:var(--radius-lg);font-size:13px;font-weight:700;padding:0;white-space:nowrap}
+
+/* stand-in timeline list */
+.thead{display:flex;align-items:center;gap:8px;padding:8px 12px 4px 16px;flex:none;background:var(--surface)}
+.logo{width:30px;height:30px;flex:none;border-radius:var(--radius-md);background:var(--mint);display:inline-flex;align-items:center;justify-content:center;color:var(--on-mint)}
+.list{flex:1;min-height:0;overflow-y:auto;background:var(--surface);border-top:1px solid var(--line)}
+.drow{display:flex;align-items:center;gap:12px;width:100%;min-height:44px;border:0;border-bottom:1px solid var(--line);background:transparent;padding:4px 16px;text-align:left;font-size:13px}
+.drow:active{background:var(--mint-bg)}
+.drow .d{width:40px;flex:none;text-align:center;line-height:14px}
+.drow .d b{display:block;font-size:15px;line-height:18px}
+.dot{width:8px;height:8px;border-radius:var(--radius-full);display:inline-block;margin-right:6px;background:var(--mint)}
+.dot.half{background:var(--surface);border:1.5px solid var(--mint-deep)}
+.dot.none{background:var(--surface);border:1.5px dashed var(--ink-3)}
+
+/* R10 sheet */
+#sheetRoot{position:absolute;inset:0;z-index:20;display:none;flex-direction:column;justify-content:flex-end}
+#sheetRoot.open{display:flex}
+.scrim{flex:1;border:0;padding:0;border-radius:0;background:color-mix(in srgb,var(--ink) 26%,transparent);cursor:default;animation:fade .18s ease-out both}
+.sheet{background:var(--surface);border-radius:var(--radius-sheet) var(--radius-sheet) 0 0;max-height:640px;display:flex;flex-direction:column;box-shadow:var(--shadow-sheet);animation:rise .22s var(--ease) both}
+.grab{flex:none;display:flex;justify-content:center;padding:8px 0 0}
+.grab span{width:38px;height:4px;border-radius:2px;background:var(--line-strong)}
+.shead{flex:none;display:flex;align-items:center;justify-content:space-between;padding:4px 8px 8px 20px;border-bottom:1px solid var(--line)}
+.stitle{font-family:var(--font-display);font-size:20px;font-weight:600;letter-spacing:-0.03em}
+.close{min-height:44px;padding:0 12px;border:0;border-radius:var(--radius-md);background:transparent;font-size:14px;font-weight:600;color:var(--mint-deep)}
+.sbody{flex:1;min-height:0;overflow-y:auto;padding:14px 16px 20px}
+.sfoot{flex:none;display:flex;gap:8px;padding:12px 16px 26px;border-top:1px solid var(--line);background:var(--surface)}
+.sfoot button{min-height:50px;border-radius:var(--radius-md);font-size:16px;font-weight:600}
+.sfoot .pri{flex:1}
+.sfoot .ghost{padding:0 18px}
+.danger{color:var(--danger)}
+.dateline{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:12px;font-weight:500;color:var(--ink-3);margin:-4px 0 8px;min-height:32px}
+.dateline .chg{border:0;background:none;padding:0 4px;min-height:44px;margin:-6px -4px;font-size:13px;font-weight:600;color:var(--mint-deep)}
+.lbl{display:flex;justify-content:space-between;align-items:baseline;font-size:12px;font-weight:600;color:var(--ink-2);margin:0 0 7px}
+.lbl .o{font-weight:500;color:var(--ink-3)}
+.fld{margin-bottom:16px}
+.inp{display:block;width:100%;min-height:50px;border:1px solid var(--line-strong);border-radius:var(--radius-md);padding:0 14px;font-size:16px;font-weight:400;background:var(--surface-tint);outline:none;transition:border-color .15s,box-shadow .15s}
+textarea.inp{padding:13px 14px;line-height:22px;resize:none;min-height:74px}
+.inp:focus{border-color:var(--mint);box-shadow:0 0 0 3px color-mix(in srgb,var(--mint) 22%,transparent)}
+.inp.short{width:120px;display:inline-block}
+.err{color:var(--danger);font-size:12px;line-height:15px;margin-top:6px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+/* Chip (filter chip, R10) used as single select */
+.chips{display:flex;flex-wrap:wrap;gap:10px 8px}
+.chip{position:relative;height:36px;display:inline-flex;align-items:center;gap:7px;padding:0 12px 0 10px;border-radius:var(--radius-md);border:1px solid var(--line-strong);background:linear-gradient(180deg,var(--surface),var(--surface-tint));box-shadow:var(--shadow-button);font-size:14px;font-weight:600;color:var(--ink)}
+.chip.nomark{padding:0 12px}
+.chip::after{content:"";position:absolute;left:0;right:0;top:-4px;bottom:-4px}
+.chip[aria-checked="true"],.chip[aria-pressed="true"]{background:var(--mint-bg);border-color:var(--mint-line);color:var(--mint-deep);box-shadow:none}
+.chip:active{opacity:.6}
+.chip.amt{min-width:44px;justify-content:center;padding:0 10px;font-variant-numeric:tabular-nums}
+.check{display:flex;align-items:center;gap:10px;min-height:44px;font-size:14px;line-height:19px;cursor:pointer;margin:-4px 0 12px}
+.check input{width:20px;height:20px;accent-color:var(--mint-deep);flex:none;margin:0}
+/* R10 add grid */
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.opt{min-height:54px;border-radius:var(--radius-md);font-size:14px;font-weight:600;padding:0 12px;display:flex;align-items:center;gap:10px;text-align:left}
+.opt .ic{flex:none;width:26px;height:26px;border-radius:7px;background:var(--mint-bg);border:1px solid var(--mint-line);display:inline-flex;align-items:center;justify-content:center;color:var(--mint-deep)}
+.opt .tx{flex:1;min-width:0;line-height:17px}
+.linkrow{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;min-height:48px;margin-top:12px;border:1px dashed var(--line-strong);border-radius:var(--radius-lg);background:var(--surface);font-size:14px;font-weight:600;color:var(--mint-deep)}
+.sketch{font-size:11px;font-weight:700;padding:1px 6px;border-radius:var(--radius-sm);border:1px solid var(--line-strong);color:var(--ink-2)}
+.summary{padding:12px 14px;margin-top:4px}
+
+/* Toast (PROPOSED) */
+#toastRoot{position:absolute;left:12px;right:12px;bottom:76px;z-index:30}
+.toast{display:flex;align-items:center;gap:8px;padding:0 4px 0 16px;min-height:48px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-lg);box-shadow:var(--shadow-sheet);animation:pop .15s ease-out both}
+.toast .m{flex:1;min-width:0;font-size:14px;font-weight:600}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+@keyframes rise{from{transform:translateY(100%)}to{transform:none}}
+@keyframes pop{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+@keyframes flash{from{background:var(--mint-bg)}to{background:transparent}}
+.flash{animation:flash .9s ease-out both;border-radius:var(--radius-md)}
+@media (prefers-reduced-motion: reduce){*{animation-duration:.001ms !important;transition-duration:.001ms !important}}
+</style>
+</head>
+<body>
+<div class="page">
+  <aside class="flows" aria-label="Prototype flows">
+    <div class="card">
+      <div class="disp" style="font-size:15px;font-weight:600">Logging: flows (round 2)</div>
+      <p style="margin:6px 0 0;font-size:12px;line-height:16px" class="ink2">JCB-25. Fictional data. Today is Thu 15 Oct 2026, the prototype clock says 16:30. Changes reset on reload.</p>
+      <button class="ghost" data-act="flow" data-flow="day">1. Day view (today)</button>
+      <button class="ghost" data-act="flow" data-flow="add">2. + Add: the one way in</button>
+      <button class="ghost" data-act="flow" data-flow="food">3. Log food (structured)</button>
+      <button class="ghost" data-act="flow" data-flow="med">4. Log medication</button>
+      <button class="ghost" data-act="flow" data-flow="edit">5. Edit or delete (14 Oct)</button>
+      <button class="ghost" data-act="flow" data-flow="sym">6. Symptom: Poo</button>
+      <button class="ghost" data-act="flow" data-flow="usual">7. Usual day</button>
+      <button class="ghost" data-act="flow" data-flow="empty">8. Fill an empty day (31 Aug)</button>
+      <button class="ghost" data-act="flow" data-flow="range">9. Fill several days (sketch)</button>
+      <button class="ghost" data-act="lang">EN | PL</button>
+    </div>
+  </aside>
+  <main class="phone" id="app">
+    <div id="screen"></div>
+    <div id="toastRoot" aria-live="polite"></div>
+    <nav class="nav" id="nav"></nav>
+    <div id="sheetRoot"></div>
+  </main>
+</div>
+<script src="sample-data.js"></script>
+<script>
+(function () {
+'use strict';
+const TODAY = '2026-10-15';
+const NOW = '16:30'; // prototype clock: today's fill covers day parts up to now
+
+/* ---------- copy: [en, pl, reviewed CSV row or 0 for new] ---------- */
+/*S-START*/
+const S = {
+  langBtn: ['EN | PL', 'PL | EN', 0],
+  timeline: ['Timeline', 'Oś czasu', 167],
+  jump: ['Jump to date', 'Przejdź do daty', 1],
+  prevDay: ['Previous day', 'Poprzedni dzień', 21],
+  nextDay: ['Next day', 'Następny dzień', 22],
+  back: ['Back', 'Wstecz', 20],
+  today: ['Today', 'Dziś', 94],
+  yesterday: ['Yesterday', 'Wczoraj', 114],
+  happened: ['What happened', 'Co się wydarzyło', 23],
+  dayParts: ['Parts of the day', 'Pory dnia', 26],
+  nothingSched: ['Nothing scheduled', 'Nic nie zaplanowano', 28],
+  p1: ['Before breakfast', 'Przed śniadaniem', 48], p2: ['Breakfast', 'Śniadanie', 49], p3: ['Between breakfast and dinner', 'Między śniadaniem a obiadem', 50],
+  p4: ['Dinner', 'Obiad', 51], p5: ['Between dinner and supper', 'Między obiadem a kolacją', 52], p6: ['Supper', 'Kolacja', 53], p7: ['After supper', 'Po kolacji', 54],
+  given: ['Given', 'Podane', 96], skipped: ['Skipped / refused', 'Pominięte / odmowa', 97], partial: ['Partly eaten', 'Zjedzone częściowo', 98],
+  tagR: ['Refused', 'Odmowa', 63], tagHalf: ['Half eaten', 'Połowa', 72],
+  save: ['Save', 'Zapisz', 46], close: ['Close', 'Zamknij', 45], add: ['Add', 'Dodaj', 172], addTo: ['Add to ', 'Dodaj do: ', 110], forD: ['For ', 'Dla: ', 163],
+  food: ['Food', 'Jedzenie', 104], medication: ['Medication', 'Leki', 106], medOne: ['Medication', 'Lek', 133], treats: ['Treats', 'Przysmaki', 58],
+  eatenQ: ['Eaten?', 'Zjedzone?', 125], givenQ: ['Given?', 'Podane?', 137],
+  note: ['Note', 'Notatka', 154], notePh: ['What did you notice?', 'Co zauważono?', 155],
+  symptom: ['Symptom', 'Objaw', 140], symptoms: ['Symptoms', 'Objawy', 12], intensity: ['Intensity', 'Nasilenie', 142],
+  lvlSmall: ['small', 'małe', 74], lvlMedium: ['medium', 'średnie', 75], lvlLot: ['a lot', 'duże', 76],
+  details: ['Details', 'Szczegóły', 144],
+  vetVisit: ['Vet visit', 'Wizyta u weta', 101], clinic: ['Clinic', 'Klinika', 147], clinicPh: ['e.g. Maple Vet', 'np. Maple Vet', 148], reason: ['Reason and findings', 'Powód i wyniki', 149], alsoDone: ['Also done', 'Dodatkowo', 150],
+  deworming: ['Deworming', 'Odrobaczanie', 102], analGlands: ['Anal glands expressed', 'Opróżnienie gruczołów odbytu', 117], nails: ['Nail trimming', 'Przycięcie pazurów', 118],
+  sx_leak: ['Leakage', 'Wyciek', 77], sx_poo: ['Poo', 'Kupa', 78], sx_vomit: ['Vomit', 'Wymioty', 79], sx_pant: ['Panting', 'Dyszenie', 80], sx_rumble: ['Stomach rumbling', 'Burczenie w brzuchu', 81],
+  sx_heart: ['Heartburn', 'Zgaga', 82], sx_fear: ['Fear', 'Strach', 83], sx_rest: ['Restlessness', 'Niepokój', 84], sx_reflux: ['Reflux', 'Refluks', 85],
+  pinned: ['Pinned', 'Przypięte', 171], tracked: ['Tracked', 'Śledzone', 173], search: ['Search', 'Szukaj', 42],
+  photo: ['Lump A photo', 'zdjęcie Lump A', 91],
+
+  /* new in this proposal */
+  addFood: ['Add food', 'Dodaj jedzenie', 0], addMed: ['Add medication', 'Dodaj lek', 0], addSymptom: ['Add symptom', 'Dodaj objaw', 139], addVisit: ['Add vet visit', 'Dodaj wizytę u weta', 146], addNote: ['Add note', 'Dodaj notatkę', 153],
+  addOther: ['Add other event', 'Dodaj inne zdarzenie', 0], otherEvent: ['Other', 'Inne', 0],
+  editEntry: ['Edit entry', 'Edytuj wpis', 0], editEvent: ['Edit event', 'Edytuj zdarzenie', 0], delete: ['Delete', 'Usuń', 0], change: ['Change', 'Zmień', 0],
+  date: ['Date', 'Data', 0], dayPart: ['Part of the day', 'Pora dnia', 0], other: ['Other', 'Inne', 0], optional: ['optional', 'opcjonalnie', 0],
+  flavour: ['Flavour', 'Smak', 0], amount: ['Amount', 'Ilość', 0], unit: ['Unit', 'Jednostka', 0], amountPh: ['e.g. 0,15', 'np. 0,15', 0],
+  u_pill: ['pill', 'tabl.', 0], u_capsule: ['capsule', 'kaps.', 0], u_sachet: ['sachet', 'saszetka', 0], u_ml: ['ml', 'ml', 0], u_drop: ['drop', 'kropla', 0],
+  u_can: ['can', 'puszka', 0], u_tray: ['tray', 'tacka', 0], u_g: ['g', 'g', 0], u_piece: ['piece', 'szt.', 0], u_bars: ['bars', 'bars', 0],
+  pickFood: ['Pick a food.', 'Wybierz jedzenie.', 0], pickMed: ['Pick a medication.', 'Wybierz lek.', 0], pickAmount: ['Add the amount.', 'Podaj ilość.', 0],
+  otherFoodPh: ['Name of the food', 'Nazwa jedzenia', 0], otherMedPh: ['Name of the medication', 'Nazwa leku', 0],
+  addToUsual: ['Add to the usual day from this day on', 'Dodaj do zwykłego dnia od tego dnia', 0],
+  makeUsual: ['Make this the usual amount from this day on', 'Ustaw jako zwykłą ilość od tego dnia', 0],
+  usualIs: ['Usual: {x}', 'Zwykle: {x}', 0],
+  planned: ['Not logged yet', 'Jeszcze niezapisane', 0], laterToday: ['Later today', 'Później dziś', 0],
+  markGiven: ['Mark {name} as given', 'Oznacz {name} jako podane', 0],
+  dayNofM: ['day {n} of {m}', 'dzień {n} z {m}', 0],
+  usualDay: ['Usual day', 'Zwykły dzień', 0], usualLink: ['Usual day', 'Zwykły dzień', 0],
+  fillTodayH: ['Up to now: {n} not logged', 'Do teraz: niezapisane {n}', 0],
+  fillPastH: ['{n} not logged', 'Niezapisane: {n}', 0],
+  fillHint: ['Logs them as given, the way your usual day has them. Then fix what was different.', 'Zapisze je jako podane, tak jak w zwykłym dniu. Potem popraw to, co było inaczej.', 0],
+  fillBtn: ['Fill with your usual day: {n}', 'Uzupełnij zwykłym dniem: {n}', 0],
+  toastFilled: ['{n} logged as given', 'Zapisano jako podane: {n}', 0],
+  toastDeleted: ['Entry deleted', 'Wpis usunięty', 0], toastEventDeleted: ['Event deleted', 'Zdarzenie usunięte', 0], toastSaved: ['Saved', 'Zapisano', 0],
+  toastUsual: ['Usual day updated', 'Zwykły dzień zaktualizowany', 0], undo: ['Undo', 'Cofnij', 0],
+  usualHint: ['What a normal day looks like. Fill uses it. A change starts on the date you pick, so days already logged stay as they were.', 'Tak wygląda zwykły dzień. Uzupełnianie z niego korzysta. Zmiana obowiązuje od wybranej daty, więc zapisane dni zostają bez zmian.', 0],
+  asOf: ['As of {d}', 'Stan na {d}', 0],
+  fromD: ['From {d}: {x}', 'Od {d}: {x}', 0], untilD: ['until {d}', 'do {d}', 0],
+  addUsualTitle: ['Add to usual day', 'Dodaj do zwykłego dnia', 0], editUsualTitle: ['Usual day item', 'Pozycja zwykłego dnia', 0],
+  startsOn: ['Starts on', 'Od dnia', 0], howLong: ['How long', 'Jak długo', 0], noEnd: ['No end', 'Bez końca', 0], days7: ['7 days', '7 dni', 0], days14: ['14 days', '14 dni', 0], endsOn: ['Ends on', 'Do dnia', 0],
+  removeUsual: ['Remove from this day on', 'Usuń od tego dnia', 0],
+  partTime: ['Time', 'Godzina', 0],
+  fillSeveral: ['Fill several days', 'Uzupełnij kilka dni', 0],
+  from: ['From', 'Od', 0], to: ['To', 'Do', 0],
+  rangeSummary: ['{d} days with your usual day: {n} items', 'Dni: {d}, ze zwykłym dniem: {n} pozycji', 0],
+  rangeKeep: ['Anything already logged on these days stays as it is.', 'To, co już zapisano w tych dniach, zostaje bez zmian.', 0],
+  fillNDays: ['Fill {d} days', 'Uzupełnij dni: {d}', 0], endRange: ['The end date is before the start date.', 'Data końcowa jest przed początkową.', 0],
+  sketch: ['Sketch', 'Szkic', 0],
+  consistency: ['Consistency', 'Konsystencja', 0], colour: ['Colour', 'Kolor', 0], quantity: ['Amount', 'Ilość', 0], times: ['How many times', 'Ile razy', 0], when: ['When', 'Kiedy', 0],
+  c_normal: ['normal', 'normalna', 0], c_soft: ['soft', 'miękka', 0], c_diarrhea: ['diarrhea', 'biegunka', 0],
+  k_normal: ['normal colour', 'normalny kolor', 0], k_dark: ['dark', 'ciemna', 0], k_light: ['light', 'jasna', 0], k_blood: ['with blood', 'z krwią', 0],
+  q_small: ['small amount', 'mało', 0], q_medium: ['medium amount', 'średnio', 0], q_lot: ['a lot', 'dużo', 0],
+  w_morning: ['in the morning', 'rano', 0], w_midday: ['at midday', 'w południe', 0], w_evening: ['in the evening', 'wieczorem', 0], w_night: ['at night', 'w nocy', 0],
+  otherSymptomPh: ['Describe the symptom', 'Opisz objaw', 0], pickSymptom: ['Pick a symptom or describe it.', 'Wybierz objaw lub go opisz.', 0],
+  writeNote: ['Write the note first.', 'Najpierw wpisz notatkę.', 0], writeClinic: ['Add the clinic or what was done.', 'Wpisz klinikę lub co zrobiono.', 0],
+  titleLbl: ['What was it', 'Co to było', 0], titlePh: ['e.g. Grooming', 'np. Strzyżenie', 0], writeTitle: ['Say what it was.', 'Napisz, co to było.', 0],
+  typeLbl: ['Type', 'Rodzaj', 0],
+  loggedOf: ['{a} of {b} logged', 'Zapisano {a} z {b}', 0], notLogged: ['Nothing logged', 'Brak wpisów', 0],
+  standIn: ['Stand-in for the R10 Timeline, which does not change. Pick a day.', 'Zastępuje oś czasu z R10, która się nie zmienia. Wybierz dzień.', 0],
+  notInScope: ['Not part of this proposal', 'Poza zakresem tej propozycji', 0]
+};
+/*S-END*/
+
+/* sample free text that exists in the reviewed CSV (prototype only: real notes are stored as typed) */
+const LOC = [
+  ['Monthly flea and tick treatment given. Time of day not tracked.', 'Miesięczna ochrona przeciw pchłom i kleszczom podana. Pora dnia nieistotna.'],
+  ['Given every 6 months. Next one due in March.', 'Podawana co 6 miesięcy. Następna w marcu.'],
+  ['Symptom consultation, stomach ultrasound, limb check (X-ray of front paws recommended). Gastrelle prescribed.', 'Konsultacja objawów, USG brzucha, kontrola kończyn (zalecane RTG przednich łap). Przepisano Gastrelle.'],
+  ['Blood pressure check: high, 150–160. Further consultation.', 'Pomiar ciśnienia: wysokie, 150–160. Dalsza konsultacja.'],
+  ['Restless night and day. Refused breakfast. Weak and confused on walks, lay down a few times.', 'Niespokojna w nocy i w dzień. Odmówiła śniadania. Osłabiona i zdezorientowana na spacerach, kilka razy się położyła.']];
+
+/* items: food has flavours; units have PL forms [one, few, many, fraction] */
+const ITEMS = {
+  cooked: { kind: 'food', c: 'food-cooked', n: ['Cooked meal', 'Gotowany posiłek'], unit: 'tray', flav: [] },
+  farm: { kind: 'food', c: 'food-farm', n: ['Farm Fresh', 'Farm Fresh'], unit: 'can', flav: [['turkey', 'indyk'], ['salmon', 'łosoś'], ['chicken', 'kurczak']] },
+  ocean: { kind: 'food', c: 'food-ocean', n: ['Ocean Blend', 'Ocean Blend'], unit: 'can', flav: [['salmon', 'łosoś'], ['whitefish', 'biała ryba']] },
+  treat: { kind: 'food', c: 'treat', n: ['Treat', 'Przysmak'], unit: 'piece', flav: [['chicken', 'kurczak'], ['beef', 'wołowina'], ['fish', 'ryba']] },
+  arvelin: { kind: 'med', c: 'med-arvelin', n: ['Arvelin', 'Arvelin'], unit: 'pill' },
+  bellavet: { kind: 'med', c: 'med-bellavet', n: ['Bellavet', 'Bellavet'], unit: 'ml', bar: 0.1 },
+  biomend: { kind: 'med', c: 'med-biomend', n: ['Biomend', 'Biomend'], unit: 'pill' },
+  gastrelle: { kind: 'med', c: 'med-gastrelle', n: ['Gastrelle', 'Gastrelle'], unit: 'sachet' },
+  calmora: { kind: 'med', c: 'med-calmora', n: ['Calmora', 'Calmora'], unit: 'capsule' }
+};
+const ORDER = Object.keys(ITEMS);
+const UNITS = { food: ['can', 'tray', 'g', 'piece'], med: ['pill', 'ml', 'sachet', 'capsule', 'drop'] };
+const PL_UNIT = { sachet: ['saszetka', 'saszetki', 'saszetek', 'saszetki'], can: ['puszka', 'puszki', 'puszek', 'puszki'], tray: ['tacka', 'tacki', 'tacek', 'tacki'], drop: ['kropla', 'krople', 'kropli', 'kropli'] };
+const FRACS = [[0.25, '¼'], [1 / 3, '⅓'], [0.5, '½'], [2 / 3, '⅔'], [0.75, '¾'], [1, '1'], [1.5, '1½'], [2, '2'], [3, '3']];
+const DECIMAL_UNITS = ['ml', 'g'];
+const SYMS = ['sx_poo', 'sx_vomit', 'sx_leak', 'sx_pant', 'sx_rumble', 'sx_heart', 'sx_fear', 'sx_rest', 'sx_reflux'];
+/* per-symptom properties (proposal, see README) */
+const SYMPROPS = {
+  sx_poo: [['consistency', ['c_normal', 'c_soft', 'c_diarrhea']], ['colour', ['k_normal', 'k_dark', 'k_light', 'k_blood']], ['quantity', ['q_small', 'q_medium', 'q_lot']]],
+  sx_vomit: [['times', ['1×', '2×', '3×+']], ['when', ['w_morning', 'w_midday', 'w_evening', 'w_night']]],
+  sx_leak: [['quantity', ['q_small', 'q_medium', 'q_lot']]],
+  _default: [['intensity', ['lvlSmall', 'lvlMedium', 'lvlLot']]]
+};
+const PART_TIME = ['07:00', '07:30', '12:00', '15:00', '18:00', '20:00', '22:00'];
+const MEAL = [false, true, false, true, false, true, false];
+
+/* usual day (routine = schedule_slot) */
+let uid = 0; const nid = (p) => p + (++uid);
+const slot = (part, item, flavour, amount, unit, from, to) => ({ id: nid('s'), part, item, flavour, amount, unit, from, to });
+let SCHED = [
+  slot(1, 'arvelin', '', 0.5, 'pill', '2026-09-20', null),
+  slot(2, 'cooked', '', 1 / 3, 'tray', '2026-08-01', null), slot(2, 'bellavet', '', 0.15, 'ml', '2026-09-25', null), slot(2, 'biomend', '', 1, 'pill', '2026-08-01', null),
+  slot(3, 'gastrelle', '', 1, 'sachet', '2026-10-14', '2026-10-20'),
+  slot(4, 'farm', 'turkey', 0.25, 'can', '2026-08-01', '2026-10-11'), slot(4, 'ocean', 'salmon', 0.5, 'can', '2026-10-12', null), slot(4, 'bellavet', '', 0.15, 'ml', '2026-09-25', null),
+  slot(5, 'arvelin', '', 0.5, 'pill', '2026-09-20', null),
+  slot(6, 'farm', 'turkey', 0.25, 'can', '2026-08-01', '2026-10-11'), slot(6, 'ocean', 'salmon', 0.5, 'can', '2026-10-12', null), slot(6, 'bellavet', '', 0.15, 'ml', '2026-09-25', null),
+  slot(7, 'calmora', '', 1, 'capsule', '2026-09-01', '2026-09-19')
+];
+
+/* sample entries: convert the free-text doses of data/demo into amount + unit + flavour */
+const fracVal = { '½': 0.5, '⅓': 1 / 3, '¼': 0.25 };
+function parseDose(item, t) {
+  const m = /^([½⅓¼]|[\d,]+) (pill|tray|can|sachet|capsule|ml)/.exec(t);
+  if (m) return { amount: fracVal[m[1]] || parseFloat(m[1].replace(',', '.')), unit: m[2] };
+  const tr = /^(\w+) · (\d+)$/.exec(t); if (tr) return { flavour: tr[1], amount: +tr[2], unit: 'piece' };
+  return { amount: 1, unit: ITEMS[item].unit };
+}
+let ENTRIES = (window.SAMPLE_ENTRIES || []).map((r) => {
+  const d = parseDose(r[2], r[3]);
+  const flavour = d.flavour || (r[2] === 'farm' ? 'turkey' : r[2] === 'ocean' ? 'salmon' : '');
+  const s = SCHED.find((x) => x.part === r[1] && x.item === r[2] && x.from <= r[0] && (!x.to || x.to >= r[0]));
+  return { id: nid('e'), date: r[0], part: r[1], item: r[2], flavour, amount: d.amount, unit: d.unit, state: r[4] === 'g' ? 'given' : r[4] === 's' ? 'skipped' : 'partial', note: '', slot: s ? s.id : null };
+});
+const ev = (date, type, title, detail, props, extra) => Object.assign({ id: nid('v'), date, type, title, detail, props: props || {}, also: [] }, extra || {});
+let EVENTS = [
+  ev('2026-09-08', 'frontline', '', 'Monthly flea and tick treatment given. Time of day not tracked.'),
+  ev('2026-09-12', 'deworming', '', 'Given every 6 months. Next one due in March.'),
+  ev('2026-09-20', 'symptom', 'sx_reflux', '', { intensity: 'lvlMedium' }), ev('2026-09-20', 'symptom', 'sx_pant', '', { intensity: 'lvlSmall' }),
+  ev('2026-09-28', 'symptom', 'sx_fear', '', { intensity: 'lvlLot' }),
+  ev('2026-10-03', 'symptom', 'sx_leak', '', { quantity: 'q_small' }), ev('2026-10-03', 'photo', '', ''),
+  ev('2026-10-06', 'symptom', 'sx_poo', '', { consistency: 'c_diarrhea', colour: 'k_dark', quantity: 'q_medium' }),
+  ev('2026-10-08', 'frontline', '', 'Monthly flea and tick treatment given. Time of day not tracked.'),
+  ev('2026-10-09', 'symptom', 'sx_heart', '', { intensity: 'lvlMedium' }),
+  ev('2026-10-10', 'photo', '', ''),
+  ev('2026-10-12', 'symptom', 'sx_rumble', '', { intensity: 'lvlSmall' }), ev('2026-10-12', 'symptom', 'sx_poo', '', { consistency: 'c_soft', colour: 'k_normal', quantity: 'q_small' }),
+  ev('2026-10-14', 'vet', 'Maple Vet', 'Symptom consultation, stomach ultrasound, limb check (X-ray of front paws recommended). Gastrelle prescribed.'),
+  ev('2026-10-14', 'vet', 'Riverside Vet', 'Blood pressure check: high, 150–160. Further consultation.', {}, { also: ['analGlands', 'nails'] }),
+  ev('2026-10-14', 'symptom', 'sx_rest', '', { intensity: 'lvlLot' }), ev('2026-10-14', 'symptom', 'sx_vomit', '', { times: '1×', when: 'w_morning' }),
+  ev('2026-10-14', 'note', '', 'Restless night and day. Refused breakfast. Weak and confused on walks, lay down a few times.')
+];
+
+/* ---------- state ---------- */
+const st = { lang: 'en', screen: 'day', date: TODAY, f: null, flash: null };
+let undoSnap = null, toastTimer = null;
+
+/* ---------- helpers ---------- */
+const tr = (k, v) => { const s = S[k]; let o = s ? (st.lang === 'pl' ? s[1] : s[0]) : k; if (v) Object.keys(v).forEach((x) => { o = o.split('{' + x + '}').join(v[x]); }); return o; };
+const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const loc = (s) => { if (!s) return ''; const p = LOC.find((x) => x[0] === s || x[1] === s); return p ? p[st.lang === 'pl' ? 1 : 0] : s; };
+const pad = (n) => String(n).padStart(2, '0');
+const parse = (s) => { const p = s.split('-').map(Number); return new Date(Date.UTC(p[0], p[1] - 1, p[2])); };
+const iso = (d) => d.getUTCFullYear() + '-' + pad(d.getUTCMonth() + 1) + '-' + pad(d.getUTCDate());
+const shift = (s, n) => { const d = parse(s); d.setUTCDate(d.getUTCDate() + n); return iso(d); };
+const diff = (a, b) => Math.round((parse(b) - parse(a)) / 864e5);
+const L = () => (st.lang === 'pl' ? 'pl-PL' : 'en-GB');
+const fmt = (s, o) => parse(s).toLocaleDateString(L(), Object.assign({ timeZone: 'UTC' }, o));
+const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
+const dayTitle = (s) => cap(fmt(s, { weekday: 'short', day: 'numeric', month: 'long', year: 'numeric' }));
+const shortDate = (s) => cap(fmt(s, { weekday: 'short', day: 'numeric', month: 'short' }));
+const dm = (s) => fmt(s, { day: 'numeric', month: 'short' });
+const iname = (k) => (ITEMS[k] ? ITEMS[k].n[st.lang === 'pl' ? 1 : 0] : k);
+const flavName = (k, f) => { const it = ITEMS[k]; const x = it && it.flav ? it.flav.find((y) => y[0] === f) : null; return x ? x[st.lang === 'pl' ? 1 : 0] : f; };
+const fullName = (k, f) => iname(k) + (f ? ', ' + flavName(k, f) : '');
+const isFood = (k) => ITEMS[k] && ITEMS[k].kind === 'food';
+const fracLabel = (a) => { const f = FRACS.find((x) => Math.abs(x[0] - a) < 0.005); return f ? f[1] : String(+a.toFixed(3)).replace('.', ','); };
+function unitLabel(u, a) {
+  if (st.lang === 'pl') { const f = PL_UNIT[u]; if (!f) return tr('u_' + u); if (a % 1) return f[3]; if (a === 1) return f[0]; if (a >= 2 && a <= 4) return f[1]; return f[2]; }
+  const one = tr('u_' + u); if (['ml', 'g'].includes(u) || a <= 1) return one; return one + 's';
+}
+const amountText = (k, a, u) => { let t = fracLabel(a) + ' ' + unitLabel(u, a); const it = ITEMS[k]; if (it && it.bar && u === 'ml') t += ' (' + String(+(a / it.bar).toFixed(2)).replace('.', ',') + ' ' + tr('u_bars') + ')'; return t; };
+const markHtml = (k, state) => { const it = ITEMS[k] || { kind: 'food', c: 'mark-neutral' }; return '<span class="markbox"><span class="mark ' + (it.kind === 'food' ? 'food' : 'med') + (state && state !== 'given' ? ' ' + state : '') + '" style="--mark:var(--' + it.c + ')"></span></span>'; };
+const activeOn = (s, d) => s.from <= d && (!s.to || s.to >= d);
+const slotsFor = (d, part) => SCHED.filter((s) => activeOn(s, d) && (part == null || s.part === part)).sort((a, b) => a.part - b.part || ORDER.indexOf(a.item) - ORDER.indexOf(b.item));
+const entryForSlot = (d, s) => ENTRIES.find((e) => e.date === d && (e.slot === s.id || (e.part === s.part && e.item === s.item)));
+const openSlots = (d, part) => slotsFor(d, part).filter((s) => !entryForSlot(d, s));
+const partDue = (d, p) => d < TODAY || (d === TODAY && PART_TIME[p - 1] <= NOW);
+const dueOpen = (d) => openSlots(d).filter((s) => partDue(d, s.part));
+const courseText = (s, d) => (s.to && s.from ? tr('dayNofM', { n: diff(s.from, d) + 1, m: diff(s.from, s.to) + 1 }) : '');
+const snapshot = () => JSON.stringify({ e: ENTRIES, v: EVENTS, s: SCHED });
+const restore = (j) => { const o = JSON.parse(j); ENTRIES = o.e; EVENTS = o.v; SCHED = o.s; };
+const ICON = {
+  back: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>',
+  next: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>',
+  chev: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>',
+  plus: '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>',
+  check: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>',
+  cal: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="3.5"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>',
+  routine: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.3-5.7"/><path d="M20 4v4h-4"/><path d="M12 8v4l3 2"/></svg>',
+  vet: '<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 1h3v3.5H11v3H7.5V11h-3V7.5H1v-3h3.5z" fill="currentColor"/></svg>',
+  cam: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>',
+  note: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 4h10l4 4v12H5z"/><path d="M9 12h6M9 16h6"/></svg>',
+  dots: '<svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>',
+  bowl: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11h18a9 9 0 0 1-18 0z"/><path d="M8 7c0-2 2-2 2-4M13 7c0-2 2-2 2-4"/></svg>',
+  pill: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="8.5" width="18" height="7" rx="3.5" transform="rotate(-35 12 12)"/><path d="M9.5 8.3l5 7.4"/></svg>',
+  sun1: '<svg width="26" height="26" viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M11 28a9 9 0 0 1 18 0z" fill="currentColor"/><path d="M5 31h30M20 8v5M8.5 14l3.5 3.5M31.5 14L28 17.5M3 24h4M33 24h4"/></svg>',
+  sun2: '<svg width="26" height="26" viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="20" cy="20" r="7" fill="currentColor"/><path d="M20 4v5M20 31v5M4 20h5M31 20h5M8.7 8.7l3.5 3.5M27.8 27.8l3.5 3.5M31.3 8.7l-3.5 3.5M12.2 27.8l-3.5 3.5"/></svg>',
+  sun3: '<svg width="26" height="26" viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M7 22a13 13 0 0 1 26 0z" fill="currentColor" stroke="none"/><path d="M7 26.5h26M10 30.5h20M14 34.5h12"/></svg>',
+  paw: '<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><ellipse cx="6.2" cy="11" rx="2" ry="2.6"/><ellipse cx="10.2" cy="7" rx="2" ry="2.6"/><ellipse cx="14.2" cy="7" rx="2" ry="2.6"/><ellipse cx="18" cy="11" rx="2" ry="2.6"/><path d="M12 12c-3 0-6 4-6 6.5 0 1.6 1.4 2.3 3 1.9 1.1-.3 2-.8 3-.8s1.9.5 3 .8c1.6.4 3-.3 3-1.9C18 16 15 12 12 12z"/></svg>'
+};
+const evBadge = (t) => ({ vet: '<span class="badge b-vet" aria-hidden="true">' + ICON.vet + '</span>', symptom: '<span class="badge b-sym" aria-hidden="true">!</span>', photo: '<span class="badge b-photo" aria-hidden="true">' + ICON.cam + '</span>', frontline: '<span class="badge b-front" aria-hidden="true">F</span>', deworming: '<span class="badge b-worm" aria-hidden="true">D</span>' }[t] || '<span class="plain-ic">' + (t === 'note' ? ICON.note : ICON.dots) + '</span>');
+const symName = (e) => (S[e.title] ? tr(e.title) : e.title);
+const symDetail = (e) => {
+  const p = e.props || {}; const bits = [];
+  if (e.title === 'sx_vomit') { if (p.times || p.when) bits.push([p.times || '', p.when ? tr(p.when) : ''].join(' ').trim()); }
+  else (SYMPROPS[e.title] || SYMPROPS._default).forEach((d) => { if (p[d[0]]) bits.push(tr(p[d[0]])); });
+  if (e.detail) bits.push(loc(e.detail));
+  return bits.join(' · ');
+};
+const evTitle = (e) => ({ vet: tr('vetVisit') + (e.title ? ' · ' + e.title : ''), photo: tr('photo'), frontline: 'Frontline', deworming: tr('deworming'), anal_glands: tr('analGlands'), nails: tr('nails'), note: tr('note') }[e.type] || e.title || tr('otherEvent'));
+
+/* ---------- screens ---------- */
+function render() {
+  document.documentElement.lang = st.lang;
+  const scr = document.getElementById('screen');
+  const b = scr.querySelector('.body,.list'); const top = b ? b.scrollTop : 0;
+  scr.innerHTML = st.screen === 'day' ? renderDay() : st.screen === 'usual' ? renderUsual() : renderList();
+  const nb = scr.querySelector('.body,.list'); if (nb && st.keep) nb.scrollTop = top;
+  st.keep = false;
+  renderNav();
+}
+
+function partIcon(p, on) { return p === 2 ? ICON.sun1 : p === 4 ? ICON.sun2 : p === 6 ? ICON.sun3 : '<span class="pdot' + (on ? ' on' : '') + '"></span>'; }
+
+function renderDay() {
+  const d = st.date; const due = dueOpen(d); const evs = EVENTS.filter((e) => e.date === d);
+  let h = '<div class="topbar"><button class="ghost sm btn34" data-act="goList" style="padding:0 16px 0 10px"><span class="deep">' + ICON.back + '</span>' + esc(tr('timeline')) + '</button><span style="flex:1"></span>' +
+    '<button class="ghost sm btn34" data-act="nope" style="padding:0 13px;font-size:13px;gap:7px"><span class="deep">' + ICON.cal + '</span>' + esc(tr('jump')) + '</button></div>' +
+    '<div class="daynav"><button class="ghost sm sq36" data-act="day" data-n="-1" aria-label="' + esc(tr('prevDay')) + '">' + ICON.back + '</button>' +
+    '<div style="flex:1;text-align:center"><div class="daytitle">' + esc(dayTitle(d)) + '</div><div class="cap deep" style="margin-top:1px">' + esc(d === TODAY ? tr('today') : d === shift(TODAY, -1) ? tr('yesterday') : '') + '&nbsp;</div></div>' +
+    '<button class="ghost sm sq36" data-act="day" data-n="1" aria-label="' + esc(tr('nextDay')) + '"' + (d >= TODAY ? ' disabled' : '') + '>' + ICON.next + '</button></div>' +
+    '<div class="body">';
+  if (due.length) {
+    h += '<div class="card fill"><span class="ic">' + ICON.routine + '</span><div class="tx"><div class="h">' + esc(d === TODAY ? tr('fillTodayH', { n: due.length }) + ' (' + NOW + ')' : tr('fillPastH', { n: due.length })) + '</div>' +
+      '<div class="s">' + esc(tr('fillHint')) + '</div><button class="pri" data-act="fillDay">' + esc(tr('fillBtn', { n: due.length })) + '</button></div></div>';
+  }
+  if (evs.length) {
+    h += '<div class="sec"><span class="cap">' + esc(tr('happened')) + '</span></div>';
+    evs.filter((e) => e.type === 'vet').forEach((e) => {
+      h += '<button class="card ecard tap" data-act="editEvent" data-id="' + e.id + '"><span class="ehead">' + evBadge('vet') + '<span class="etitle">' + esc(evTitle(e)) + '</span></span>' +
+        (e.detail ? '<span class="etext" style="display:block">' + esc(loc(e.detail)) + '</span>' : '') + (e.also.length ? '<span class="echips">' + e.also.map((a) => '<span class="echip">' + esc(tr(a)) + '</span>').join('') + '</span>' : '') + '</button>';
+    });
+    const syms = evs.filter((e) => e.type === 'symptom');
+    if (syms.length) {
+      h += '<div class="card ecard"><div class="ehead">' + evBadge('symptom') + '<span class="etitle">' + esc(tr('symptoms')) + '</span></div><div style="margin-top:4px">' +
+        syms.map((e) => '<button class="srow" data-act="editEvent" data-id="' + e.id + '"><span style="font-weight:600">' + esc(symName(e)) + '</span><span class="r">' + esc(symDetail(e)) + '</span></button>').join('') + '</div></div>';
+    }
+    evs.filter((e) => !['vet', 'symptom'].includes(e.type)).forEach((e) => {
+      const tap = e.type !== 'photo';
+      h += '<' + (tap ? 'button' : 'div') + ' class="card ecard' + (tap ? ' tap' : '') + '"' + (tap ? ' data-act="editEvent" data-id="' + e.id + '"' : '') + '><span class="ehead">' + evBadge(e.type) + '<span class="etitle">' + esc(evTitle(e)) + '</span></span>' +
+        (e.detail ? '<span class="etext" style="display:block">' + esc(loc(e.detail)) + '</span>' : '') + '</' + (tap ? 'button' : 'div') + '>';
+    });
+  }
+  h += '<div class="sec"><span class="cap">' + esc(tr('dayParts')) + '</span><button class="seclink" data-act="goUsual">' + ICON.routine + '&nbsp;' + esc(tr('usualLink')) + ICON.chev + '</button></div><div class="card parts">';
+  for (let p = 1; p <= 7; p++) {
+    const slots = slotsFor(d, p); const logged = ENTRIES.filter((e) => e.date === d && e.part === p);
+    let rows = '';
+    slots.forEach((s) => { const e = entryForSlot(d, s); rows += e ? loggedRow(e) : plannedRow(d, s); });
+    logged.filter((e) => !slots.some((s) => entryForSlot(d, s) === e)).forEach((e) => { rows += loggedRow(e); });
+    const any = !!rows;
+    if (!rows) rows = '<div class="pempty" style="padding-top:4px">' + esc(tr('nothingSched')) + '</div>';
+    h += '<div class="part' + (MEAL[p - 1] ? ' meal' : '') + '"><div class="pico">' + partIcon(p, any) + '</div><div class="pmain"><div class="cap pname">' + esc(tr('p' + p)) + '</div>' + rows + '</div>' +
+      '<button class="padd" data-act="openAdd" data-part="' + p + '" aria-label="' + esc(tr('addTo') + tr('p' + p)) + '"><span>' + ICON.plus + '</span></button></div>';
+  }
+  h += '</div><div style="height:12px"></div></div>';
+  return h;
+}
+function plannedRow(d, s) {
+  const later = !partDue(d, s.part); const name = fullName(s.item, s.flavour);
+  const course = courseText(s, d);
+  return '<div class="irow planned"><button class="iopen" data-act="newFromSlot" data-slot="' + s.id + '">' + markHtml(s.item, 'planned') +
+    '<span><span class="iname">' + esc(name) + ' <span class="d">· ' + esc(amountText(s.item, s.amount, s.unit)) + '</span></span><span class="isub">' + esc(later ? tr('laterToday') : tr('planned')) + (course ? ' · ' + esc(course) : '') + '</span></span></button>' +
+    (later ? '' : '<button class="ghost sm give" data-act="quickGive" data-slot="' + s.id + '" aria-label="' + esc(tr('markGiven', { name })) + '"><span class="deep">' + ICON.check + '</span>' + esc(tr('given')) + '</button>') + '</div>';
+}
+function loggedRow(e) {
+  const fl = st.flash && st.flash.includes(e.id) ? ' flash' : '';
+  const s = SCHED.find((x) => x.id === e.slot); const course = s ? courseText(s, e.date) : '';
+  const tag = e.state === 'skipped' ? '<span class="tag skipped">' + esc(tr('tagR')) + '</span>' : e.state === 'partial' ? '<span class="tag partial">' + esc(tr('tagHalf')) + '</span>' : '';
+  const sub = [course, e.note].filter(Boolean).join(' · ');
+  return '<div class="irow' + fl + '"><button class="iopen" data-act="editEntry" data-id="' + e.id + '">' + markHtml(e.item, e.state) +
+    '<span style="min-width:0"><span class="iname' + (e.state === 'skipped' ? ' skip' : '') + '">' + esc(fullName(e.item, e.flavour)) + ' <span class="d">· ' + esc(amountText(e.item, e.amount, e.unit)) + '</span></span>' + (sub ? '<span class="isub">' + esc(sub) + '</span>' : '') + '</span>' + tag + '</button></div>';
+}
+
+function renderUsual() {
+  const d = st.date;
+  let h = '<div class="topbar"><button class="ghost sm btn34" data-act="goDay" style="padding:0 16px 0 10px"><span class="deep">' + ICON.back + '</span>' + esc(tr('back')) + '</button></div>' +
+    '<div style="padding:12px 18px 10px;flex:none"><div class="cap deep">' + esc(tr('asOf', { d: dm(d) })) + '</div><div class="disp" style="font-size:28px;font-weight:600;line-height:32px;letter-spacing:-0.035em;margin-top:2px">' + esc(tr('usualDay')) + '</div>' +
+    '<div class="hint" style="margin:6px 0 0">' + esc(tr('usualHint')) + '</div></div><div class="body"><div style="height:12px"></div><div class="card parts">';
+  for (let p = 1; p <= 7; p++) {
+    const slots = slotsFor(d, p);
+    const upcoming = SCHED.filter((s) => s.part === p && s.from > d);
+    let rows = slots.map((s) => {
+      const next = upcoming.find((u) => u.item === s.item && s.to && u.from === shift(s.to, 1));
+      const sub = [s.to ? (courseText(s, d) + ', ' + tr('untilD', { d: dm(s.to) })) : '', next ? tr('fromD', { d: dm(next.from), x: amountText(next.item, next.amount, next.unit) }) : ''].filter(Boolean).join(' · ');
+      return '<div class="irow' + (st.flash && st.flash.includes(s.id) ? ' flash' : '') + '"><button class="iopen" data-act="editSlot" data-slot="' + s.id + '">' + markHtml(s.item, '') + '<span><span class="iname">' + esc(fullName(s.item, s.flavour)) + ' <span class="d">· ' + esc(amountText(s.item, s.amount, s.unit)) + '</span></span>' + (sub ? '<span class="isub">' + esc(sub) + '</span>' : '') + '</span></button></div>';
+    }).join('');
+    upcoming.filter((u) => !slots.some((s) => s.item === u.item)).forEach((u) => {
+      rows += '<div class="irow"><button class="iopen" data-act="editSlot" data-slot="' + u.id + '">' + markHtml(u.item, 'planned') + '<span><span class="iname">' + esc(fullName(u.item, u.flavour)) + ' <span class="d">· ' + esc(amountText(u.item, u.amount, u.unit)) + '</span></span><span class="isub">' + esc(tr('fromD', { d: dm(u.from), x: '' }).replace(/:\s*$/, '')) + '</span></span></button></div>';
+    });
+    if (!rows) rows = '<div class="pempty" style="padding-top:4px">' + esc(tr('nothingSched')) + '</div>';
+    h += '<div class="part' + (MEAL[p - 1] ? ' meal' : '') + '"><div class="pico">' + partIcon(p, slots.length > 0) + '</div><div class="pmain"><div class="cap pname">' + esc(tr('p' + p)) + ' <span class="t">· ' + PART_TIME[p - 1] + '</span></div>' + rows + '</div>' +
+      '<button class="padd" data-act="newSlot" data-part="' + p + '" aria-label="' + esc(tr('addTo') + tr('p' + p)) + '"><span>' + ICON.plus + '</span></button></div>';
+  }
+  h += '</div><div style="height:12px"></div></div>';
+  return h;
+}
+
+function renderList() {
+  let rows = '';
+  for (let d = TODAY; d >= '2026-08-25'; d = shift(d, -1)) {
+    const slots = slotsFor(d); const open = openSlots(d); const n = ENTRIES.filter((e) => e.date === d).length;
+    const kinds = []; EVENTS.filter((e) => e.date === d).forEach((e) => { if (!kinds.includes(e.type)) kinds.push(e.type); });
+    const dot = n === 0 ? 'none' : open.length ? 'half' : '';
+    rows += '<button class="drow" data-act="goDayDate" data-date="' + d + '"><span class="d"><b>' + parse(d).getUTCDate() + '</b><span class="cap" style="font-size:9px">' + esc(d === TODAY ? tr('today') : fmt(d, { weekday: 'short' })) + '</span></span>' +
+      '<span style="flex:1" class="ink2"><span class="dot ' + dot + '"></span>' + esc(n ? tr('loggedOf', { a: slots.length - open.length, b: slots.length }) : tr('notLogged')) + '</span><span style="display:flex;gap:4px">' + kinds.map(evBadge).join('') + '</span></button>';
+  }
+  return '<div class="thead"><span class="logo">' + ICON.paw + '</span><span class="disp" style="flex:1;font-size:24px;font-weight:700;line-height:30px;letter-spacing:-0.03em">PawLog</span>' +
+    '<button class="ghost sm btn34" data-act="lang" style="padding:0 12px;font-size:13px">' + esc(tr('langBtn')) + '</button></div>' +
+    '<div style="font-size:12px;line-height:16px;padding:4px 16px 8px;background:var(--surface)" class="ink3">' + esc(tr('standIn')) + '</div><div class="list">' + rows + '</div>';
+}
+
+function renderNav() {
+  const it = (k, label, path, on) => '<button class="it' + (on ? ' on' : '') + '" data-act="nav" data-to="' + k + '"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="' + (on ? 2.1 : 1.8) + '" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + path + '</svg>' + esc(label) + '</button>';
+  document.getElementById('nav').innerHTML = '<div class="ind"><span></span></div>' +
+    it('timeline', tr('timeline'), '<path d="M9.5 6.5H20M9.5 12H20M9.5 17.5H20"/><circle cx="4.8" cy="6.5" r="1.1"/><circle cx="4.8" cy="12" r="1.1"/><circle cx="4.8" cy="17.5" r="1.1"/>', true) +
+    it('pinned', tr('pinned'), '<path d="M12 16.5V21M8 3.5h8l-1 5.5 3 3.2v1.8H6v-1.8L9 9z"/>', false) +
+    '<div class="addw"><button class="pri sm add" data-act="openAdd">+ ' + esc(tr('add')) + '</button></div>' +
+    it('tracked', tr('tracked'), '<circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="3.2"/>', false) +
+    it('search', tr('search'), '<circle cx="10.8" cy="10.8" r="6.6"/><path d="M20 20l-4.6-4.6"/>', false);
+}
+
+/* ---------- sheets: opened once, then only title/body/footer are updated in place ---------- */
+function openSheet(f) {
+  st.f = f;
+  const root = document.getElementById('sheetRoot');
+  root.innerHTML = '<button class="scrim" data-act="closeSheet" aria-label="' + esc(tr('close')) + '"></button><section class="sheet" role="dialog" aria-modal="true"><div class="grab"><span></span></div>' +
+    '<div class="shead"><div class="stitle" id="sTitle"></div><button class="close" data-act="closeSheet">' + esc(tr('close')) + '</button></div><div class="sbody" id="sBody"></div><div id="sFoot"></div></section>';
+  root.classList.add('open');
+  updateSheet();
+}
+function closeSheet() { const root = document.getElementById('sheetRoot'); root.classList.remove('open'); root.innerHTML = ''; st.f = null; }
+function updateSheet() {
+  const f = st.f; if (!f) return;
+  const body = document.getElementById('sBody'); const top = body.scrollTop;
+  const v = VIEWS[f.kind](f);
+  document.getElementById('sTitle').textContent = v.title;
+  document.querySelector('.sheet').setAttribute('aria-label', v.title);
+  body.innerHTML = v.body;
+  body.scrollTop = top;
+  const foot = document.getElementById('sFoot');
+  foot.className = v.foot ? 'sfoot' : ''; foot.innerHTML = v.foot || '';
+}
+const fld = (label, inner, opt, id) => '<div class="fld"' + (id ? ' id="' + id + '"' : '') + '><div class="lbl"><span>' + esc(label) + '</span>' + (opt ? '<span class="o">' + esc(opt) + '</span>' : '') + '</div>' + inner + '</div>';
+const radio = (act, val, cur, label, extra, cls) => '<button class="chip' + (cls ? ' ' + cls : '') + '" role="radio" aria-checked="' + (val === cur) + '" data-act="' + act + '" data-v="' + esc(val) + '">' + (extra || '') + esc(label) + '</button>';
+const footSave = (edit, delAct) => (edit ? '<button class="ghost danger" data-act="' + delAct + '">' + esc(tr('delete')) + '</button>' : '') + '<button class="pri" data-act="save">' + esc(tr('save')) + '</button>';
+function dateLine(f, withPart) {
+  const txt = tr('forD') + shortDate(f.date) + (withPart && f.part ? ' · ' + tr('p' + f.part) : '');
+  if (f.ctxOpen) {
+    return '<div class="two" style="' + (withPart ? '' : 'grid-template-columns:1fr;') + 'margin-bottom:16px"><div><div class="lbl"><span>' + esc(tr('date')) + '</span></div><input class="inp" type="date" max="' + TODAY + '" value="' + f.date + '" data-in="date"></div>' +
+      (withPart ? '<div><div class="lbl"><span>' + esc(tr('dayPart')) + '</span></div><select class="inp" data-in="part" style="padding:0 8px">' + [1, 2, 3, 4, 5, 6, 7].map((p) => '<option value="' + p + '"' + (p === f.part ? ' selected' : '') + '>' + esc(tr('p' + p)) + '</option>').join('') + '</select></div>' : '') + '</div>';
+  }
+  return '<div class="dateline"><span>' + esc(txt) + '</span><button class="chg" data-act="openCtx">' + esc(tr('change')) + '</button></div>';
+}
+function amountFields(f) {
+  const dec = DECIMAL_UNITS.includes(f.unit);
+  const isPreset = FRACS.some((x) => Math.abs(x[0] - f.amount) < 0.005);
+  let amt;
+  if (dec) amt = '<input class="inp short" inputmode="decimal" data-in="amountNum" placeholder="' + esc(tr('amountPh')) + '" value="' + (f.amount ? String(+f.amount.toFixed(3)).replace('.', ',') : '') + '"> <span class="ink2" style="font-size:16px;margin-left:6px">' + esc(unitLabel(f.unit, 2)) + '</span>';
+  else amt = '<div class="chips" role="radiogroup" aria-label="' + esc(tr('amount')) + '">' + FRACS.map((x) => '<button class="chip amt" role="radio" aria-checked="' + (Math.abs(x[0] - (f.amount || 0)) < 0.005 && !f.amtOther) + '" data-act="pickAmt" data-v="' + x[0] + '">' + x[1] + '</button>').join('') +
+    '<button class="chip amt" role="radio" aria-checked="' + (!!f.amtOther || (!!f.amount && !isPreset)) + '" data-act="amtOther">' + esc(tr('other')) + '</button></div>' +
+    (f.amtOther || (f.amount && !isPreset) ? '<input class="inp short" style="margin-top:10px" inputmode="decimal" data-in="amountNum" value="' + (f.amount ? String(+f.amount.toFixed(3)).replace('.', ',') : '') + '">' : '');
+  const units = UNITS[f.kind === 'food' || (f.kind === 'slot' && isFood(f.item)) ? 'food' : 'med'];
+  return fld(tr('amount'), amt + (f.err === 'amount' ? '<div class="err">' + esc(tr('pickAmount')) + '</div>' : ''), f.usual ? tr('usualIs', { x: f.usual }) : '') +
+    fld(tr('unit'), '<div class="chips" role="radiogroup">' + units.map((u) => radio('pickUnit', u, f.unit, unitLabel(u, 1), '', 'nomark')).join('') + '</div>');
+}
+
+const VIEWS = {
+  add(f) {
+    const opt = (act, type, ic, label) => '<button class="ghost opt" data-act="' + act + '" data-type="' + type + '"><span class="ic">' + ic + '</span><span class="tx">' + esc(label) + '</span></button>';
+    let body = dateLine(f, !!f.part);
+    body += '<div class="grid2">' + opt('pickKind', 'food', ICON.bowl, tr('food')) + opt('pickKind', 'med', ICON.pill, tr('medication'));
+    if (!f.part) body += opt('pickKind', 'symptom', '<span class="badge b-sym">!</span>', tr('symptom')) + opt('pickKind', 'vet', '<span class="badge b-vet">' + ICON.vet + '</span>', tr('vetVisit')) + opt('pickKind', 'note', ICON.note, tr('note')) + opt('pickKind', 'other', ICON.dots, tr('otherEvent'));
+    body += '</div>';
+    if (!f.part) body += '<button class="linkrow" data-act="openRange">' + ICON.routine + esc(tr('fillSeveral')) + ' <span class="sketch">' + esc(tr('sketch')) + '</span></button>';
+    return { title: f.part ? tr('addTo') + tr('p' + f.part) : tr('add'), body, foot: '' };
+  },
+  food(f) { return entryView(f); },
+  med(f) { return entryView(f); },
+  symptom(f) {
+    let body = dateLine(f, false);
+    body += fld(tr('symptom'), '<div class="chips" role="radiogroup">' + SYMS.map((k) => radio('pickSym', k, f.title, tr(k), '', 'nomark')).join('') + radio('pickSym', '_other', f.title, tr('other'), '', 'nomark') + '</div>' +
+      (f.title === '_other' ? '<input class="inp" style="margin-top:10px" data-in="titleText" placeholder="' + esc(tr('otherSymptomPh')) + '" value="' + esc(f.titleText) + '">' : '') + (f.err ? '<div class="err">' + esc(tr('pickSymptom')) + '</div>' : ''));
+    if (f.title) {
+      const defs = SYMPROPS[f.title] || SYMPROPS._default;
+      defs.forEach((dd) => { body += fld(tr(dd[0]), '<div class="chips">' + dd[1].map((v) => '<button class="chip nomark" aria-pressed="' + (f.props[dd[0]] === v) + '" data-act="pickProp" data-p="' + dd[0] + '" data-v="' + esc(v) + '">' + esc(S[v] ? tr(v) : v) + '</button>').join('') + '</div>', tr('optional')); });
+      body += fld(tr('details'), '<textarea class="inp" rows="2" data-in="detail" placeholder="' + esc(tr('notePh')) + '">' + esc(loc(f.detail)) + '</textarea>', tr('optional'));
+    }
+    return { title: f.mode === 'edit' ? tr('editEvent') : tr('addSymptom'), body, foot: footSave(f.mode === 'edit', 'deleteEvent') };
+  },
+  vet(f) {
+    const clinics = []; EVENTS.forEach((e) => { if (e.type === 'vet' && e.title && !clinics.includes(e.title)) clinics.push(e.title); });
+    let body = dateLine(f, false);
+    body += fld(tr('clinic'), '<input class="inp" data-in="titleText" placeholder="' + esc(tr('clinicPh')) + '" value="' + esc(f.titleText) + '"><div class="chips" style="margin-top:10px" id="clinicChips">' + clinicChips(f, clinics) + '</div>');
+    body += fld(tr('reason'), '<textarea class="inp" rows="3" data-in="detail">' + esc(loc(f.detail)) + '</textarea>' + (f.err ? '<div class="err">' + esc(tr('writeClinic')) + '</div>' : ''));
+    body += fld(tr('alsoDone'), '<div class="chips">' + ['analGlands', 'nails'].map((a) => '<button class="chip nomark" aria-pressed="' + f.also.includes(a) + '" data-act="toggleAlso" data-v="' + a + '">' + esc(tr(a)) + '</button>').join('') + '</div>', tr('optional'));
+    return { title: f.mode === 'edit' ? tr('editEvent') : tr('addVisit'), body, foot: footSave(f.mode === 'edit', 'deleteEvent') };
+  },
+  note(f) {
+    const body = dateLine(f, false) + fld(tr('note'), '<textarea class="inp" rows="4" data-in="detail" placeholder="' + esc(tr('notePh')) + '">' + esc(loc(f.detail)) + '</textarea>' + (f.err ? '<div class="err">' + esc(tr('writeNote')) + '</div>' : ''));
+    return { title: f.mode === 'edit' ? tr('editEvent') : tr('addNote'), body, foot: footSave(f.mode === 'edit', 'deleteEvent') };
+  },
+  other(f) {
+    const types = [['frontline', 'Frontline'], ['deworming', tr('deworming')], ['anal_glands', tr('analGlands')], ['nails', tr('nails')], ['other', tr('other')]];
+    let body = dateLine(f, false) + fld(tr('typeLbl'), '<div class="chips" role="radiogroup">' + types.map((x) => radio('pickOtherType', x[0], f.type, x[1], '', 'nomark')).join('') + '</div>');
+    if (f.type === 'other') body += fld(tr('titleLbl'), '<input class="inp" data-in="titleText" placeholder="' + esc(tr('titlePh')) + '" value="' + esc(f.titleText) + '">' + (f.err ? '<div class="err">' + esc(tr('writeTitle')) + '</div>' : ''));
+    body += fld(tr('details'), '<textarea class="inp" rows="2" data-in="detail" placeholder="' + esc(tr('notePh')) + '">' + esc(loc(f.detail)) + '</textarea>', tr('optional'));
+    return { title: f.mode === 'edit' ? tr('editEvent') : tr('addOther'), body, foot: footSave(f.mode === 'edit', 'deleteEvent') };
+  },
+  slot(f) {
+    let body = '';
+    if (f.mode === 'edit') body += '<div class="dateline" style="margin-bottom:12px"><span style="display:flex;align-items:center;gap:8px;font-size:15px;font-weight:600;color:var(--ink)">' + markHtml(f.item, '') + esc(iname(f.item)) + '</span><span>' + esc(tr('p' + f.part)) + ' · ' + PART_TIME[f.part - 1] + '</span></div>';
+    else body += '<div class="dateline"><span>' + esc(tr('p' + f.part)) + ' · ' + PART_TIME[f.part - 1] + '</span></div>' + itemPicker(f, null);
+    if (f.item) {
+      if (ITEMS[f.item] && ITEMS[f.item].flav && ITEMS[f.item].flav.length) body += fld(tr('flavour'), '<div class="chips" role="radiogroup">' + ITEMS[f.item].flav.map((x) => radio('pickFlav', x[0], f.flavour, flavName(f.item, x[0]), '', 'nomark')).join('') + '</div>');
+      body += amountFields(f);
+      body += fld(tr('startsOn'), '<input class="inp" type="date" value="' + f.from + '" data-in="from">');
+      body += fld(tr('howLong'), '<div class="chips" role="radiogroup">' + radio('pickLen', 'none', f.len, tr('noEnd'), '', 'nomark') + radio('pickLen', '7', f.len, tr('days7'), '', 'nomark') + radio('pickLen', '14', f.len, tr('days14'), '', 'nomark') + radio('pickLen', 'date', f.len, tr('endsOn'), '', 'nomark') + '</div>' +
+        (f.len === 'date' ? '<input class="inp" style="margin-top:10px" type="date" min="' + f.from + '" value="' + (f.to || '') + '" data-in="to">' : ''));
+    }
+    return { title: f.mode === 'edit' ? tr('editUsualTitle') : tr('addUsualTitle'), body, foot: (f.mode === 'edit' ? '<button class="ghost danger" data-act="removeSlot">' + esc(tr('removeUsual')) + '</button>' : '') + '<button class="pri" data-act="save">' + esc(tr('save')) + '</button>' };
+  },
+  range(f) {
+    const c = rangeCount(f);
+    let body = '<div class="two"><div class="fld"><div class="lbl"><span>' + esc(tr('from')) + '</span></div><input class="inp" type="date" max="' + TODAY + '" value="' + f.from + '" data-in="rfrom"></div>' +
+      '<div class="fld"><div class="lbl"><span>' + esc(tr('to')) + '</span></div><input class="inp" type="date" max="' + TODAY + '" value="' + f.to + '" data-in="rto"></div></div>';
+    body += f.to < f.from ? '<div class="err">' + esc(tr('endRange')) + '</div>' : '<div class="card summary"><div style="font-size:14px;font-weight:600">' + esc(tr('rangeSummary', { d: c.days, n: c.n })) + '</div><div class="ink2" style="font-size:13px;line-height:18px;margin-top:2px">' + esc(tr('rangeKeep')) + '</div></div>' +
+      '<button class="linkrow" data-act="goUsualFromRange">' + ICON.routine + esc(tr('usualDay')) + ICON.chev + '</button>';
+    return { title: tr('fillSeveral'), body, foot: '<button class="pri" data-act="fillRange"' + (c.n ? '' : ' disabled') + '>' + esc(tr('fillNDays', { d: c.days })) + '</button>' };
+  }
+};
+function clinicChips(f, clinics) { return clinics.map((c) => '<button class="chip nomark" aria-pressed="' + (f.titleText === c) + '" data-act="pickClinic" data-v="' + esc(c) + '">' + esc(c) + '</button>').join(''); }
+function itemPicker(f, part) {
+  const kind = f.kind === 'slot' ? null : f.kind;
+  const keys = ORDER.filter((k) => (!kind || ITEMS[k].kind === kind));
+  const sched = part ? slotsFor(f.date, part).map((s) => s.item) : [];
+  const recent = part ? keys.filter((k) => !sched.includes(k) && ENTRIES.some((e) => e.item === k && e.part === part && e.date <= f.date && e.date >= shift(f.date, -14))) : [];
+  const live = keys.filter((k) => !sched.includes(k) && !recent.includes(k) && (slotsFor(f.date).some((s) => s.item === k) || k === 'treat' || f.kind === 'slot'));
+  const list = sched.concat(recent, live).filter((k, i, a) => a.indexOf(k) === i && keys.includes(k));
+  const label = kind === 'food' ? tr('food') : kind === 'med' ? tr('medOne') : (tr('food') + ' / ' + tr('medOne'));
+  return fld(label, '<div class="chips" role="radiogroup">' + list.map((k) => radio('pickItem', k, f.item, iname(k), markHtml(k, ''))).join('') + radio('pickItem', '_other', f.item, tr('other'), '', 'nomark') + '</div>' +
+    (f.item === '_other' ? '<input class="inp" style="margin-top:10px" data-in="otherName" placeholder="' + esc(kind === 'med' ? tr('otherMedPh') : tr('otherFoodPh')) + '" value="' + esc(f.otherName) + '">' : '') +
+    (f.err === 'item' ? '<div class="err">' + esc(kind === 'med' ? tr('pickMed') : tr('pickFood')) + '</div>' : ''));
+}
+function entryView(f) {
+  const edit = f.mode === 'edit'; const food = f.kind === 'food';
+  let body = dateLine(f, true);
+  if (edit) body += '<div style="display:flex;align-items:center;gap:8px;font-size:15px;font-weight:600;margin:-2px 0 14px">' + markHtml(f.item, f.state) + esc(iname(f.item)) + '</div>';
+  else body += itemPicker(f, f.part);
+  if (f.item) {
+    if (ITEMS[f.item] && ITEMS[f.item].flav && ITEMS[f.item].flav.length) body += fld(tr('flavour'), '<div class="chips" role="radiogroup">' + ITEMS[f.item].flav.map((x) => radio('pickFlav', x[0], f.flavour, flavName(f.item, x[0]), '', 'nomark')).join('') + '</div>');
+    body += amountFields(f);
+    const states = food ? ['given', 'skipped', 'partial'] : ['given', 'skipped'];
+    body += fld(food ? tr('eatenQ') : tr('givenQ'), '<div class="chips" role="radiogroup">' + states.map((s) => radio('pickState', s, f.state, tr(s), f.item === '_other' ? '<span class="markbox"><span class="mark food' + (s !== 'given' ? ' ' + s : '') + '" style="--mark:var(--mark-neutral)"></span></span>' : markHtml(f.item, s))).join('') + '</div>');
+    body += fld(tr('note'), '<textarea class="inp" rows="2" data-in="note" placeholder="' + esc(tr('notePh')) + '">' + esc(f.note) + '</textarea>', tr('optional'));
+    body += '<div id="usualBox">' + usualBox(f) + '</div>';
+  }
+  return { title: edit ? tr('editEntry') : food ? tr('addFood') : tr('addMed'), body, foot: footSave(edit, 'deleteEntry') };
+}
+function usualBox(f) {
+  if (!f.item || f.item === '_other') return '';
+  const s = slotsFor(f.date, f.part).find((x) => x.item === f.item);
+  if (!s) return '<label class="check"><input type="checkbox" data-in="toUsual"' + (f.toUsual ? ' checked' : '') + '><span>' + esc(tr('addToUsual')) + '</span></label>';
+  const same = Math.abs(s.amount - (f.amount || 0)) < 0.005 && s.unit === f.unit && (s.flavour || '') === (f.flavour || '');
+  return same ? '' : '<label class="check"><input type="checkbox" data-in="toUsual"' + (f.toUsual ? ' checked' : '') + '><span>' + esc(tr('makeUsual')) + '</span></label>';
+}
+function rangeCount(f) { let days = 0, n = 0; if (f.to < f.from) return { days: 0, n: 0 }; for (let d = f.from; d <= f.to; d = shift(d, 1)) { days++; n += dueOpen(d).length; } return { days, n }; }
+
+/* ---------- toast ---------- */
+function toast(msg, undo) {
+  const r = document.getElementById('toastRoot');
+  r.innerHTML = '<div class="toast" role="status"><span class="m">' + esc(msg) + '</span>' + (undo ? '<button class="close" data-act="undo">' + esc(tr('undo')) + '</button>' : '') + '</div>';
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => { r.innerHTML = ''; st.flash = null; }, 5000);
+}
+const clearToast = () => { document.getElementById('toastRoot').innerHTML = ''; };
+
+/* ---------- forms ---------- */
+function entryForm(kind, date, part, item, s) {
+  const it = item ? ITEMS[item] : null;
+  const src = s || (item && part ? slotsFor(date, part).find((x) => x.item === item) : null);
+  return { kind, mode: 'add', date, part: part || 2, item: item || null, otherName: '', flavour: src ? src.flavour : (it && it.flav && it.flav[0] ? it.flav[0][0] : ''),
+    amount: src ? src.amount : (it ? 1 : null), unit: src ? src.unit : (it ? it.unit : (kind === 'food' ? 'can' : 'pill')), state: 'given', note: '', toUsual: false, ctxOpen: false, err: null,
+    usual: src ? amountText(src.item, src.amount, src.unit) : '', slot: src ? src.id : null };
+}
+function setItem(f, k) {
+  f.item = k; f.err = null; f.toUsual = false; f.amtOther = false;
+  if (k === '_other') { f.flavour = ''; return; }
+  const s = f.kind === 'slot' ? null : slotsFor(f.date, f.part).find((x) => x.item === k);
+  const it = ITEMS[k];
+  f.flavour = s ? s.flavour : (it.flav && it.flav[0] ? it.flav[0][0] : '');
+  f.amount = s ? s.amount : (it.unit === 'ml' ? null : 1); f.unit = s ? s.unit : it.unit; f.slot = s ? s.id : null;
+  f.usual = s ? amountText(k, s.amount, s.unit) : '';
+  if (!isFood(k) && f.state === 'partial') f.state = 'given';
+}
+function logSlots(date, slots) { const ids = []; slots.forEach((s) => { const e = { id: nid('e'), date, part: s.part, item: s.item, flavour: s.flavour, amount: s.amount, unit: s.unit, state: 'given', note: '', slot: s.id }; ENTRIES.push(e); ids.push(e.id); }); return ids; }
+function setUsualFrom(part, item, flavour, amount, unit, from, to) {
+  const cur = SCHED.find((x) => x.part === part && x.item === item && activeOn(x, from));
+  if (cur) { if (cur.from === from) { Object.assign(cur, { flavour, amount, unit, to: to === undefined ? cur.to : to }); return cur; } const endOld = cur.to; cur.to = shift(from, -1); const n = slot(part, item, flavour, amount, unit, from, to === undefined ? endOld : to); SCHED.push(n); return n; }
+  const n = slot(part, item, flavour, amount, unit, from, to || null); SCHED.push(n); return n;
+}
+
+/* ---------- actions ---------- */
+const A = {
+  lang() { st.lang = st.lang === 'en' ? 'pl' : 'en'; st.keep = true; render(); if (st.f) { document.querySelector('.close').textContent = tr('close'); updateSheet(); } },
+  nope() { toast(tr('notInScope')); },
+  nav(el) { if (el.dataset.to === 'timeline') { st.screen = 'list'; render(); } else toast(tr('notInScope')); },
+  goList() { st.screen = 'list'; render(); },
+  goDay() { st.screen = 'day'; render(); },
+  goDayDate(el) { st.screen = 'day'; st.date = el.dataset.date; render(); },
+  goUsual() { st.screen = 'usual'; render(); },
+  goUsualFromRange() { closeSheet(); st.screen = 'usual'; render(); },
+  day(el) { const d = shift(st.date, +el.dataset.n); if (d <= TODAY) { st.date = d; render(); } },
+  quickGive(el) { const s = SCHED.find((x) => x.id === el.dataset.slot); st.flash = logSlots(st.date, [s]); st.keep = true; render(); },
+  fillDay() { undoSnap = snapshot(); const ids = logSlots(st.date, dueOpen(st.date)); st.flash = ids; st.keep = true; render(); toast(tr('toastFilled', { n: ids.length }), true); },
+  undo() { if (undoSnap) restore(undoSnap); undoSnap = null; clearToast(); st.flash = null; st.keep = true; render(); },
+  closeSheet() { closeSheet(); },
+  openCtx() { st.f.ctxOpen = true; updateSheet(); },
+  openAdd(el) { const part = el && el.dataset.part ? +el.dataset.part : 0; openSheet({ kind: 'add', date: st.screen === 'day' ? st.date : TODAY, part, ctxOpen: false }); },
+  pickKind(el) {
+    const t = el.dataset.type; const a = st.f;
+    if (t === 'food' || t === 'med') { st.f = entryForm(t, a.date, a.part || firstOpenPart(a.date, t), null); }
+    else st.f = { kind: t === 'symptom' || t === 'vet' || t === 'note' ? t : 'other', mode: 'add', date: a.date, type: t === 'other' ? 'frontline' : t, title: '', titleText: '', detail: '', props: {}, also: [], ctxOpen: false, err: null };
+    st.f.ctxOpen = a.ctxOpen; // an opened date row stays open
+    updateSheet();
+  },
+  newFromSlot(el) { const s = SCHED.find((x) => x.id === el.dataset.slot); openSheet(entryForm(isFood(s.item) ? 'food' : 'med', st.date, s.part, s.item, s)); },
+  editEntry(el) {
+    const e = ENTRIES.find((x) => x.id === el.dataset.id); const s = SCHED.find((x) => x.id === e.slot) || slotsFor(e.date, e.part).find((x) => x.item === e.item);
+    openSheet({ kind: isFood(e.item) ? 'food' : 'med', mode: 'edit', id: e.id, date: e.date, part: e.part, item: e.item, flavour: e.flavour, amount: e.amount, unit: e.unit, state: e.state, note: e.note, toUsual: false, ctxOpen: false, err: null, usual: s ? amountText(s.item, s.amount, s.unit) : '', slot: e.slot });
+  },
+  pickItem(el) { setItem(st.f, el.dataset.v); updateSheet(); },
+  pickFlav(el) { st.f.flavour = el.dataset.v; refreshUsual(); updateSheet(); },
+  pickAmt(el) { st.f.amount = +el.dataset.v; st.f.amtOther = false; st.f.err = null; updateSheet(); },
+  amtOther() { st.f.amtOther = true; updateSheet(); const i = document.querySelector('[data-in="amountNum"]'); if (i) i.focus(); },
+  pickUnit(el) { st.f.unit = el.dataset.v; if (DECIMAL_UNITS.includes(st.f.unit) && st.f.amount && FRACS.some((x) => Math.abs(x[0] - st.f.amount) < 0.005) && st.f.amount < 1) st.f.amount = null; updateSheet(); },
+  pickState(el) { st.f.state = el.dataset.v; updateSheet(); },
+  pickSym(el) { st.f.title = el.dataset.v; st.f.props = {}; st.f.err = null; updateSheet(); },
+  pickProp(el) { const p = el.dataset.p; st.f.props[p] = st.f.props[p] === el.dataset.v ? '' : el.dataset.v; updateSheet(); },
+  pickClinic(el) { st.f.titleText = el.dataset.v; st.f.err = null; updateSheet(); },
+  toggleAlso(el) { const a = st.f.also; const v = el.dataset.v; st.f.also = a.includes(v) ? a.filter((x) => x !== v) : a.concat(v); updateSheet(); },
+  pickOtherType(el) { st.f.type = el.dataset.v; st.f.err = null; updateSheet(); },
+  pickLen(el) { const f = st.f; f.len = el.dataset.v; f.to = f.len === 'none' ? null : f.len === 'date' ? (f.to || shift(f.from, 6)) : shift(f.from, +f.len - 1); updateSheet(); },
+  editEvent(el) {
+    const e = EVENTS.find((x) => x.id === el.dataset.id);
+    const kind = ['symptom', 'vet', 'note'].includes(e.type) ? e.type : 'other';
+    const known = e.type !== 'symptom' || S[e.title];
+    openSheet({ kind, mode: 'edit', id: e.id, date: e.date, type: e.type, title: e.type === 'symptom' ? (known ? e.title : '_other') : '', titleText: e.type === 'symptom' ? (known ? '' : e.title) : e.title, detail: e.detail, props: Object.assign({}, e.props), also: (e.also || []).slice(), ctxOpen: false, err: null });
+  },
+  newSlot(el) { openSheet({ kind: 'slot', mode: 'add', part: +el.dataset.part, date: st.date, item: null, flavour: '', amount: 1, unit: 'pill', from: st.date, len: 'none', to: null, otherName: '' }); },
+  editSlot(el) {
+    const s = SCHED.find((x) => x.id === el.dataset.slot);
+    openSheet({ kind: 'slot', mode: 'edit', id: s.id, part: s.part, date: st.date, item: s.item, flavour: s.flavour, amount: s.amount, unit: s.unit, from: s.from > st.date ? s.from : st.date, len: s.to ? 'date' : 'none', to: s.to, origFrom: s.from });
+  },
+  removeSlot() {
+    undoSnap = snapshot(); const f = st.f; const s = SCHED.find((x) => x.id === f.id);
+    if (s.from >= f.from) SCHED = SCHED.filter((x) => x.id !== s.id); else s.to = shift(f.from, -1);
+    closeSheet(); st.keep = true; render(); toast(tr('toastUsual'), true);
+  },
+  save() { SAVE[st.f.kind](st.f); },
+  deleteEntry() { undoSnap = snapshot(); ENTRIES = ENTRIES.filter((x) => x.id !== st.f.id); closeSheet(); st.keep = true; render(); toast(tr('toastDeleted'), true); },
+  deleteEvent() { undoSnap = snapshot(); EVENTS = EVENTS.filter((x) => x.id !== st.f.id); closeSheet(); st.keep = true; render(); toast(tr('toastEventDeleted'), true); },
+  openRange() { st.f = { kind: 'range', from: '2026-08-25', to: '2026-08-31' }; updateSheet(); },
+  fillRange() { undoSnap = snapshot(); let n = 0; const f = st.f; for (let d = f.from; d <= f.to; d = shift(d, 1)) n += logSlots(d, dueOpen(d)).length; closeSheet(); st.screen = 'list'; render(); toast(tr('toastFilled', { n }), true); },
+  flow(el) {
+    closeSheet(); clearToast(); st.flash = null; const k = el.dataset.flow;
+    st.screen = 'day'; st.date = TODAY;
+    if (k === 'edit' || k === 'sym') st.date = '2026-10-14';
+    if (k === 'empty') st.date = '2026-08-31';
+    if (k === 'usual') st.screen = 'usual';
+    if (k === 'range') st.screen = 'list';
+    render();
+    if (k === 'add') A.openAdd();
+    if (k === 'food' || k === 'med') { A.openAdd(); A.pickKind({ dataset: { type: k } }); }
+    if (k === 'sym') { A.openAdd(); A.pickKind({ dataset: { type: 'symptom' } }); A.pickSym({ dataset: { v: 'sx_poo' } }); }
+    if (k === 'range') { A.openAdd(); A.openRange(); }
+  }
+};
+function firstOpenPart(d, kind) { for (let p = 1; p <= 7; p++) { if (openSlots(d, p).some((s) => (kind === 'food') === isFood(s.item))) return p; } return kind === 'food' ? 4 : 1; }
+function refreshUsual() { const b = document.getElementById('usualBox'); if (b && st.f) b.innerHTML = usualBox(st.f); }
+
+const SAVE = {
+  food: saveEntry, med: saveEntry,
+  symptom(f) { const title = f.title === '_other' ? f.titleText.trim() : f.title; if (!title) { f.err = true; updateSheet(); return; } saveEvent(f, { type: 'symptom', title, props: f.props }); },
+  vet(f) { if (!f.titleText.trim() && !f.detail.trim()) { f.err = true; updateSheet(); return; } saveEvent(f, { type: 'vet', title: f.titleText.trim(), also: f.also }); },
+  note(f) { if (!f.detail.trim()) { f.err = true; updateSheet(); return; } saveEvent(f, { type: 'note', title: '' }); },
+  other(f) { if (f.type === 'other' && !f.titleText.trim()) { f.err = true; updateSheet(); return; } saveEvent(f, { type: f.type, title: f.type === 'other' ? f.titleText.trim() : '' }); },
+  slot(f) {
+    if (!f.item || (f.item === '_other' && !(f.otherName || '').trim())) return;
+    if (!f.amount) { f.err = 'amount'; updateSheet(); return; }
+    undoSnap = snapshot();
+    const item = ensureItem(f, isFood(f.item) ? 'food' : 'med');
+    const n = setUsualFrom(f.part, item, f.flavour, f.amount, f.unit, f.from, f.len === 'none' ? null : f.to);
+    st.flash = [n.id]; closeSheet(); st.keep = true; render(); toast(tr('toastUsual'), true);
+  }
+};
+function ensureItem(f, kind) {
+  if (f.item !== '_other') return f.item;
+  const name = f.otherName.trim(); const key = name.toLowerCase().replace(/[^a-z0-9]+/g, '-') || 'other';
+  if (!ITEMS[key]) { ITEMS[key] = { kind, c: 'mark-neutral', n: [name, name], unit: f.unit, flav: [] }; ORDER.push(key); }
+  return key;
+}
+function saveEntry(f) {
+  if (!f.item || (f.item === '_other' && !f.otherName.trim())) { f.err = 'item'; updateSheet(); return; }
+  if (!f.amount) { f.err = 'amount'; updateSheet(); return; }
+  undoSnap = snapshot();
+  const item = ensureItem(f, f.kind);
+  let slotId = f.slot;
+  if (f.toUsual) { const n = setUsualFrom(f.part, item, f.flavour, f.amount, f.unit, f.date); slotId = n.id; }
+  const data = { date: f.date, part: f.part, item, flavour: f.flavour, amount: f.amount, unit: f.unit, state: f.state, note: f.note.trim(), slot: slotId };
+  let id;
+  if (f.mode === 'edit') { Object.assign(ENTRIES.find((x) => x.id === f.id), data); id = f.id; }
+  else { const e = Object.assign({ id: nid('e') }, data); ENTRIES.push(e); id = e.id; }
+  st.flash = [id]; st.date = f.date; st.screen = 'day'; closeSheet(); st.keep = true; render(); toast(tr(f.toUsual ? 'toastUsual' : 'toastSaved'), f.toUsual);
+}
+function saveEvent(f, data) {
+  undoSnap = snapshot();
+  const d = Object.assign({ date: f.date, detail: (f.detail || '').trim(), props: {}, also: [] }, data);
+  if (f.mode === 'edit') Object.assign(EVENTS.find((x) => x.id === f.id), d); else EVENTS.push(Object.assign({ id: nid('v') }, d));
+  st.date = f.date; st.screen = 'day'; closeSheet(); st.keep = f.mode === 'edit'; render(); toast(tr('toastSaved'), true);
+}
+
+/* events: clicks run actions; typing updates state in place without redrawing the sheet */
+document.addEventListener('click', (ev) => {
+  const el = ev.target.closest('[data-act]'); if (!el || el.disabled) return;
+  const fn = A[el.dataset.act]; if (!fn) return; ev.preventDefault(); fn(el);
+});
+document.addEventListener('input', (ev) => {
+  const el = ev.target; const k = el.dataset && el.dataset.in; const f = st.f; if (!k || !f) return;
+  if (k === 'toUsual') { f.toUsual = el.checked; return; }
+  if (k === 'amountNum') { const v = parseFloat(el.value.replace(',', '.')); f.amount = isNaN(v) ? null : v; f.err = null; refreshUsual(); return; }
+  if (['note', 'detail', 'otherName'].includes(k)) { f[k] = el.value; return; }
+  if (k === 'titleText') { f.titleText = el.value; f.err = null; const c = document.getElementById('clinicChips'); if (c) { const clinics = []; EVENTS.forEach((e) => { if (e.type === 'vet' && e.title && !clinics.includes(e.title)) clinics.push(e.title); }); c.innerHTML = clinicChips(f, clinics); } return; }
+});
+document.addEventListener('change', (ev) => {
+  const el = ev.target; const k = el.dataset && el.dataset.in; const f = st.f; if (!k || !f || !el.value) return;
+  if (k === 'date') { if (el.value <= TODAY) { f.date = el.value; if (f.mode !== 'edit' && f.item && f.item !== '_other') setItem(f, f.item); refreshUsual(); } return; }
+  if (k === 'part') { f.part = +el.value; if (f.mode !== 'edit' && f.item && f.item !== '_other') { setItem(f, f.item); updateSheet(); } else refreshUsual(); return; }
+  if (k === 'from') { f.from = el.value; if (f.len === '7' || f.len === '14') f.to = shift(f.from, +f.len - 1); return; }
+  if (k === 'to') { f.to = el.value; return; }
+  if (k === 'rfrom' || k === 'rto') { f[k === 'rfrom' ? 'from' : 'to'] = el.value; updateSheet(); }
+});
+document.addEventListener('keydown', (ev) => { if (ev.key === 'Escape' && st.f) closeSheet(); });
+
+/* deep links for screenshots: #frame=1&lang=pl&screen=day|usual|list&date=…&open=… */
+function applyHash() {
+  const h = new URLSearchParams(location.hash.slice(1));
+  if (h.get('frame')) document.body.classList.add('frame');
+  if (h.get('lang')) st.lang = h.get('lang');
+  if (h.get('screen')) st.screen = h.get('screen');
+  if (h.get('date')) st.date = h.get('date');
+  render();
+  const o = (h.get('open') || '').split(':');
+  if (o[0] === 'add') A.openAdd(o[1] ? { dataset: { part: o[1] } } : null);
+  if (o[0] === 'kind') { A.openAdd(); A.pickKind({ dataset: { type: o[1] } }); if (o[2]) A.pickItem({ dataset: { v: o[2] } }); if (o[3]) A.pickSym({ dataset: { v: o[3] } }); }
+  if (o[0] === 'edit') { const e = ENTRIES.find((x) => x.date === st.date && x.part === +o[1] && x.item === o[2]); if (e) A.editEntry({ dataset: { id: e.id } }); }
+  if (o[0] === 'editEvent') { const e = EVENTS.filter((x) => x.date === st.date)[+o[1]]; if (e) A.editEvent({ dataset: { id: e.id } }); }
+  if (o[0] === 'slot') { const s = slotsFor(st.date, +o[1]).find((x) => x.item === o[2]); if (s) A.editSlot({ dataset: { slot: s.id } }); }
+  if (o[0] === 'newSlot') A.newSlot({ dataset: { part: o[1] } });
+  if (o[0] === 'range') { A.openAdd(); A.openRange(); }
+  if (o[0] === 'fill') A.fillDay();
+  if (h.get('ctx') && st.f) A.openCtx();
+  if (h.get('amt') && st.f) { st.f.amount = +h.get('amt'); st.f.amtOther = h.get('amt').length > 4; updateSheet(); }
+  if (h.get('state') && st.f) { st.f.state = h.get('state'); updateSheet(); }
+  if (h.get('props') && st.f) { h.get('props').split(',').forEach((kv) => { const p = kv.split('='); st.f.props[p[0]] = p[1]; }); updateSheet(); }
+  if (h.get('len') && st.f) A.pickLen({ dataset: { v: h.get('len') } });
+  if (h.get('scroll')) { const b = document.querySelector('.body,.list'); if (b) b.scrollTop = +h.get('scroll'); }
+  if (h.get('sscroll')) { const b = document.getElementById('sBody'); if (b) b.scrollTop = +h.get('sscroll'); }
+}
+applyHash();
+})();
+</script>
+</body>
+</html>

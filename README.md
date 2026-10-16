@@ -9,7 +9,7 @@ Node 22+.
 
 ```bash
 npm ci
-npm run dev        # http://localhost:5173/demo  (demo mode, no backend): the read-only Timeline; tap a row for its Day view (/demo/day/2026-10-14)
+npm run dev        # http://localhost:5173/demo  (demo mode, no backend): the Timeline; tap a row for its Day view (/demo/day/2026-10-14)
 ```
 
 The root path `/` is the real app: sign-in with e-mail and password (accounts are created by the CEO in Supabase, no sign-up), then the household's data in Supabase. It needs `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` (see `.env.example`); without them it shows "PawLog is not connected". Setting up the Supabase project is a one-time job for the CEO: [docs/runbooks/supabase-setup.md](docs/runbooks/supabase-setup.md).
@@ -28,8 +28,10 @@ The root path `/` is the real app: sign-in with e-mail and password (accounts ar
 
 Keep the list out of the repo, issues, PRs and commit messages.
 
-Copy `.env.example` to `.env` for local settings. `VITE_DEMO_MODE=true` forces demo mode; otherwise demo mode is on whenever the path is `/demo`. Demo data lives in `data/demo/` and is fictional (1 Sep to 15 Oct 2026, "today" frozen at 15 Oct); visitor changes stay in `localStorage`.
+Logging (JCB-39): **+ Add** in the bottom bar (Food, Medication, Symptom, Vet visit, Note, Other), **+** on a day part, tap any row or event card to edit or delete it (Undo in the toast). Planned items of the usual day show as dashed circles with **Given**; **Fill with your usual day** logs everything due (today only up to now). **Menu** in the header (every screen): Usual day (`/demo/usual`), the usual time of each day part, language, Sign out / Reset demo data.
 
-Code map: `src/data/` (repository interface and implementations), `src/auth/` (sign-in, session, Supabase client wiring; loaded only outside demo mode), `src/i18n/`, `src/timeline/` (Timeline screen: pure model, geometry constants, component, CSS), `src/day/` (Day view: pure model, component, CSS), `src/routes.ts` (path router), `src/components/` (design-system components: `DoseMark`, `EventBadge`, `MealIcon`, shared `marks.css`; plus `Brand`, `LangSwitch`), `supabase/` (migrations, RLS tests, bootstrap template, local CLI config).
+Copy `.env.example` to `.env` for local settings. `VITE_DEMO_MODE=true` forces demo mode; otherwise demo mode is on whenever the path is `/demo`. Demo data lives in `data/demo/` (items, `schedule.json` = the usual day, entries, events) and is fictional (1 Sep to 15 Oct 2026, "today" frozen at 15 Oct, the time of day is the device clock); visitor changes stay in `localStorage` (`pawlog.demo.v2`).
+
+Code map: `src/data/` (repository interface and implementations), `src/auth/` (sign-in, session, Supabase client wiring; loaded only outside demo mode), `src/i18n/`, `src/timeline/` (Timeline screen: pure model, geometry constants, component, CSS), `src/day/` (Day view: pure model, component, CSS), `src/log/` (logging: amounts, usual-day logic, symptoms, writes with undo, the sheets and their shared state), `src/usual/` (Usual day screen), `src/routes.ts` (path router), `src/components/` (design-system components: `DoseMark`, `EventBadge`, `MealIcon`, `Sheet`/`Field`/`Chip`, icons, shared `marks.css` and `controls.css`; plus `Brand`, `LangSwitch`), `supabase/` (migrations, RLS tests, bootstrap template, local CLI config).
 
 Manual test cases: [docs/TEST-CASES.md](docs/TEST-CASES.md). Architecture notes: [docs/ENGINEERING.md](docs/ENGINEERING.md).
