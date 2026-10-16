@@ -4,7 +4,25 @@ Format: [Keep a Changelog](https://keepachangelog.com). "Unreleased" means not y
 
 ## Unreleased
 
+### Fixed
+- Real-data blockers from the first use on the iPhone PWA and desktop (JCB-43), reproduced on the real data path (SupabaseRepository and supabase-js against a PostgREST-like fake on Postgres), not only `/demo`:
+  - Editing an entry (or logging a planned row) as another item or part kept the row but dropped its usual-day slot, so the slot came back as "not logged" and looked like a new entry: the entry now keeps the slot it filled or was opened from (same date), unless its new item has its own open slot.
+  - Deleting a usual-day item in the Day view put it back as "not logged" and in Fill: it now stays as "Removed for this day" (an `entry` row with state `removed`, so Fill and the other phone skip it); tap it to log it after all; Undo restores the entry.
+  - Day-part times saved on every keystroke or wheel turn, overlapping writes could land out of order and the field was reset while typing: they save on commit (blur, Enter, picker closed); all writes run one after another, so the last one wins.
+  - Saving on a day before the first record bounced back to the Timeline while the records reloaded: the Day view waits for the reload.
+  - Back to the Timeline (from the Usual day or a day) reloaded everything and showed a blank screen until it arrived, or for good when the load failed: the Timeline renders from the records already loaded; a failed load says so with Try again and retries on its own (also when the app returns to the foreground or online); an unexpected error shows Reload instead of a blank page.
+  - Reads never come from the HTTP cache (`cache: 'no-store'`).
+  - Date and time inputs on iOS Safari: same 50px height and left-aligned value as the other fields.
+  - After Fill, no blank space is reserved any more; the day parts keep their place on screen when they can.
+
 ### Added
+- Log starts on (Menu): every day from that date to today is on the Timeline, empty days too, so past days can be opened and filled. Default: the earliest record or usual-day start, else a year back. Long logs render only the rows near the screen. New table `dog_settings` (JCB-43).
+- A usual-day item added or changed from a past date asks once to log it as given on the past days where it is still open ("Log … as given on N past days (… – yesterday)? Days already logged for it stay as they are."); Yes fills them and reports how many were already logged; Undo takes them back.
+- New food or medication gets the first unused item colour token (cycling when all are used); the colour can be changed with swatches of the item colour tokens, also on an existing usual-day item. Food: Add flavour adds a new flavour to the item.
+- A new food or medication entry starts from the last one of its kind (item, amount, unit, flavour).
+- + on a Usual day part asks Food or Medication first, then lists only that kind.
+- Migration `20261017120000_removed_entries_log_start.sql` (entry state `removed`, table `dog_settings` with RLS); RLS tests 72 checks. Repository: `listRemovedSlots`, `removeFromDay`, `getSettings`, `saveSettings`.
+- Test harness `tests/harness/` (fake Supabase backend on PGlite with every migration and RLS) used by contract tests for both repositories (`tests/contract.test.ts`) and real-path app tests (`tests/realpath.test.tsx`); dev-only `harness.html` runs the app on it in the browser. Draft copy `docs/copy/copy-proposal-blockers.csv`.
 - Logging, editing and the usual day (JCB-39), after the approved design (JCB-25 round 2): **+ Add** in a new bottom navbar (Food, Medication, Symptom, Vet visit, Note, Other) and **+** on each day part (Food or Medication with that part set). Entry sheet with item picker (Other creates a new item), flavour, structured amount (fraction chips, or a decimal field for ml and g), unit chips, Given / Skipped / Partly eaten (food only), note, "For … · Change" date and part. Tap any entry to edit it, including changing the item; tap a vet, symptom, note or other card to edit it. Delete without confirmation, with Undo in a toast.
 - Usual day in the Day view: not-yet-logged items as planned rows (dashed `DoseMark` state `planned`) with **Given** in one tap, **All given** per part, and the "Fill with your usual day: N" banner (today only the parts whose time has passed; never overwrites; Undo). "Add to the usual day from this day on" and "Make this the usual amount from this day on" in the entry sheet. Course days ("day 2 of 7") only for slots marked as a course (`schedule_slot.is_course`, set by "How long"). Writes are guarded against double taps; Partly eaten is the one term for partial food.
 - Events: symptoms with per-type properties (Poo: consistency, colour, amount; Vomit: times, when; Leakage: amount; others: intensity) and details; vet visit with clinic chips, reason and also done (anal glands, nails); note; other (Frontline, deworming, anal glands, nails, other with a title). No attachments yet.
@@ -25,6 +43,8 @@ Format: [Keep a Changelog](https://keepachangelog.com). "Unreleased" means not y
 - Draft EN/PL copy for sign-in in `docs/copy/copy-proposal-auth.csv` (pending CEO review), merged into the generated catalogues.
 
 ### Changed
+- Fill: the prominent banner shows only on a day with nothing logged; otherwise a quiet "Fill with your usual day: N" sits under the day parts.
+- The Timeline reads the shared records instead of loading on its own.
 - Demo data (fictional) moved to structured amounts: items carry a default unit and flavours ("Farm Fresh" with flavour turkey instead of "Farm Fresh, turkey"), Bellavet a 1 bar = 0,1 ml conversion; `data/demo/schedule.json` is the usual day; entries link to their slot; symptom details became properties. Demo storage key is now `pawlog.demo.v2` (older demo edits are dropped).
 - Language switch and Sign out moved from the header into the Menu. Day-part headers: the name is centred on its icon; the Day view's Timeline button keeps icon and label on one line.
 - Back from a day (in-app or browser) returns to the Timeline at the same scroll position; reload keeps the day; invalid or out-of-range day URLs fall back to the Timeline.

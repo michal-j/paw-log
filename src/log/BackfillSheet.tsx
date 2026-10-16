@@ -68,7 +68,7 @@ export function BackfillSheet({ slot }: { slot: ScheduleSlot }) {
         </>
       }
     >
-      <p className="sheet__text">{text}</p>
+      <p className="sheet__text sheet__text--toast-room">{text}</p>
     </Sheet>
   );
 }

@@ -19,6 +19,7 @@ The root path `/` is the real app: sign-in with e-mail and password (accounts ar
 | `npm run generate` | Builds `src/styles/tokens.css` from `docs/design-system/tokens.json` and the EN/PL catalogues from `docs/copy/pawlog-copy-en-pl.csv` plus draft `docs/copy/copy-proposal-*.csv` files (git-ignored; runs before dev, build, test, typecheck) |
 | `npm run lint` / `npm run typecheck` / `npm test` | ESLint, `tsc --noEmit`, Vitest |
 | `npm run test:db` | Applies `supabase/migrations/` to an in-process Postgres (PGlite, no Docker) and runs the row-level-security tests in `supabase/tests/database/` |
+| `npm run dev`, then `/harness.html` | Dev only: the real app (sign-in gate, SupabaseRepository, supabase-js) against an in-browser fake Supabase on PGlite with every migration; no project or account needed (`tests/harness/`, see docs/ENGINEERING.md) |
 | `npm run build` | Type-check, then production build with the service worker |
 | `npm run check:secrets` | Fails on service-key or real-project-URL patterns, and on locally blocked words (the repo is public) |
 
