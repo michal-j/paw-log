@@ -243,4 +243,78 @@ describe('real data path', () => {
       { day_part: 6 },
     ]);
   });
+
+  it('(10) a usual-day item added from a past date offers once to log the past days; Yes fills, skipping logged days', async () => {
+    const { fake: f } = await at('/usual/2026-10-15');
+    await screen.findAllByText('Cooked meal');
+    // Logged by hand on 13 Oct already.
+    await f.backend.sql(
+      `insert into entry (dog_id, date, day_part, item_id, amount, unit, state) values ('${SEED.dog}', '2026-10-13', 6, '${SEED.items.arvelin}', 1, 'pill', 'given')`,
+    );
+    click('Add to Supper');
+    fireEvent.click(within(dialog()).getByText('Medication'));
+    fireEvent.click(await within(dialog()).findByRole('radio', { name: 'Arvelin' }));
+    fireEvent.change(within(dialog()).getByLabelText('Starts on'), { target: { value: '2026-10-12' } });
+    click('Save');
+    expect(await screen.findByRole('heading', { name: 'Log past days?' })).toBeTruthy();
+    expect(await screen.findByText('Log Arvelin as given on 2 past days (12 Oct – yesterday)? Days already logged for it stay as they are.')).toBeTruthy();
+    click('Yes, log them');
+    expect(await screen.findByText('Logged on 2 days, 1 already logged')).toBeTruthy();
+    expect(
+      await rows(`select date::text as d from entry where item_id = '${SEED.items.arvelin}' and day_part = 6 and schedule_slot_id is not null order by date`),
+    ).toEqual([{ d: '2026-10-12' }, { d: '2026-10-14' }]);
+    click('Undo');
+    await waitFor(async () =>
+      expect(await rows(`select count(*)::int as n from entry where item_id = '${SEED.items.arvelin}' and day_part = 6`)).toEqual([{ n: 1 }]),
+    );
+  });
+
+  it('(10) No leaves the past days alone', async () => {
+    await at('/usual/2026-10-15');
+    await screen.findAllByText('Cooked meal');
+    click('Add to Supper');
+    fireEvent.click(within(dialog()).getByText('Medication'));
+    fireEvent.click(await within(dialog()).findByRole('radio', { name: 'Arvelin' }));
+    fireEvent.change(within(dialog()).getByLabelText('Starts on'), { target: { value: '2026-10-14' } });
+    click('Save');
+    expect(await screen.findByText('Log Arvelin as given yesterday (14 Oct)? A day already logged for it stays as it is.')).toBeTruthy();
+    click('No, leave them');
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+    expect(await rows(`select count(*)::int as n from entry`)).toEqual([{ n: 0 }]);
+  });
+
+  it('(12) Log starts on in the Menu reaches further back, and is saved', async () => {
+    await at('/', '2026-10-10');
+    await screen.findByText('October 2026');
+    expect(screen.queryByText('September 2026')).toBeNull();
+    click('Menu');
+    const start = within(dialog()).getByLabelText('Log starts on') as HTMLInputElement;
+    expect(start.value).toBe('2026-10-10');
+    fireEvent.change(start, { target: { value: '2026-09-20' } });
+    fireEvent.blur(start);
+    expect(await screen.findByText('September 2026')).toBeTruthy();
+    expect(await rows(`select log_start::text as d from dog_settings`)).toEqual([{ d: '2026-09-20' }]);
+  });
+
+  it('(12) a year-long log renders only the rows near the screen, with spacers keeping the geometry', async () => {
+    const { fake: f } = await at('/', '2026-10-10');
+    await f.backend.sql(`insert into dog_settings (dog_id, log_start) values ('${SEED.dog}', '2025-10-15')`);
+    click('Menu');
+    click('Close');
+    await screen.findByText('October 2026');
+    // Any reload picks the setting up; a write is the simplest one.
+    click('Menu');
+    const breakfast = within(dialog()).getByLabelText('Breakfast');
+    fireEvent.change(breakfast, { target: { value: '07:40' } });
+    fireEvent.blur(breakfast);
+    await waitFor(() => expect(document.querySelectorAll('.tl-pad').length).toBeGreaterThan(0));
+    const rendered = document.querySelectorAll('.tl-row').length;
+    expect(rendered).toBeGreaterThan(10);
+    expect(rendered).toBeLessThan(120);
+    const list = document.querySelector('.tl-rows') as HTMLElement;
+    const heights = [...list.children].reduce((sum, li) => sum + parseFloat((li as HTMLElement).style.height || '0'), 0);
+    // 366 days of 44px plus 13 month bands of 28px.
+    expect(heights).toBe(366 * 44 + 13 * 28);
+  });
 });
+

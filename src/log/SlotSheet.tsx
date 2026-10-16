@@ -11,7 +11,7 @@ import { nextColour, withFlavour } from './items';
 import { useFormat } from './format';
 import { useBusy } from './useBusy';
 import { useLog } from './LogProvider';
-import { changeFrom, removeFrom, sameValues } from './plan';
+import { backfillDays, changeFrom, removeFrom, sameValues, slotsAfter } from './plan';
 
 type Length = 'none' | '7' | '14' | 'date';
 
@@ -40,7 +40,7 @@ const endFor = (from: PlainDate, length: Length, to: PlainDate | null): PlainDat
 export function SlotSheet({ date, part, slot, group: onlyGroup }: { date: PlainDate; part: DayPart; slot?: ScheduleSlot; group?: KindGroup }) {
   const { t } = useI18n();
   const f = useFormat();
-  const { records, repository, run, close } = useLog();
+  const { records, repository, run, close, open } = useLog();
   const { busy, guard } = useBusy();
   const [form, setForm] = useState<Form>(() => {
     const item = slot && records?.items.find((i) => i.id === slot.itemId);
@@ -134,8 +134,14 @@ export function SlotSheet({ date, part, slot, group: onlyGroup }: { date: PlainD
         undos.push(await act.applySlotChange(repository, change, records.slots));
         return act.undoAll(...undos);
       }, t('toastUsual'))
-    )
-      close();
+    ) {
+      // Added or changed from a past date: offer once to log it on the past days where it is open.
+      const saved = 'slot' in change ? change.slot : null;
+      const past = saved && !lengthOnly && saved.activeFrom < records.today;
+      const pastDays = past ? backfillDays(saved, slotsAfter(records.slots, change), records.entries, records.removed, records.today) : null;
+      if (saved && pastDays?.days.length) open({ kind: 'backfill', slot: saved });
+      else close();
+    }
   };
 
   const remove = async () => {

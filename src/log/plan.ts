@@ -193,3 +193,42 @@ export function usualDay(slots: ScheduleSlot[], date: PlainDate, order: (a: Sche
     return { part, rows };
   });
 }
+
+// ---------- Logging past days for a usual-day change ----------
+
+/** The slot list once `change` is written: saved slots replace or join, removed ones go. */
+export function slotsAfter(slots: ScheduleSlot[], change: Pick<SlotChange, 'save' | 'remove'>): ScheduleSlot[] {
+  const saved = new Map(change.save.map((s) => [s.id, s]));
+  const kept = slots.filter((s) => !saved.has(s.id) && !change.remove.includes(s.id));
+  return [...kept, ...change.save];
+}
+
+/**
+ * A usual-day item added or changed from a past date: the past days (its start to yesterday, within
+ * its period) on which it is still open, so they can be logged as given at once. Days on which it
+ * was logged, or removed for the day, are left out. `total` counts every past day of the period.
+ */
+export function backfillDays(
+  slot: ScheduleSlot,
+  slots: ScheduleSlot[],
+  entries: Entry[],
+  removed: RemovedSlot[],
+  today: PlainDate,
+): { days: PlainDate[]; total: number } {
+  const yesterday = shiftDate(today, -1);
+  const end = slot.activeTo !== null && slot.activeTo < yesterday ? slot.activeTo : yesterday;
+  const byDate = new Map<PlainDate, Entry[]>();
+  for (const e of entries) {
+    if (e.date < slot.activeFrom || e.date > end) continue;
+    const list = byDate.get(e.date);
+    if (list) list.push(e);
+    else byDate.set(e.date, [e]);
+  }
+  const days: PlainDate[] = [];
+  let total = 0;
+  for (let d = slot.activeFrom; d <= end; d = shiftDate(d, 1)) {
+    total++;
+    if (!matchDay(d, slots, byDate.get(d) ?? [], removed).filled.has(slot.id)) days.push(d);
+  }
+  return { days, total };
+}

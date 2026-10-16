@@ -41,6 +41,8 @@ export type SheetState =
     }
   | { kind: 'event'; type: EventKind; date: PlainDate; event?: HealthEvent; ctxOpen?: boolean }
   | { kind: 'slot'; date: PlainDate; part: DayPart; slot?: ScheduleSlot; group?: KindGroup }
+  /** After a usual-day change from a past date: log it on the past days where it is open? */
+  | { kind: 'backfill'; slot: ScheduleSlot }
   | { kind: 'menu' };
 
 interface Toast {

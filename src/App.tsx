@@ -5,6 +5,7 @@ import { useI18n } from './i18n';
 import { Brand } from './components/Brand';
 import { MenuIcon, PlusIcon, TimelineIcon } from './components/icons';
 import { AddSheet } from './log/AddSheet';
+import { BackfillSheet } from './log/BackfillSheet';
 import { EntrySheet } from './log/EntrySheet';
 import { EventSheet } from './log/EventSheet';
 import { LogProvider, useLog } from './log/LogProvider';
@@ -210,6 +211,8 @@ function SheetHost({
       return <EventSheet key={sheet.event?.id ?? sheet.type} kind={sheet.type} date={sheet.date} event={sheet.event} ctxOpen={sheet.ctxOpen} onShowDay={onShowDay} />;
     case 'slot':
       return <SlotSheet key={sheet.slot?.id ?? `new-${sheet.part}`} date={sheet.date} part={sheet.part} slot={sheet.slot} group={sheet.group} />;
+    case 'backfill':
+      return <BackfillSheet key={`backfill-${sheet.slot.id}`} slot={sheet.slot} />;
     case 'menu':
       return <MenuSheet onUsualDay={onUsualDay} onSignOut={onSignOut} onResetDemo={onResetDemo} />;
   }
