@@ -96,6 +96,26 @@ export interface Entry {
   updatedBy?: string;
 }
 
+/**
+ * A usual-day item deliberately removed for one day (its entry was deleted in the Day view). The
+ * slot counts as done for that date, so it is neither offered as "not logged" nor filled again.
+ * Stored as an entry row with state `removed` (one row per slot per day, like any entry).
+ */
+export interface RemovedSlot {
+  id: string;
+  dogId: string;
+  date: PlainDate;
+  dayPart: DayPart;
+  itemId: string;
+  scheduleSlotId: string;
+}
+
+/** Household settings for one dog. */
+export interface DogSettings {
+  /** The first day the Timeline and Day view offer; null = derived (see `logStartOf`). */
+  logStart: PlainDate | null;
+}
+
 export interface HealthEvent {
   id: string;
   dogId: string;

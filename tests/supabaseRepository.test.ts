@@ -29,6 +29,7 @@ class FakeQuery implements PromiseLike<Result> {
   }
   select = (...a: unknown[]) => this.add('select', a);
   eq = (...a: unknown[]) => this.add('eq', a);
+  neq = (...a: unknown[]) => this.add('neq', a);
   gte = (...a: unknown[]) => this.add('gte', a);
   lte = (...a: unknown[]) => this.add('lte', a);
   or = (...a: unknown[]) => this.add('or', a);

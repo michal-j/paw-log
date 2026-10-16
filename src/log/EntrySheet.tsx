@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import type { DayPart, Entry, EntryState, Item, PlainDate, ScheduleSlot } from '../data';
+import type { DayPart, Entry, EntryState, Item, PlainDate, RemovedSlot, ScheduleSlot } from '../data';
 import { Field, Sheet } from '../components/Sheet';
 import { fill, useI18n } from '../i18n';
 import { markSize } from '../timeline/model';
@@ -9,7 +9,7 @@ import { AmountFields, DateLine, FlavourPicker, ItemPicker, OTHER, StatePicker, 
 import { useFormat } from './format';
 import { useBusy } from './useBusy';
 import { useLog, type Records } from './LogProvider';
-import { changeFrom, matchDay, slotsOn } from './plan';
+import { activeOn, changeFrom, matchDay, slotsOn } from './plan';
 
 interface Form {
   date: PlainDate;
@@ -25,12 +25,36 @@ interface Form {
   err: 'item' | 'amount' | null;
 }
 
+/** Slots of `date` taken by other entries or removed for the day; `selfId` (the entry or marker being edited) does not count. */
+function takenSlots(records: Records, date: PlainDate, selfId?: string): Set<string> {
+  const others = records.entries.filter((e) => e.id !== selfId);
+  const removed = records.removed.filter((r) => r.id !== selfId);
+  return matchDay(date, records.slots, others, removed).filled;
+}
+
 /** The usual-day slot an entry for (date, part, item) would fill: active, same item, not filled by another entry. */
 export function slotFor(records: Records, date: PlainDate, part: DayPart, itemId: string | null, entryId?: string): ScheduleSlot | null {
   if (!itemId || itemId === OTHER) return null;
-  const others = records.entries.filter((e) => e.id !== entryId);
-  const { filled } = matchDay(date, records.slots, others);
+  const filled = takenSlots(records, date, entryId);
   return slotsOn(records.slots, date, part).find((s) => s.itemId === itemId && !filled.has(s.id)) ?? null;
+}
+
+/**
+ * The slot a saved entry fills. Its own item's open slot in that part comes first; otherwise the
+ * slot it was opened from (the planned row, or the slot the edited entry filled) keeps it, as long as
+ * the date is the same: logging something else in its place (another food, another part) is still
+ * that slot's entry, and the slot must not turn back into "not logged".
+ */
+export function slotOnSave(
+  records: Records,
+  values: { date: PlainDate; part: DayPart; itemId: string },
+  anchor: { slot: ScheduleSlot; date: PlainDate } | null,
+  selfId: string,
+): ScheduleSlot | null {
+  const own = slotFor(records, values.date, values.part, values.itemId, selfId);
+  if (own) return own;
+  if (!anchor || anchor.date !== values.date || !activeOn(anchor.slot, values.date)) return null;
+  return takenSlots(records, values.date, selfId).has(anchor.slot.id) ? null : anchor.slot;
 }
 
 /** Items of the group, ordered: in this part of the usual day, then active on the date, then the rest. */
@@ -52,6 +76,7 @@ export function EntrySheet({
   part,
   entry,
   slot,
+  replaces,
   ctxOpen = false,
   onShowDay,
 }: {
@@ -60,6 +85,7 @@ export function EntrySheet({
   part: DayPart;
   entry?: Entry;
   slot?: ScheduleSlot;
+  replaces?: RemovedSlot;
   ctxOpen?: boolean;
   onShowDay: (date: PlainDate) => void;
 }) {
@@ -99,7 +125,7 @@ export function EntrySheet({
       ctxOpen,
       err: null,
     };
-    return slot && records ? withItem(base, slot.itemId, records, group) : base;
+    return slot && records ? withItem(base, slot.itemId, records, group, replaces?.id) : base;
   });
 
   const items = useMemo(
@@ -109,7 +135,11 @@ export function EntrySheet({
   if (!records) return null;
 
   const item = records.items.find((i) => i.id === form.itemId) ?? null;
-  const usual = slotFor(records, form.date, form.part, form.itemId, entry?.id);
+  const selfId = entry?.id ?? replaces?.id;
+  // The slot this sheet was opened for: a planned or removed row's slot, or the one the edited entry fills.
+  const anchorSlot = entry ? (matchDay(entry.date, records.slots, records.entries).slotOf.get(entry.id) ?? null) : (slot ?? null);
+  const anchor = anchorSlot ? { slot: anchorSlot, date: entry?.date ?? date } : null;
+  const usual = slotFor(records, form.date, form.part, form.itemId, selfId);
   const usualText = usual && usual.amount !== null && usual.unit ? f.amount(usual.amount, usual.unit, item?.conversion) : '';
   const differs =
     !!usual && (!sameAmount(usual.amount, form.amount.amount) || usual.unit !== form.amount.unit || usual.flavour !== form.flavour);
@@ -120,7 +150,7 @@ export function EntrySheet({
     setForm((x) => {
       const next = { ...x, ...patch };
       // A new date or part takes that part's usual values when adding; an edit keeps what was logged.
-      return !edit && next.itemId && next.itemId !== OTHER ? withItem(next, next.itemId, records, group) : next;
+      return !edit && next.itemId && next.itemId !== OTHER ? withItem(next, next.itemId, records, group, selfId) : next;
     });
 
   const save = async () => {
@@ -150,13 +180,16 @@ export function EntrySheet({
       form.toUsual && offer
         ? changeFrom(records.slots, null, { itemId, dayPart: form.part, flavour, amount: form.amount.amount, unit }, form.date, undefined, act.newId, dog.id)
         : null;
+    const slotId = change?.slot.id ?? slotOnSave(records, { date: form.date, part: form.part, itemId }, anchor, selfId ?? '')?.id ?? null;
+    // Logging a removed slot again takes the marker's row; anything else is a row of its own.
+    const replacing = replaces && slotId === replaces.scheduleSlotId ? replaces : null;
     const next: Entry = {
-      id: entry?.id ?? act.newId(),
+      id: entry?.id ?? replacing?.id ?? act.newId(),
       dogId: dog.id,
       date: form.date,
       dayPart: form.part,
       itemId,
-      scheduleSlotId: change?.slot.id ?? slotFor(records, form.date, form.part, itemId, entry?.id)?.id ?? null,
+      scheduleSlotId: slotId,
       amount: form.amount.amount,
       unit,
       flavour,
@@ -169,7 +202,7 @@ export function EntrySheet({
       if (newItem) await repository.saveItem(newItem);
       const undos: act.Undo[] = [];
       if (change) undos.push(await act.applySlotChange(repository, change, records.slots));
-      undos.push(await act.saveEntry(repository, next, entry ?? null));
+      undos.push(await act.saveEntry(repository, next, entry ?? null, replacing));
       return act.undoAll(...undos);
     }, t(change ? 'toastUsual' : 'toastSaved'));
     if (ok) {
@@ -180,7 +213,7 @@ export function EntrySheet({
 
   const remove = async () => {
     if (!entry) return;
-    if (await run(() => act.deleteEntry(repository, entry), t('toastDeleted'))) close();
+    if (await run(() => act.deleteEntry(repository, entry, anchorSlot), t('toastDeleted'))) close();
   };
 
   const title = edit ? t('editEntry') : t(group === 'food' ? 'addFood' : 'addMed');
@@ -214,7 +247,7 @@ export function EntrySheet({
         label={t(group === 'food' ? 'title.104' : 'dose.133')}
         items={items}
         value={form.itemId}
-        onPick={(id) => setForm((x) => withItem(x, id, records, group))}
+        onPick={(id) => setForm((x) => withItem(x, id, records, group, selfId))}
         otherName={form.otherName}
         onOtherName={(s) => set({ otherName: s, err: null })}
         otherPlaceholder={t(group === 'food' ? 'otherFoodPh' : 'otherMedPh')}
@@ -260,11 +293,11 @@ export function EntrySheet({
 }
 
 /** Pick an item: take its usual-day values for this part (or its defaults), keep the date and part. */
-function withItem(form: Form, itemId: string, records: Records, group: KindGroup): Form {
+function withItem(form: Form, itemId: string, records: Records, group: KindGroup, selfId?: string): Form {
   const next: Form = { ...form, itemId, err: null, toUsual: false };
   if (itemId === OTHER) return { ...next, flavour: '' };
   const item = records.items.find((i) => i.id === itemId);
-  const s = slotFor(records, form.date, form.part, itemId);
+  const s = slotFor(records, form.date, form.part, itemId, selfId);
   const unit = s?.unit ?? item?.defaultUnit ?? defaultUnitFor(group);
   const amount = s ? s.amount : unit === 'ml' || unit === 'g' ? null : 1;
   return {

@@ -5,18 +5,25 @@ import entriesJson from '../../data/demo/entries.json';
 import eventsJson from '../../data/demo/events.json';
 import { DuplicateSlotEntryError } from './errors';
 import { DEFAULT_DAY_PART_TIMES, type Repository } from './repository';
-import type { DateRange, DayPart, DayPartTimes, Dog, Entry, HealthEvent, Item, ScheduleSlot } from './types';
+import type { DateRange, DayPart, DayPartTimes, Dog, DogSettings, Entry, EntryState, HealthEvent, Item, RemovedSlot, ScheduleSlot } from './types';
 
 /** v2: JCB-39 changed the shape (amounts, usual day). Changes saved under v1 are dropped. */
 export const DEMO_STORAGE_KEY = 'pawlog.demo.v2';
 
+/** Entries as stored: a usual-day item removed for a day is a row with state `removed` (as in the database). */
+type StoredEntry = Omit<Entry, 'state'> & { state: EntryState | 'removed' };
+
 interface Persisted {
   items: Item[];
   slots: ScheduleSlot[];
-  entries: Entry[];
+  entries: StoredEntry[];
   events: HealthEvent[];
   times: DayPartTimes;
+  /** Absent in changes saved before JCB-43. */
+  settings?: DogSettings;
 }
+
+const isEntry = (e: StoredEntry): e is Entry => e.state !== 'removed';
 
 const { today, ...dogFields } = dogJson;
 const inRange = (date: string, range?: DateRange) =>
@@ -33,6 +40,7 @@ function seed(): Persisted {
     entries: copy(entriesJson as Entry[]),
     events: copy(eventsJson as HealthEvent[]),
     times: { ...DEFAULT_DAY_PART_TIMES },
+    settings: { logStart: null },
   };
 }
 
@@ -62,14 +70,14 @@ export class DemoRepository implements Repository {
     return copy(this.data.items);
   }
   async saveItem(item: Item) {
-    this.data.items = upsert(this.data.items, item);
+    this.data.items = upsert(this.data.items, copy(item));
     this.persist();
   }
   async listScheduleSlots(range?: DateRange) {
     return copy(this.data.slots.filter((slot) => activeIn(slot, range)));
   }
   async saveScheduleSlot(slot: ScheduleSlot) {
-    this.data.slots = upsert(this.data.slots, slot);
+    this.data.slots = upsert(this.data.slots, copy(slot));
     this.persist();
   }
   async deleteScheduleSlot(id: string) {
@@ -85,19 +93,38 @@ export class DemoRepository implements Repository {
     this.data.times = { ...this.data.times, [part]: time };
     this.persist();
   }
-  async listEntries(range?: DateRange) {
-    return copy(this.data.entries.filter((e) => inRange(e.date, range)).sort(byDate));
+  async listEntries(range?: DateRange): Promise<Entry[]> {
+    return copy(this.data.entries.filter(isEntry).filter((e) => inRange(e.date, range)).sort(byDate));
   }
   async saveEntry(entry: Entry) {
     if (this.slotTaken(entry)) throw new DuplicateSlotEntryError(entry.date, entry.scheduleSlotId ?? '');
-    this.data.entries = upsert(this.data.entries, entry);
+    this.data.entries = upsert<StoredEntry>(this.data.entries, copy(entry));
+    this.persist();
+  }
+  async listRemovedSlots(range?: DateRange): Promise<RemovedSlot[]> {
+    return this.data.entries
+      .filter((e) => e.state === 'removed' && !!e.scheduleSlotId && inRange(e.date, range))
+      .sort(byDate)
+      .map((e) => ({ id: e.id, dogId: e.dogId, date: e.date, dayPart: e.dayPart, itemId: e.itemId, scheduleSlotId: e.scheduleSlotId as string }));
+  }
+  async removeFromDay(entry: Entry, slotId: string) {
+    const marker: StoredEntry = { ...copy(entry), scheduleSlotId: slotId, state: 'removed' };
+    if (this.slotTaken(marker)) throw new DuplicateSlotEntryError(entry.date, slotId);
+    this.data.entries = upsert(this.data.entries, marker);
+    this.persist();
+  }
+  async getSettings(): Promise<DogSettings> {
+    return { logStart: null, ...this.data.settings };
+  }
+  async saveSettings(settings: DogSettings) {
+    this.data.settings = { ...settings };
     this.persist();
   }
   async addPlannedEntries(entries: Entry[]) {
     const added: string[] = [];
     for (const entry of entries) {
       if (this.slotTaken(entry) || this.data.entries.some((e) => e.id === entry.id)) continue;
-      this.data.entries = [...this.data.entries, entry];
+      this.data.entries = [...this.data.entries, copy(entry)];
       added.push(entry.id);
     }
     this.persist();
@@ -115,7 +142,7 @@ export class DemoRepository implements Repository {
     return copy(this.data.events.filter((e) => inRange(e.date, range)).sort(byDate));
   }
   async saveEvent(event: HealthEvent) {
-    this.data.events = upsert(this.data.events, event);
+    this.data.events = upsert(this.data.events, copy(event));
     this.persist();
   }
   async deleteEvent(id: string) {
@@ -133,8 +160,8 @@ export class DemoRepository implements Repository {
     this.data = seed();
   }
 
-  /** Same rule as the database: one entry per schedule slot per date. */
-  private slotTaken(entry: Entry) {
+  /** Same rule as the database: one entry (or removal marker) per schedule slot per date. */
+  private slotTaken(entry: Pick<StoredEntry, 'id' | 'date' | 'scheduleSlotId'>) {
     const slot = entry.scheduleSlotId;
     return !!slot && this.data.entries.some((e) => e.id !== entry.id && e.date === entry.date && e.scheduleSlotId === slot);
   }

@@ -1,0 +1,20 @@
+#,Where (code name),English,Polish,EN chars,PL chars,Fit note,Your notes
+B1,removedDay,Removed for this day,Usunięte na ten dzień,20,21,"DRAFT pending CEO review; sub-line under a usual-day item deleted in the Day view","JCB-43 (13): a deleted planned item is not offered again that day"
+B2,loadFailed,Could not load. Check the connection.,Nie udało się wczytać. Sprawdź połączenie.,37,42,"DRAFT pending CEO review; Timeline when nothing could be loaded","JCB-43 (4): no blank screen"
+B3,retry,Try again,Spróbuj ponownie,9,16,DRAFT pending CEO review; button,JCB-43 (4)
+B4,crashed,Something went wrong.,Coś poszło nie tak.,21,19,"DRAFT pending CEO review; shown instead of a blank screen after an unexpected error",JCB-43 (4)
+B5,reloadApp,Reload,Odśwież,6,7,DRAFT pending CEO review; button,JCB-43 (4)
+B7,colourN,Colour {n},Kolor {n},9,8,"DRAFT pending CEO review; screen-reader name of a colour swatch",JCB-43 (6)
+B8,addFlavour,Add flavour,Dodaj smak,11,10,"DRAFT pending CEO review; chip after the flavours",JCB-43 (7)
+B9,flavourPh,New flavour,Nowy smak,11,9,"DRAFT pending CEO review; placeholder of the new flavour field",JCB-43 (7)
+B10,logStart,Log starts on,Dziennik od,13,11,"DRAFT pending CEO review; Menu field label",JCB-43 (12)
+B11,logStartHint,"Every day from this date is on the Timeline, so past days can be opened and filled.","Każdy dzień od tej daty jest na osi czasu, więc minione dni można otworzyć i uzupełnić.",83,86,"DRAFT pending CEO review; note under the field, wraps",JCB-43 (12)
+B12,backfillTitle,Log past days?,Uzupełnić minione dni?,14,22,"DRAFT pending CEO review; sheet title",JCB-43 (10)
+B13,backfillAsk,"Log {item} as given on {n} past days ({from} – yesterday)? Days already logged for it stay as they are.","Zapisać {item} jako podane od {from} do wczoraj (dni: {n})? Dni, w których już to zapisano, zostaną bez zmian.",99,107,"DRAFT pending CEO review; sheet text, wraps; PL avoids the plural with ""dni: {n}""",JCB-43 (10): wording from the issue
+B14,backfillAskOne,Log {item} as given yesterday ({from})? A day already logged for it stays as it is.,"Zapisać {item} jako podane wczoraj ({from})? Jeśli już to zapisano, zostanie bez zmian.",80,81,"DRAFT pending CEO review; the same for one day",JCB-43 (10)
+B15,backfillYes,"Yes, log them","Tak, zapisz",13,11,DRAFT pending CEO review; primary button,JCB-43 (10)
+B16,backfillNo,"No, leave them","Nie, zostaw",14,11,DRAFT pending CEO review; ghost button,JCB-43 (10)
+B17,toastBackfilled,Logged on {n} days,Zapisano dni: {n},18,17,DRAFT pending CEO review; toast,JCB-43 (10)
+B18,toastBackfilledSkip,"Logged on {n} days, {m} already logged","Zapisano dni: {n}, już zapisane: {m}",38,36,DRAFT pending CEO review; toast,JCB-43 (10)
+B19,addUsualFood,Add food to the usual day,Dodaj jedzenie do zwykłego dnia,25,31,"DRAFT pending CEO review; Usual day sheet title after picking Food",JCB-43 (8)
+B20,addUsualMed,Add medication to the usual day,Dodaj lek do zwykłego dnia,31,26,"DRAFT pending CEO review; Usual day sheet title after picking Medication",JCB-43 (8)

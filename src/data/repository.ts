@@ -1,4 +1,4 @@
-import type { DateRange, DayPart, DayPartTimes, Dog, Entry, HealthEvent, Item, PlainDate, ScheduleSlot } from './types';
+import type { DateRange, DayPart, DayPartTimes, Dog, DogSettings, Entry, HealthEvent, Item, PlainDate, RemovedSlot, ScheduleSlot } from './types';
 
 /** Usual times of the day parts until the household changes them (design proposal JCB-25). */
 export const DEFAULT_DAY_PART_TIMES: DayPartTimes = {
@@ -28,9 +28,21 @@ export interface Repository {
   /** The usual time of each day part (defaults for parts never set). */
   getDayPartTimes(): Promise<DayPartTimes>;
   saveDayPartTime(part: DayPart, time: string): Promise<void>;
+  /** Logged entries (removal markers are not entries; see listRemovedSlots). */
   listEntries(range?: DateRange): Promise<Entry[]>;
-  /** Insert or update by id. Rejects when another entry already fills the same slot on that date. */
+  /**
+   * Insert or update by id: an edit keeps its id and changes the row in place (also when it was a
+   * removal marker). Rejects when another entry already fills the same slot on that date.
+   */
   saveEntry(entry: Entry): Promise<void>;
+  /** Usual-day items removed for one day. */
+  listRemovedSlots(range?: DateRange): Promise<RemovedSlot[]>;
+  /**
+   * Delete an entry that filled usual-day slot `slotId`, keeping a marker in its place (same id), so
+   * the slot is not offered or filled again that day. Undo with saveEntry(entry). Rejects with
+   * DuplicateSlotEntryError when another entry fills that slot already.
+   */
+  removeFromDay(entry: Entry, slotId: string): Promise<void>;
   /**
    * Insert planned entries (fill, Given) and skip any whose slot is already filled on that date,
    * so filling never overwrites and two people filling at once cannot double-log.
@@ -39,6 +51,8 @@ export interface Repository {
   addPlannedEntries(entries: Entry[]): Promise<string[]>;
   deleteEntry(id: string): Promise<void>;
   deleteEntries(ids: string[]): Promise<void>;
+  getSettings(): Promise<DogSettings>;
+  saveSettings(settings: DogSettings): Promise<void>;
   listEvents(range?: DateRange): Promise<HealthEvent[]>;
   saveEvent(event: HealthEvent): Promise<void>;
   deleteEvent(id: string): Promise<void>;

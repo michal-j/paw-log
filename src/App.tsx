@@ -13,6 +13,7 @@ import { SlotSheet } from './log/SlotSheet';
 import { dayPath, parseRoute, routePath, timelinePath, usualPath, type Route } from './routes';
 import { Timeline } from './timeline/Timeline';
 import { UsualDay } from './usual/UsualDay';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import './components/controls.css';
 
 /** What PawLog keeps in `history.state`. */
@@ -45,16 +46,18 @@ function readLocation(): Location {
  */
 export function App({ repository, onSignOut }: { repository: Repository; onSignOut?: () => void }) {
   return (
-    <LogProvider repository={repository}>
-      <Shell repository={repository} onSignOut={onSignOut} />
-    </LogProvider>
+    <ErrorBoundary>
+      <LogProvider repository={repository}>
+        <Shell repository={repository} onSignOut={onSignOut} />
+      </LogProvider>
+    </ErrorBoundary>
   );
 }
 
 function Shell({ repository, onSignOut }: { repository: Repository; onSignOut?: () => void }) {
   const { t } = useI18n();
   const log = useLog();
-  const { version, open, close, reload } = log;
+  const { open, close, reload } = log;
   const isDemo = repository instanceof DemoRepository;
   const [loc, setLoc] = useState<Location>(readLocation);
   const { route } = loc;
@@ -160,7 +163,7 @@ function Shell({ repository, onSignOut }: { repository: Repository; onSignOut?: 
       ) : route.view === 'usual' ? (
         <UsualDay date={route.date ?? today} onBack={leaveUsual} />
       ) : (
-        <Timeline repository={repository} version={version} initialScrollTop={loc.scrollTop} dayHref={dayHref} onOpenDay={openDay} />
+        <Timeline initialScrollTop={loc.scrollTop} dayHref={dayHref} onOpenDay={openDay} />
       )}
       <nav className="nav" aria-label={t('menu')}>
         <button

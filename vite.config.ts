@@ -33,5 +33,7 @@ export default defineConfig({
       },
     }),
   ],
+  // PGlite (WASM Postgres) backs the dev-only harness (harness.html, tests/harness); it must not be pre-bundled.
+  optimizeDeps: { exclude: ['@electric-sql/pglite'] },
   test: { environment: 'jsdom', include: ['tests/**/*.test.{ts,tsx}'] },
 });

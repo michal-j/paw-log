@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import type { DayPart, Entry, HealthEvent, PlainDate } from '../data';
 import { fill, useI18n, type MessageKey } from '../i18n';
 import { DoseMark } from '../components/DoseMark';
@@ -38,7 +38,7 @@ interface Props {
 export function DayView({ date, onBack, onStep, onInvalid, onUsualDay }: Props) {
   const { lang, t } = useI18n();
   const f = useFormat();
-  const { records, repository, open, run } = useLog();
+  const { records, repository, open, run, version } = useLog();
 
   // Re-render every minute so "up to now" and Later today follow the clock while the app stays open.
   const [, setTick] = useState(0);
@@ -47,8 +47,14 @@ export function DayView({ date, onBack, onStep, onInvalid, onUsualDay }: Props) 
     return () => clearInterval(id);
   }, []);
 
-  const bounds = useMemo(() => (records ? dayBounds(records.today, records.entries, records.events) : null), [records]);
-  const valid = records && bounds ? inBounds(date, bounds) : true;
+  const bounds = useMemo(
+    () => (records ? dayBounds(records.today, records.entries, records.events, records.logStart) : null),
+    [records],
+  );
+  // Judge the date only on records loaded after the last write: right after saving on a day before
+  // the first record, the records still being loaded do not have that day yet.
+  const fresh = !!records && records.version === version;
+  const valid = records && bounds && fresh ? inBounds(date, bounds) : true;
   useEffect(() => {
     if (!valid) onInvalid();
   }, [valid, onInvalid]);
@@ -65,19 +71,28 @@ export function DayView({ date, onBack, onStep, onInvalid, onUsualDay }: Props) 
   const now = repository.nowTime();
   const day =
     records && bounds && valid
-      ? buildDay({ date, bounds, ...records, plan: { slots: records.slots, today, now, times: records.times } })
+      ? buildDay({ date, bounds, ...records, plan: { slots: records.slots, removed: records.removed, today, now, times: records.times } })
       : null;
   const sub = date === today ? t('sub') : date === shiftDate(today, -1) ? t('copy.114') : '';
   const due = day ? day.parts.flatMap((p) => p.due) : [];
   const anyPlanned = day ? day.parts.some((p) => p.rows.length > 0) : false;
+  // The prominent Fill banner is for a day with nothing logged; otherwise Fill is a quiet action below the parts.
+  const anyLogged = day ? day.parts.some((p) => p.entries.length > 0) : false;
   const itemGroup = (itemId: string) => groupOf(records?.items.find((i) => i.id === itemId)?.kind ?? 'medication');
 
   const { busy, guard } = useBusy();
-  // When a fill empties the banner, its space stays for this day so the list does not jump under the finger.
-  const banner = useRef<HTMLDivElement>(null);
-  const [reserve, setReserve] = useState<{ date: PlainDate; height: number } | null>(null);
-  const giveGuarded = guard(async (rows: PlannedRow[], bannerHeight: number | undefined) => {
-    if (bannerHeight) setReserve({ date, height: bannerHeight });
+  // Keep the day parts where they are on screen while a fill turns planned rows into logged ones.
+  const bodyRef = useRef<HTMLDivElement>(null);
+  const partsRef = useRef<HTMLUListElement>(null);
+  const anchor = useRef<number | null>(null);
+  useLayoutEffect(() => {
+    const body = bodyRef.current;
+    const parts = partsRef.current;
+    if (anchor.current === null || !body || !parts) return;
+    body.scrollTop += parts.getBoundingClientRect().top - anchor.current;
+    anchor.current = null;
+  }, [records]);
+  const giveGuarded = guard(async (rows: PlannedRow[]) => {
     let added = 0;
     await run(
       async () => {
@@ -89,7 +104,11 @@ export function DayView({ date, onBack, onStep, onInvalid, onUsualDay }: Props) 
       () => (added ? fill(t('toastFilled'), { n: added }) : null),
     );
   });
-  const give = (rows: PlannedRow[]) => giveGuarded(rows, banner.current?.offsetHeight);
+  const give = (rows: PlannedRow[]) => {
+    anchor.current = partsRef.current?.getBoundingClientRect().top ?? null;
+    void giveGuarded(rows);
+  };
+  const fillHead = date === today ? `${fill(t('fillTodayH'), { n: due.length })} (${now})` : fill(t('fillPastH'), { n: due.length });
 
   const editEntry = (e: Entry) => open({ kind: 'entry', group: itemGroup(e.itemId), date: e.date, part: e.dayPart, entry: e });
   const editEvent = (e: HealthEvent) => {
@@ -118,17 +137,14 @@ export function DayView({ date, onBack, onStep, onInvalid, onUsualDay }: Props) 
         <StepButton dir="next" target={day ? day.next : null} label={t('nextDay')} onStep={onStep} />
       </div>
 
-      <div className="day__body">
-        {due.length === 0 && reserve?.date === date && <div className="day-fill-space" style={{ height: reserve.height }} aria-hidden="true" />}
-        {due.length > 0 && (
-          <div ref={banner} className="day-card day-fill">
+      <div className="day__body" ref={bodyRef}>
+        {due.length > 0 && !anyLogged && (
+          <div className="day-card day-fill">
             <span className="day-fill__icon" aria-hidden="true">
               <RoutineIcon />
             </span>
             <div className="day-fill__text">
-              <p className="day-fill__head">
-                {date === today ? `${fill(t('fillTodayH'), { n: due.length })} (${now})` : fill(t('fillPastH'), { n: due.length })}
-              </p>
+              <p className="day-fill__head">{fillHead}</p>
               <p className="day-fill__hint">{t('fillHint')}</p>
               <button type="button" className="btn btn--primary btn--md day-fill__btn" disabled={busy} onClick={() => give(due)}>
                 {fill(t('fillBtn'), { n: due.length })}
@@ -227,7 +243,7 @@ export function DayView({ date, onBack, onStep, onInvalid, onUsualDay }: Props) 
           </div>
         )}
         {day && (
-          <ul className="day-card day-parts">
+          <ul className="day-card day-parts" ref={partsRef}>
             {day.parts.map((p) => (
               <li key={p.part} className={`day-part${p.meal ? ' day-part--meal' : ''}`}>
                 <div className="day-part__head">
@@ -247,6 +263,27 @@ export function DayView({ date, onBack, onStep, onInvalid, onUsualDay }: Props) 
                       const name = f.name(r.name, r.flavour);
                       const amount = f.amount(r.amount, r.unit, r.conversion, r.kind === 'logged' ? r.doseText : '');
                       const course = r.course ? fill(t('dayNofM'), r.course) : '';
+                      if (r.kind === 'removed') {
+                        return (
+                          <li key={r.id} className="day-item day-item--removed">
+                            <button
+                              type="button"
+                              className="day-item__open"
+                              onClick={() =>
+                                open({ kind: 'entry', group: itemGroup(r.itemId), date, part: p.part, slot: r.slot, replaces: r.marker })
+                              }
+                            >
+                              <span className="day-item__mark">
+                                <DoseMark colour={r.colour} size={r.size} state="planned" />
+                              </span>
+                              <span className="day-item__text">
+                                <span className="day-item__name">{name}</span>
+                                <span className="day-item__sub">{t('removedDay')}</span>
+                              </span>
+                            </button>
+                          </li>
+                        );
+                      }
                       if (r.kind === 'planned') {
                         const subText = [r.due ? t('planned') : t('laterToday'), course].filter(Boolean).join(' · ');
                         return (
@@ -315,6 +352,17 @@ export function DayView({ date, onBack, onStep, onInvalid, onUsualDay }: Props) 
               </li>
             ))}
           </ul>
+        )}
+        {due.length > 0 && anyLogged && (
+          <div className="day-fill-quiet">
+            <p className="day-fill-quiet__text">{fillHead}</p>
+            <button type="button" className="btn btn--ghost btn--md day-fill-quiet__btn" disabled={busy} onClick={() => give(due)}>
+              <span className="btn__icon">
+                <RoutineIcon size={15} />
+              </span>
+              {fill(t('fillBtn'), { n: due.length })}
+            </button>
+          </div>
         )}
       </div>
     </section>
