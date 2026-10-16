@@ -168,8 +168,9 @@ describe('sign-in flow', () => {
     expect(toggle.textContent).toBe('Show');
     fireEvent.click(toggle);
     expect(password.type).toBe('text');
-    expect(toggle.getAttribute('aria-pressed')).toBe('true');
+    expect(toggle.getAttribute('aria-label')).toBe('Hide password');
     expect(toggle.textContent).toBe('Hide');
+    expect(toggle.hasAttribute('aria-pressed')).toBe(false);
   });
 
   it('checks the fields, explains wrong credentials, then signs in and out', async () => {
@@ -189,6 +190,11 @@ describe('sign-in flow', () => {
     type(/^Password$/, 'wrong');
     submit();
     expect((await screen.findByRole('alert')).textContent).toBe('Wrong e-mail or password.');
+    expect(screen.getByLabelText(/^Password$/).getAttribute('aria-invalid')).toBe('true');
+
+    type(/^Password$/, 'wrong!'); // editing a field clears the error and the red border
+    expect(screen.queryByRole('alert')).toBeNull();
+    expect(screen.getByLabelText(/^Password$/).getAttribute('aria-invalid')).toBe('false');
 
     type(/^Password$/, PASSWORD);
     submit();

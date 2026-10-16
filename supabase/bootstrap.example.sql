@@ -3,8 +3,8 @@
 -- 1. Copy this text into the Supabase SQL editor (do NOT save a filled-in copy in the repo).
 -- 2. Replace every <PLACEHOLDER>. Both e-mail addresses must already exist under
 --    Authentication > Users (created in step 3 of the runbook).
--- 3. Run it once. It stops with an error, and changes nothing, if a placeholder is left
---    or a user is missing.
+-- 3. Run it once. It stops with an error, and changes nothing, if a placeholder is left,
+--    a user is missing, or a household already exists (it was run before).
 --
 -- The SQL editor runs as the postgres role, which bypasses row-level security; the app cannot
 -- create households, members or dogs itself.
@@ -25,6 +25,10 @@ begin
     raise exception 'Fill in every <PLACEHOLDER> before running this script.';
   end if;
   start_date := start_text::date;
+
+  if exists (select 1 from public.household) then
+    raise exception 'A household already exists: this script runs only once. Change data in the Table Editor instead.';
+  end if;
 
   insert into public.household (name) values (household_name) returning id into new_household;
   insert into public.dog (household_id, name) values (new_household, dog_name) returning id into new_dog;

@@ -65,7 +65,10 @@ export function SignIn({ auth }: { auth: AuthService }) {
               inputMode="email"
               required
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(e) => {
+                setEmail(e.target.value);
+                setProblem(null); // editing clears the message and the red border
+              }}
               aria-invalid={emailInvalid}
             />
           </label>
@@ -83,14 +86,17 @@ export function SignIn({ auth }: { auth: AuthService }) {
               spellCheck={false}
               required
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={(e) => {
+                setPassword(e.target.value);
+                setProblem(null);
+              }}
               aria-invalid={passwordInvalid}
             />
             <button
               type="button"
               className="auth__toggle"
-              aria-label={t('auth.showPassword')}
-              aria-pressed={showPassword}
+              // The name changes with the visible text (Show / Hide), so no aria-pressed on top.
+              aria-label={showPassword ? t('auth.hidePassword') : t('auth.showPassword')}
               onClick={() => setShowPassword((v) => !v)}
             >
               {showPassword ? t('auth.hide') : t('auth.show')}

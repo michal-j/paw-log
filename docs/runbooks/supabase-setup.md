@@ -30,22 +30,14 @@ Authentication > Users > Add user > **Create new user**, once per person:
 On the iPhone, after the first sign-in Safari / Keychain offers to save the password, so it fills in next time.
 
 ### Resetting a forgotten password
-There is no reset in the app (the sign-in screen says to ask you). Either:
-- Authentication > Users > the user > **Edit / Update user** (if your dashboard version offers it) and set a new password; or
-- SQL Editor, run (fill in, run once, do not save the query):
-  ```sql
-  update auth.users
-  set encrypted_password = extensions.crypt('<NEW PASSWORD>', extensions.gen_salt('bf'))
-  where email = '<EMAIL>';
-  ```
-  It should say "1 row affected". Other devices of that person stay signed in until they sign out.
+There is no reset in the app (the sign-in screen says to ask you). Reset it in the dashboard only: Authentication > Users > the user > reset / update password, and set a new long password. Give it to the person privately. Their other devices stay signed in until they sign out.
 
 To remove someone's access: Authentication > Users > the user > Delete user (their logged data stays; it belongs to the household).
 
 ## 4. Create the database schema
-SQL Editor > New query. Paste and run each file from `supabase/migrations/` **in filename order**, one at a time:
-1. `20261016120000_core_schema.sql` (tables)
-2. `20261016120100_row_level_security.sql` (who may see and change what)
+SQL Editor > New query. Open each file on GitHub (button "Copy raw file"), paste it and run it, **in this order**, one at a time:
+1. [20261016120000_core_schema.sql](https://github.com/michal-j/paw-log/blob/main/supabase/migrations/20261016120000_core_schema.sql) (tables)
+2. [20261016120100_row_level_security.sql](https://github.com/michal-j/paw-log/blob/main/supabase/migrations/20261016120100_row_level_security.sql) (who may see and change what)
 
 Each should end with "Success. No rows returned". If one fails, stop and send the error text (it contains no personal data) to the PM.
 
@@ -54,12 +46,13 @@ Check: Table Editor shows `household`, `member`, `dog`, `item`, `schedule_slot`,
 (Developers with the Supabase CLI can use `npx supabase link` and `npx supabase db push` instead; same files.)
 
 ## 5. Add your household, dog and starting items
-1. Open `supabase/bootstrap.example.sql` in the repo and copy all of it into a new SQL Editor query. Do not save a filled-in copy in the repo.
+1. Open [bootstrap.example.sql](https://github.com/michal-j/paw-log/blob/main/supabase/bootstrap.example.sql) on GitHub, copy all of it ("Copy raw file") into a new SQL Editor query. Do not save a filled-in copy anywhere.
 2. Replace every `<PLACEHOLDER>`: household name, dog name, the two e-mails from step 3, the first day you want to log, and the item rows (food, medication, treats). The comments list the allowed kinds, colours and day parts. Delete item rows you do not need, copy a row for more.
 3. Run it. You should see "Created household …, dog …, 2 members, N items, N schedule slots".
    - "Fill in every <PLACEHOLDER>": something is still in angle brackets.
    - "Expected 2 members but found 1": an e-mail does not match a user from step 3 exactly.
-   Either error means nothing was saved; fix and run again. Run it successfully only once.
+   - "A household already exists": it ran before; nothing new was saved. Change data in the Table Editor instead.
+   The first two errors mean nothing was saved; fix and run again. Once it has succeeded, it refuses to run again.
 
 Items and the plan (schedule slots, doses) can be changed later in the Table Editor until the app has screens for it.
 
@@ -84,12 +77,12 @@ The session is stored on the device and refreshed automatically, so you stay sig
 | Symptom | Cause and fix |
 |---|---|
 | "Wrong e-mail or password." | The address is not in Authentication > Users (step 3), has a typo, or the password is wrong. Reset it (step 3). |
-| "Too many tries. Wait a minute…" | Supabase rate limit on sign-in attempts. Wait a few minutes. |
+| "Too many tries. Wait a minute and try again." | Supabase limits sign-in attempts. Wait a minute and try again. |
 | "This account is not linked to a dog yet." | The bootstrap (step 5) did not run, or used a different e-mail. Check `member` in the Table Editor. |
 | "PawLog is not connected" on the production URL | Vercel variables missing or a redeploy is needed (step 6). |
 | Empty timeline after sign-in | No entries logged yet, or the device is offline. |
 
 ## How the security works (for reference)
 - Every table has row-level security. A signed-in user can read and write only rows of a household they are a member of; signed-out visitors can read nothing. Households, members and dogs are read-only from the app; only the SQL Editor (step 5) creates them.
-- Proven by `supabase/tests/database/rls.test.sql` (48 checks), run locally with `npm run test:db`.
+- Proven by [rls.test.sql](https://github.com/michal-j/paw-log/blob/main/supabase/tests/database/rls.test.sql) (48 checks), run locally with `npm run test:db`.
 - The anon / publishable key in the app is public by design; the database rules above, sign-ups being off and strong passwords are what protect the data.
