@@ -180,3 +180,7 @@
 179,text,[Medication name]: allergic reaction. Replace with the real one.,[Nazwa leku]: reakcja alergiczna. Zastąp prawdziwą informacją.,64,62,,
 180,kind,Needs to happen,Do zrobienia,15,12,,
 181,text,"X-ray of front paws (recommended at Maple Vet, 14 Oct).","RTG przednich łap (zalecenie, Maple Vet, 14 paź).",54,48,,
+182,langSwitch,Language,Język,8,5,"Scaffold (JCB-28), needs PM review",
+183,demoBanner,Demo with sample data. Changes stay in this browser.,Demo z przykładowymi danymi. Zmiany zostają w tej przeglądarce.,52,63,"Scaffold (JCB-28), needs PM review",
+184,demoReset,Reset demo data,Przywróć dane demo,15,18,"Scaffold (JCB-28), needs PM review",
+185,latestEntries,Latest entries,Najnowsze wpisy,14,15,"Scaffold (JCB-28), needs PM review",

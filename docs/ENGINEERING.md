@@ -46,3 +46,11 @@ Everything here is a proposal from the PM for the Developer to refine. Items mar
 - Preserve the fixed timeline geometry; derive scroll maths from named constants.
 - Migrations are versioned files; nothing changes the live database schema without PM and CEO approval.
 - Secrets never in the repo; environment variables only.
+
+## Scaffold notes (slice 1, JCB-28)
+- `npm run generate` writes `src/styles/tokens.css` and `src/i18n/catalogues.generated.json` (both git-ignored). Edit the token JSON or the copy CSV, never the output.
+- Catalogue keys: the CSV's "Where (code name)" is not unique. A code is used as the key only if it appears once; otherwise the key is `<code or copy>.<row #>` (for example `name.96`). Row numbers in the CSV are therefore part of the key: do not renumber rows.
+- Demo mode is on when the path is `/demo` (or `/demo/...`) or `VITE_DEMO_MODE=true`. `vercel.json` rewrites non-asset paths to `index.html`; the service worker falls back to the shell for navigations.
+- Fonts (Onest, Instrument Sans) are named in the tokens but not yet shipped; the system font stack renders until the Designer and PM decide how to host them.
+- Placeholder icons are flat mint squares generated for the scaffold; replace with the real mark once designed.
+- Vercel project and Supabase project are not created (CEO approval pending); `SupabaseRepository` is a stub.
