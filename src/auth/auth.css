@@ -1,0 +1,124 @@
+/* Sign-in, loading and setup screens. Card, Button and the Sheet's input recipe from the design system. */
+.auth {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-6) var(--space-4) calc(var(--space-6) + env(safe-area-inset-bottom));
+}
+.auth__card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  background: linear-gradient(180deg, var(--color-surface), var(--color-surface-tint));
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+}
+.auth__card form { display: flex; flex-direction: column; gap: var(--space-3); }
+.auth__title {
+  margin: 0;
+  font: var(--type-heading-weight) var(--type-heading-size) / var(--type-heading-line) var(--type-heading-family);
+}
+.auth__text {
+  margin: 0;
+  color: var(--color-ink-2);
+  overflow-wrap: anywhere;
+}
+.auth__loading { text-align: center; }
+.auth__label {
+  display: block;
+  color: var(--color-ink-2);
+  font: var(--type-body-strong-weight) var(--type-small-size) / var(--type-small-line) var(--type-small-family);
+}
+/* Sheet input recipe: 50px high, 16px text so iOS does not zoom on focus. */
+.auth__input {
+  display: block;
+  width: 100%;
+  min-height: 50px;
+  margin-top: var(--space-2);
+  padding: 0 var(--space-3);
+  background: var(--color-surface-tint);
+  border: 1px solid var(--color-line-strong);
+  border-radius: var(--radius-md);
+  color: var(--color-ink);
+  font: var(--type-body-weight) 16px / 1.2 var(--type-body-family);
+  transition: border-color 150ms cubic-bezier(.2, .7, .2, 1), box-shadow 150ms cubic-bezier(.2, .7, .2, 1);
+}
+.auth__input:focus {
+  outline: none;
+  border-color: var(--color-mint-deep);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-mint) 22%, transparent);
+}
+.auth__input[aria-invalid='true'] { border-color: var(--color-danger); }
+/* Password field with a Show/Hide toggle inside its right edge (44px hit area). */
+.auth__password {
+  position: relative;
+  /* The label sits outside this wrapper; pull it as close as the e-mail label is to its input. */
+  margin-top: calc(var(--space-2) - var(--space-3));
+}
+.auth__password .auth__input { margin-top: 0; }
+.auth__input--password { padding-right: calc(var(--space-6) * 3); }
+.auth__toggle {
+  position: absolute;
+  top: 50%;
+  right: var(--space-1);
+  transform: translateY(-50%);
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0 var(--space-3);
+  background: none;
+  border: 0;
+  border-radius: var(--radius-md);
+  color: var(--color-mint-deep);
+  font: var(--type-button-weight) var(--type-button-size) / var(--type-button-line) var(--type-button-family);
+  cursor: pointer;
+}
+.auth__hint {
+  margin: 0;
+  color: var(--color-ink-3);
+  font: var(--type-small-weight) var(--type-small-size) / var(--type-small-line) var(--type-small-family);
+}
+.auth__error,
+.auth__info {
+  margin: 0;
+  font: var(--type-small-weight) var(--type-small-size) / var(--type-small-line) var(--type-small-family);
+}
+.auth__error { color: var(--color-danger); }
+.auth__info { color: var(--color-mint-deep); }
+
+.auth__primary,
+.auth__ghost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-md);
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+}
+/* Primary button: the one action of the screen. Full width and 50px, as in the prototype's sheet forms. */
+.auth__primary {
+  width: 100%;
+  min-height: 50px;
+  padding: 0 var(--space-4);
+  border: 0;
+  background: linear-gradient(180deg, var(--color-mint-top), var(--color-mint));
+  box-shadow: var(--shadow-primary);
+  color: var(--color-on-mint);
+  font: var(--type-heading-weight) var(--type-heading-size) / var(--type-heading-line) var(--type-heading-family);
+}
+.auth__primary:active { opacity: 0.78; }
+.auth__ghost {
+  flex: 1 1 auto;
+  min-height: 44px;
+  padding: 0 var(--space-3);
+  background: linear-gradient(180deg, var(--color-surface), var(--color-surface-tint));
+  border: 1px solid var(--color-line-strong);
+  box-shadow: var(--shadow-button);
+  color: var(--color-ink);
+  font: var(--type-button-weight) var(--type-button-size) / var(--type-button-line) var(--type-button-family);
+}
+.auth__ghost:active { opacity: 0.55; }
+.auth__ghost--wide { width: 100%; }
+.auth__primary:disabled,
+.auth__ghost:disabled { cursor: default; opacity: 0.6; }

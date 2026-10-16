@@ -1,8 +1,9 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { buildCatalogues, buildTokensCss, parseCsv } from '../scripts/lib.mjs';
+import { buildCatalogues, buildTokensCss, mergeCatalogues, parseCsv } from '../scripts/lib.mjs';
 
 const csv = readFileSync('docs/copy/pawlog-copy-en-pl.csv', 'utf8');
+const authCsv = readFileSync('docs/copy/copy-proposal-auth.csv', 'utf8');
 const tokens = JSON.parse(readFileSync('docs/design-system/tokens.json', 'utf8'));
 
 describe('parseCsv', () => {
@@ -38,5 +39,27 @@ describe('buildTokensCss', () => {
   });
   it('emits type styles', () => {
     expect(css).toContain('--type-title-size: 22px;');
+  });
+});
+
+describe('draft copy proposals', () => {
+  const reviewed = buildCatalogues(csv);
+  const draft = buildCatalogues(authCsv);
+  it('auth draft has EN and PL for every key, all marked pending review', () => {
+    expect(Object.keys(draft.pl)).toEqual(Object.keys(draft.en));
+    for (const k of Object.keys(draft.en)) {
+      expect(draft.en[k], k).not.toBe('');
+      expect(draft.pl[k], k).not.toBe('');
+    }
+    for (const row of parseCsv(authCsv).slice(1)) expect(row[6]).toMatch(/^DRAFT pending CEO review/);
+  });
+  it('merges drafts after the reviewed copy', () => {
+    const merged = mergeCatalogues(reviewed, draft);
+    expect(merged.en['auth.signOut']).toBe('Sign out');
+    expect(merged.pl['auth.signOut']).toBe('Wyloguj');
+    expect(merged.en.demoBanner).toBe(reviewed.en.demoBanner);
+  });
+  it('refuses a draft that reuses a reviewed key', () => {
+    expect(() => mergeCatalogues(reviewed, { en: { demoBanner: 'x' }, pl: { demoBanner: 'x' } })).toThrow(/demoBanner/);
   });
 });

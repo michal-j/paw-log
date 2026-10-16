@@ -2,8 +2,9 @@ import dogJson from '../../data/demo/dog.json';
 import itemsJson from '../../data/demo/items.json';
 import entriesJson from '../../data/demo/entries.json';
 import eventsJson from '../../data/demo/events.json';
+import { DuplicateSlotEntryError } from './errors';
 import type { Repository } from './repository';
-import type { DateRange, Dog, Entry, HealthEvent, Item } from './types';
+import type { DateRange, Dog, Entry, HealthEvent, Item, ScheduleSlot } from './types';
 
 export const DEMO_STORAGE_KEY = 'pawlog.demo.v1';
 
@@ -16,6 +17,19 @@ const { today, ...dogFields } = dogJson;
 const inRange = (date: string, range?: DateRange) =>
   (!range?.from || date >= range.from) && (!range?.to || date <= range.to);
 const byDate = <T extends { date: string }>(a: T, b: T) => a.date.localeCompare(b.date);
+const activeIn = (slot: ScheduleSlot, range?: DateRange) =>
+  (!range?.to || slot.activeFrom <= range.to) && (!range?.from || slot.activeTo === null || slot.activeTo >= range.from);
+
+/** The demo has no separate plan: each item gets one slot in its default day part, for its active period. */
+const demoSlots: ScheduleSlot[] = (itemsJson as Item[]).map((item) => ({
+  id: `slot-${item.id}`,
+  dogId: item.dogId,
+  itemId: item.id,
+  dayPart: item.defaultDayPart,
+  doseText: '',
+  activeFrom: item.activeFrom,
+  activeTo: item.activeTo,
+}));
 
 /** Fictional frozen data; edits persist only in the visitor's localStorage. */
 export class DemoRepository implements Repository {
@@ -37,6 +51,9 @@ export class DemoRepository implements Repository {
   async listItems(): Promise<Item[]> {
     return itemsJson as Item[];
   }
+  async listScheduleSlots(range?: DateRange) {
+    return demoSlots.filter((slot) => activeIn(slot, range));
+  }
   async listEntries(range?: DateRange) {
     return this.entries.filter((e) => inRange(e.date, range)).sort(byDate);
   }
@@ -44,6 +61,11 @@ export class DemoRepository implements Repository {
     return this.events.filter((e) => inRange(e.date, range)).sort(byDate);
   }
   async saveEntry(entry: Entry) {
+    // Same rule as the database: one entry per schedule slot per date.
+    const slot = entry.scheduleSlotId;
+    if (slot && this.entries.some((e) => e.id !== entry.id && e.date === entry.date && e.scheduleSlotId === slot)) {
+      throw new DuplicateSlotEntryError(entry.date, slot);
+    }
     this.entries = upsert(this.entries, entry);
     this.persist();
   }

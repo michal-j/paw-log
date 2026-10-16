@@ -1,6 +1,6 @@
 # Test cases
 
-Automated: `npm test` (Vitest, `tests/`). Manual cases below are for the checks automation does not cover. Viewport for manual checks: 390x844 first, then tablet and desktop.
+Automated: `npm test` (Vitest, `tests/`) and `npm run test:db` (row-level security, `supabase/tests/database/`). Manual cases below are for the checks automation does not cover. Viewport for manual checks: 390x844 first, then tablet and desktop.
 
 | # | Case | Steps | Expected | Automated |
 |---|---|---|---|---|
@@ -28,3 +28,14 @@ Automated: `npm test` (Vitest, `tests/`). Manual cases below are for the checks 
 | 22 | Day URLs | Reload `/demo/day/2026-10-14`; open `/demo/day/2026-02-30`, `/demo/day/2026-10-16`, `/demo/day/banana` | Reload shows the same day; the invalid ones land on the Timeline at `/demo` | `tests/day.test.ts`, `tests/app.test.tsx`, manual (reload) |
 | 23 | Empty day | Delete all entries of a day (devtools or a later edit flow), open it | Clock card "Nothing logged for this date yet…" and "Nothing scheduled" in all seven parts | `tests/app.test.tsx` |
 | 24 | Day view widths and Polish | `/demo/day/2026-10-14` at 390x844, 768 and desktop, EN and PL | No horizontal page scroll; "śr., 14 października 2026" on one line between the arrows; part names and tags fit; Back and arrows have 44px hit areas | manual |
+| 25 | Row-level security | Run `npm run test:db` | 48 checks pass: anon reads and writes nothing; a member sees and edits only their household; cannot join another household, create households or dogs, or move rows across dogs; one entry per slot per day; created_by/updated_by set by the database | `supabase/tests/database/rls.test.sql` |
+| 26 | Repository mapping | Run `npm test` | Rows map to app types and back, date range and dog filters applied, all pages read, errors carry the database code, slot conflicts become `DuplicateSlotEntryError`, non-UUID ids refused | `tests/supabaseRepository.test.ts` |
+| 27 | Sign-in flow | Open `/` with Supabase settings; enter e-mail and password; tap Sign in | Timeline shows the household's data; on iPhone, Keychain offers to save the login and fills it next time | `tests/auth.test.tsx` (flow with a fake), manual (real account, Keychain, after the runbook) |
+| 28 | Sign-in errors | Bad address; empty password; wrong password; airplane mode; many wrong tries quickly | "Enter a valid e-mail address."; "Enter your password."; "Wrong e-mail or password."; "No connection..."; "Too many tries. Wait a minute and try again." | `tests/auth.test.tsx`, manual (rate limit) |
+| 29 | No sign-up, show/hide | Look for a sign-up or reset link; tap Show, then Hide | Neither exists (only the "ask the person who set up PawLog" hint); the password becomes readable and hidden again | `tests/auth.test.tsx` (toggle), manual |
+| 30 | Session persists | Sign in on the installed iPhone PWA, close it from the app switcher, reopen | Timeline opens without signing in again | manual |
+| 31 | Sign out | Tap Sign out, confirm; on another try, Cancel | Back to sign-in on this device; the other phone stays signed in; Cancel keeps the session | `tests/auth.test.tsx` (confirm), manual (other device) |
+| 32 | Not connected | Build without `VITE_SUPABASE_URL`, open `/` | "PawLog is not connected" with an Open the demo button; no crash | `tests/auth.test.tsx` |
+| 33 | Demo unchanged | Open `/demo`, watch the network panel | Timeline as before; no request leaves the site; no Sign out button | manual |
+| 34 | Account without household | Sign in with an account that has no `member` row | "This account is not linked to a dog yet..." and Sign out | `tests/auth.test.tsx` |
+| 35 | Sign-in widths and Polish | Sign-in screen (with an error showing) and the signed-in top bar at 390x844, 768, desktop, EN and PL | Nothing clipped; Show/Pokaż stays inside the field; buttons at least 44px; "Wyloguj" fits beside EN/PL at 390 | manual |
