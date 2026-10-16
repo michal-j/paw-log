@@ -11,9 +11,14 @@
 - Look: R10 Mint Clean. Light only, mint primary, pastel data colours, subtle depth. Design system published.
 - Copy: reviewed EN/PL pairs in `docs/copy/pawlog-copy-en-pl.csv`; the CEO reviews copy outside the app.
 - Process: function first, then UI and copy polish, then spec and backlog, then build. PM agent keeps full context; separate agents for design, code, QA.
+- Slice 1 scaffold (JCB-28) and slice 2a read-only Timeline in demo mode (JCB-29, PR #2) merged (16 Oct). Slice 2b (Supabase) split out as JCB-35; Supabase project still needs the CEO's OK.
+- Timeline rail touch area is 20px wide, below the 44px rule, so swipes over the Events column scroll normally (CEO, 16 Oct; Designer to revisit in JCB-37).
+- `Item.hiddenByDefault` added to the data model so treats and Calmora start hidden, per the default filters (16 Oct).
 - Working rules: short explanations, clarifying questions first, quality over quantity, no unauthorised access (confirm with the CEO).
 
 ## Open
+- JCB-36 Public repo: old product names in the design-system Cover preview (and git history).
+- JCB-37 Design follow-ups from the Timeline: column headers, sticky month label, tablet/desktop layout, rail hit area, mini badge type token.
 - JCB-26 Event icons: remaining inconsistencies between screens (fix after the first build slice).
 - JCB-25 Design editing and bulk adding.
 - JCB-10 Dose changes on the timeline. JCB-11 Real-time sync need. JCB-6 Issues model.
