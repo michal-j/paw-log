@@ -11,3 +11,6 @@ coverage/
 src/styles/tokens.css
 src/i18n/catalogues.generated.json
 dev-dist/
+
+# local list of words the secret scan blocks (never commit)
+.secret-words
