@@ -17,9 +17,10 @@ export function partNow(times: Records['times'], now: string): DayPart {
 
 /**
  * + Add: the one way in. From the navbar it offers Food, Medication, Symptom, Vet visit, Note and
- * Other; from a day part's + it offers Food and Medication with that part set.
+ * Other; from a day part's + it offers Food and Medication with that part set. On the Usual day
+ * (`usual`), Food or Medication opens the usual-day form listing only that kind.
  */
-export function AddSheet({ date: initialDate, part }: { date: PlainDate; part?: DayPart }) {
+export function AddSheet({ date: initialDate, part, usual = false }: { date: PlainDate; part?: DayPart; usual?: boolean }) {
   const { t } = useI18n();
   const f = useFormat();
   const { records, repository, open, close } = useLog();
@@ -29,7 +30,9 @@ export function AddSheet({ date: initialDate, part }: { date: PlainDate; part?: 
   if (!records) return null;
 
   const entry = (group: KindGroup) =>
-    open({ kind: 'entry', group, date, part: atPart ?? partNow(records.times, repository.nowTime()), ctxOpen });
+    usual && part
+      ? open({ kind: 'slot', date, part, group })
+      : open({ kind: 'entry', group, date, part: atPart ?? partNow(records.times, repository.nowTime()), ctxOpen });
   const event = (type: EventKind) => open({ kind: 'event', type, date, ctxOpen });
 
   const option = (key: string, icon: ReactNode, label: MessageKey, onClick: () => void) => (
@@ -41,15 +44,17 @@ export function AddSheet({ date: initialDate, part }: { date: PlainDate; part?: 
 
   return (
     <Sheet title={part ? `${t('addAria')}${f.part(part)}` : t('label.172')} onClose={close}>
-      <DateLine
-        date={date}
-        part={atPart}
-        open={ctxOpen}
-        today={records.today}
-        onOpen={() => setCtxOpen(true)}
-        onDate={setDate}
-        onPart={part ? setAtPart : undefined}
-      />
+      {!usual && (
+        <DateLine
+          date={date}
+          part={atPart}
+          open={ctxOpen}
+          today={records.today}
+          onOpen={() => setCtxOpen(true)}
+          onDate={setDate}
+          onPart={part ? setAtPart : undefined}
+        />
+      )}
       <div className="add-grid">
         {option('food', <BowlIcon />, 'title.104', () => entry('food'))}
         {option('med', <PillIcon />, 'title.106', () => entry('med'))}

@@ -26,7 +26,8 @@ export interface Records {
 export type EventKind = 'symptom' | 'vet' | 'note' | 'other';
 
 export type SheetState =
-  | { kind: 'add'; date: PlainDate; part?: DayPart }
+  /** `usual`: adding to the Usual day (a part's +): Food or Medication, then the usual-day form. */
+  | { kind: 'add'; date: PlainDate; part?: DayPart; usual?: boolean }
   | {
       kind: 'entry';
       group: KindGroup;
@@ -39,7 +40,7 @@ export type SheetState =
       ctxOpen?: boolean;
     }
   | { kind: 'event'; type: EventKind; date: PlainDate; event?: HealthEvent; ctxOpen?: boolean }
-  | { kind: 'slot'; date: PlainDate; part: DayPart; slot?: ScheduleSlot }
+  | { kind: 'slot'; date: PlainDate; part: DayPart; slot?: ScheduleSlot; group?: KindGroup }
   | { kind: 'menu' };
 
 interface Toast {

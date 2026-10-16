@@ -6,7 +6,8 @@ import { useI18n } from '../i18n';
 import { markSize, shiftDate } from '../timeline/model';
 import * as act from './actions';
 import { defaultUnitFor, groupOf, type KindGroup } from './amount';
-import { AmountFields, FlavourPicker, ItemPicker, OTHER, amountValue, type AmountValue } from './fields';
+import { AmountFields, ColourPicker, FlavourPicker, ItemPicker, OTHER, amountValue, type AmountValue } from './fields';
+import { nextColour, withFlavour } from './items';
 import { useFormat } from './format';
 import { useBusy } from './useBusy';
 import { useLog } from './LogProvider';
@@ -19,6 +20,8 @@ interface Form {
   itemId: string | null;
   otherGroup: KindGroup;
   otherName: string;
+  /** The item's colour: a new item's, or a change to the edited item's. */
+  colour: string;
   flavour: string;
   amount: AmountValue;
   from: PlainDate;
@@ -30,21 +33,25 @@ interface Form {
 const endFor = (from: PlainDate, length: Length, to: PlainDate | null): PlainDate | null =>
   length === 'none' ? null : length === 'date' ? (to && to >= from ? to : from) : shiftDate(from, Number(length) - 1);
 
-/** Usual day: add an item to a part, or change it from a date (amount, course length), or remove it from a date on. */
-export function SlotSheet({ date, part, slot }: { date: PlainDate; part: DayPart; slot?: ScheduleSlot }) {
+/**
+ * Usual day: add an item to a part (after choosing Food or Medication, `group`: only that kind is
+ * listed), or change it from a date (amount, course length, colour), or remove it from a date on.
+ */
+export function SlotSheet({ date, part, slot, group: onlyGroup }: { date: PlainDate; part: DayPart; slot?: ScheduleSlot; group?: KindGroup }) {
   const { t } = useI18n();
   const f = useFormat();
   const { records, repository, run, close } = useLog();
   const { busy, guard } = useBusy();
   const [form, setForm] = useState<Form>(() => {
     const item = slot && records?.items.find((i) => i.id === slot.itemId);
-    const group = item ? groupOf(item.kind) : 'med';
+    const group = item ? groupOf(item.kind) : (onlyGroup ?? 'med');
     const unit = slot?.unit ?? item?.defaultUnit ?? defaultUnitFor(group);
     const from = slot && slot.activeFrom > date ? slot.activeFrom : date;
     return {
       itemId: slot?.itemId ?? null,
-      otherGroup: 'med',
+      otherGroup: onlyGroup ?? 'med',
       otherName: '',
+      colour: item ? item.colour : records ? nextColour(records.items) : 'mark-neutral',
       flavour: slot?.flavour ?? '',
       amount: amountValue(slot ? slot.amount : null, unit),
       from,
@@ -62,7 +69,7 @@ export function SlotSheet({ date, part, slot }: { date: PlainDate; part: DayPart
     if (id === OTHER) return set({ itemId: OTHER, otherGroup: g, flavour: '', err: null, amount: amountValue(1, defaultUnitFor(g)) });
     const it = records.items.find((i) => i.id === id);
     const unit = it?.defaultUnit ?? defaultUnitFor(g);
-    set({ itemId: id, otherName: '', flavour: it?.flavours?.[0] ?? '', amount: amountValue(unit === 'ml' || unit === 'g' ? null : 1, unit), err: null });
+    set({ itemId: id, otherName: '', colour: it?.colour ?? form.colour, flavour: it?.flavours?.[0] ?? '', amount: amountValue(unit === 'ml' || unit === 'g' ? null : 1, unit), err: null });
   };
   const groupItems = (g: KindGroup) => records.items.filter((i) => groupOf(i.kind) === g);
 
@@ -76,19 +83,19 @@ export function SlotSheet({ date, part, slot }: { date: PlainDate; part: DayPart
           dogId: records.dogId,
           kind: form.otherGroup === 'food' ? 'food' : 'medication',
           name: form.otherName.trim(),
-          colour: 'mark-neutral',
+          colour: form.colour,
           defaultDayPart: part,
           activeFrom: form.from,
           activeTo: null,
           defaultUnit: form.amount.unit,
-          flavours: [],
+          flavours: form.otherGroup === 'food' && form.flavour.trim() ? [form.flavour.trim()] : [],
           position: Math.max(0, ...records.items.map((i) => i.position ?? 0)) + 10,
         }
       : null;
     const values = {
       itemId: newItem?.id ?? (form.itemId as string),
       dayPart: part,
-      flavour: (item?.flavours ?? []).includes(form.flavour) ? form.flavour : '',
+      flavour: group === 'food' || (item?.flavours ?? []).includes(form.flavour.trim()) ? form.flavour.trim() : '',
       amount: form.amount.amount,
       unit: form.amount.unit,
     };
@@ -112,11 +119,20 @@ export function SlotSheet({ date, part, slot }: { date: PlainDate; part: DayPart
             remove: [],
           }
         : changeFrom(records.slots, slot ?? null, { ...values, course }, form.from, end, act.newId, records.dogId);
-    if (!change.save.length && !newItem) return close();
+    // The edited item's colour, and a new flavour joining a food's list, are saved on the item.
+    const recoloured = item && slot && form.colour !== item.colour ? { ...item, colour: form.colour } : null;
+    const itemChange = group === 'food' ? withFlavour(recoloured ?? item, values.flavour) ?? recoloured : recoloured;
+    if (!change.save.length && !newItem && !itemChange) return close();
     if (
       await run(async () => {
         if (newItem) await repository.saveItem(newItem);
-        return act.applySlotChange(repository, change, records.slots);
+        const undos: act.Undo[] = [];
+        if (itemChange && item) {
+          await repository.saveItem(itemChange);
+          undos.push(() => repository.saveItem(item));
+        }
+        undos.push(await act.applySlotChange(repository, change, records.slots));
+        return act.undoAll(...undos);
       }, t('toastUsual'))
     )
       close();
@@ -131,7 +147,7 @@ export function SlotSheet({ date, part, slot }: { date: PlainDate; part: DayPart
   const partLine = `${f.part(part)} · ${records.times[part]}`;
   return (
     <Sheet
-      title={t(slot ? 'editUsualTitle' : 'addUsualTitle')}
+      title={t(slot ? 'editUsualTitle' : onlyGroup ? (onlyGroup === 'food' ? 'addUsualFood' : 'addUsualMed') : 'addUsualTitle')}
       onClose={close}
       footer={
         <>
@@ -161,7 +177,7 @@ export function SlotSheet({ date, part, slot }: { date: PlainDate; part: DayPart
           <div className="dateline">
             <span>{partLine}</span>
           </div>
-          {(['food', 'med'] as const).map((g) => (
+          {(onlyGroup ? [onlyGroup] : (['food', 'med'] as const)).map((g) => (
             <ItemPicker
               key={g}
               label={t(g === 'food' ? 'title.104' : 'dose.133')}
@@ -171,14 +187,17 @@ export function SlotSheet({ date, part, slot }: { date: PlainDate; part: DayPart
               otherName={form.otherName}
               onOtherName={(s) => set({ otherName: s, err: null })}
               otherPlaceholder={t(g === 'food' ? 'otherFoodPh' : 'otherMedPh')}
-              error={form.err === 'item' && g === 'med' ? t('pickMed') : undefined}
+              error={form.err === 'item' && g === (onlyGroup ?? 'med') ? t(g === 'food' ? 'pickFood' : 'pickMed') : undefined}
             />
           ))}
         </>
       )}
       {form.itemId && (
         <>
-          <FlavourPicker flavours={item?.flavours ?? []} value={form.flavour} onPick={(x) => set({ flavour: x })} />
+          {(form.itemId === OTHER || slot) && (
+            <ColourPicker value={form.colour} size={group === 'food' ? 'food' : 'small'} onPick={(c) => set({ colour: c })} />
+          )}
+          <FlavourPicker flavours={item?.flavours ?? []} value={form.flavour} canAdd={group === 'food'} onPick={(x) => set({ flavour: x })} />
           <AmountFields
             group={group}
             value={form.amount}

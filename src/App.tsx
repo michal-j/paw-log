@@ -203,13 +203,13 @@ function SheetHost({
   if (!sheet) return null;
   switch (sheet.kind) {
     case 'add':
-      return <AddSheet key={`add-${sheet.date}-${sheet.part ?? 0}`} date={sheet.date} part={sheet.part} />;
+      return <AddSheet key={`add-${sheet.date}-${sheet.part ?? 0}`} date={sheet.date} part={sheet.part} usual={sheet.usual} />;
     case 'entry':
       return <EntrySheet key={sheet.entry?.id ?? sheet.slot?.id ?? 'new'} {...sheet} onShowDay={onShowDay} />;
     case 'event':
       return <EventSheet key={sheet.event?.id ?? sheet.type} kind={sheet.type} date={sheet.date} event={sheet.event} ctxOpen={sheet.ctxOpen} onShowDay={onShowDay} />;
     case 'slot':
-      return <SlotSheet key={sheet.slot?.id ?? `new-${sheet.part}`} date={sheet.date} part={sheet.part} slot={sheet.slot} />;
+      return <SlotSheet key={sheet.slot?.id ?? `new-${sheet.part}`} date={sheet.date} part={sheet.part} slot={sheet.slot} group={sheet.group} />;
     case 'menu':
       return <MenuSheet onUsualDay={onUsualDay} onSignOut={onSignOut} onResetDemo={onResetDemo} />;
   }

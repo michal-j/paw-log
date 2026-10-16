@@ -5,7 +5,8 @@ import { fill, useI18n } from '../i18n';
 import { markSize } from '../timeline/model';
 import * as act from './actions';
 import { defaultUnitFor, groupOf, sameAmount, type KindGroup } from './amount';
-import { AmountFields, DateLine, FlavourPicker, ItemPicker, OTHER, StatePicker, amountValue, type AmountValue } from './fields';
+import { AmountFields, ColourPicker, DateLine, FlavourPicker, ItemPicker, OTHER, StatePicker, amountValue, type AmountValue } from './fields';
+import { lastUsed, nextColour, withFlavour } from './items';
 import { useFormat } from './format';
 import { useBusy } from './useBusy';
 import { useLog, type Records } from './LogProvider';
@@ -16,6 +17,8 @@ interface Form {
   part: DayPart;
   itemId: string | null;
   otherName: string;
+  /** Colour of a new item typed under Other. */
+  colour: string;
   flavour: string;
   amount: AmountValue;
   state: EntryState;
@@ -103,6 +106,7 @@ export function EntrySheet({
         part: entry.dayPart,
         itemId: entry.itemId,
         otherName: '',
+        colour: 'mark-neutral',
         flavour: entry.flavour,
         amount: amountValue(entry.amount, unit),
         state: entry.state,
@@ -117,6 +121,7 @@ export function EntrySheet({
       part,
       itemId: null,
       otherName: '',
+      colour: records ? nextColour(records.items) : 'mark-neutral',
       flavour: '',
       amount: amountValue(null, defaultUnitFor(group)),
       state: 'given',
@@ -125,7 +130,12 @@ export function EntrySheet({
       ctxOpen,
       err: null,
     };
-    return slot && records ? withItem(base, slot.itemId, records, group, replaces?.id) : base;
+    if (slot && records) return withItem(base, slot.itemId, records, group, replaces?.id);
+    // A new entry starts from the last one of its kind: item, amount, unit and flavour.
+    const last = records ? lastUsed(records, group) : null;
+    if (!last || !records?.items.some((i) => i.id === last.itemId)) return base;
+    const unit = last.unit ?? records.items.find((i) => i.id === last.itemId)?.defaultUnit ?? defaultUnitFor(group);
+    return { ...base, itemId: last.itemId, flavour: last.flavour, amount: amountValue(last.amount, unit) };
   });
 
   const items = useMemo(
@@ -165,17 +175,20 @@ export function EntrySheet({
           dogId: dog.id,
           kind: group === 'food' ? 'food' : 'medication',
           name: form.otherName.trim(),
-          colour: 'mark-neutral',
+          colour: form.colour,
           defaultDayPart: form.part,
           activeFrom: form.date,
           activeTo: null,
           defaultUnit: unit,
-          flavours: [],
+          flavours: group === 'food' && form.flavour.trim() ? [form.flavour.trim()] : [],
           position: Math.max(0, ...records.items.map((i) => i.position ?? 0)) + 10,
         }
       : null;
     const itemId = newItem?.id ?? (form.itemId as string);
-    const flavour = (item?.flavours ?? []).includes(form.flavour) ? form.flavour : '';
+    // Food takes any flavour (a new one joins the item's list); other kinds only one of the item's own.
+    const typed = form.flavour.trim();
+    const flavour = group === 'food' || (item?.flavours ?? []).includes(typed) ? typed : '';
+    const flavoured = group === 'food' ? withFlavour(item, flavour) : null;
     const change =
       form.toUsual && offer
         ? changeFrom(records.slots, null, { itemId, dayPart: form.part, flavour, amount: form.amount.amount, unit }, form.date, undefined, act.newId, dog.id)
@@ -201,6 +214,10 @@ export function EntrySheet({
     const ok = await run(async () => {
       if (newItem) await repository.saveItem(newItem);
       const undos: act.Undo[] = [];
+      if (flavoured && item) {
+        await repository.saveItem(flavoured);
+        undos.push(() => repository.saveItem(item));
+      }
       if (change) undos.push(await act.applySlotChange(repository, change, records.slots));
       undos.push(await act.saveEntry(repository, next, entry ?? null, replacing));
       return act.undoAll(...undos);
@@ -255,7 +272,10 @@ export function EntrySheet({
       />
       {form.itemId && (
         <>
-          <FlavourPicker flavours={item?.flavours ?? []} value={form.flavour} onPick={(x) => set({ flavour: x })} />
+          {form.itemId === OTHER && (
+            <ColourPicker value={form.colour} size={group === 'food' ? 'food' : 'small'} onPick={(c) => set({ colour: c })} />
+          )}
+          <FlavourPicker flavours={item?.flavours ?? []} value={form.flavour} canAdd={group === 'food'} onPick={(x) => set({ flavour: x })} />
           <AmountFields
             group={group}
             value={form.amount}

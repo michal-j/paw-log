@@ -205,6 +205,26 @@ select.input { padding: 0 var(--space-2); }
 .chip--amount { min-width: 44px; justify-content: center; padding: 0 10px; font-variant-numeric: tabular-nums; }
 .chip__mark { width: 18px; height: 18px; flex: none; display: inline-flex; align-items: center; justify-content: center; }
 
+/* ---------- Colour swatches (item colour tokens) ---------- */
+.swatches { display: flex; flex-wrap: wrap; gap: var(--space-1); }
+.swatch {
+  width: 44px;
+  height: 44px;
+  margin: 0;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  background: transparent;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.swatch[aria-checked='true'] { border-color: var(--color-mint-line); background: var(--color-mint-bg); }
+.swatch:active { opacity: 0.6; }
+.swatch .dose-mark { transform: scale(1.4); }
+
 /* ---------- Toast ---------- */
 .toast-root { position: absolute; left: var(--space-3); right: var(--space-3); bottom: calc(76px + env(safe-area-inset-bottom)); z-index: 30; pointer-events: none; }
 .toast {

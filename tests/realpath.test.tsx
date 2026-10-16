@@ -174,4 +174,73 @@ describe('real data path', () => {
     expect(await screen.findByRole('heading', { name: /1 October 2026/ })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Fill with your usual day: 4' })).toBeTruthy();
   });
+
+  it('(6) a new medication gets the first unused colour, which can be changed', async () => {
+    await at('/day/2026-10-15');
+    await screen.findAllByText('Cooked meal');
+    click('Add to Breakfast');
+    fireEvent.click(within(dialog()).getByText('Medication'));
+    fireEvent.click(within(dialog()).getByRole('radio', { name: 'Other' }));
+    fireEvent.change(within(dialog()).getByLabelText('Name of the medication'), { target: { value: 'Testamol' } });
+    const colours = within(dialog()).getByRole('radiogroup', { name: 'Colour' });
+    // Seed uses food-cooked, food-farm, med-arvelin, med-bellavet and treat: food-ocean is the first free one.
+    expect(within(colours).getByRole('radio', { name: 'Colour 3' }).getAttribute('aria-checked')).toBe('true');
+    fireEvent.click(within(colours).getByRole('radio', { name: 'Colour 7' }));
+    fireEvent.click(within(dialog()).getByRole('radio', { name: '1' }));
+    click('Save');
+    expect(await screen.findByText('Saved')).toBeTruthy();
+    expect(await rows(`select colour, kind from item where name = 'Testamol'`)).toEqual([{ colour: 'med-biomend', kind: 'medication' }]);
+  });
+
+  it('(7) a food takes a new flavour, which joins its list', async () => {
+    await at('/day/2026-10-15');
+    await screen.findAllByText('Cooked meal');
+    click('Add to Dinner');
+    fireEvent.click(within(dialog()).getByText('Food'));
+    fireEvent.click(within(dialog()).getByRole('radio', { name: 'Farm Fresh' }));
+    fireEvent.click(within(dialog()).getByRole('radio', { name: 'Add flavour' }));
+    fireEvent.change(within(dialog()).getByLabelText('New flavour'), { target: { value: 'duck' } });
+    click('Save');
+    expect(await screen.findByText('Farm Fresh, duck')).toBeTruthy();
+    expect(await rows(`select flavours from item where id = '${SEED.items.farm}'`)).toEqual([{ flavours: ['turkey', 'salmon', 'duck'] }]);
+  });
+
+  it('(9) a new form starts from the last one of its kind; with none, it asks', async () => {
+    await at('/day/2026-10-15');
+    await screen.findAllByText('Cooked meal');
+    click('Add to Dinner');
+    fireEvent.click(within(dialog()).getByText('Food'));
+    click('Save');
+    expect(await within(dialog()).findByText('Pick a food.')).toBeTruthy();
+    fireEvent.click(within(dialog()).getByRole('radio', { name: 'Farm Fresh' }));
+    fireEvent.click(within(dialog()).getByRole('radio', { name: 'salmon' }));
+    fireEvent.click(within(dialog()).getByRole('radio', { name: '½' }));
+    click('Save');
+    expect(await screen.findByText('Saved')).toBeTruthy();
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+    click('Add to Supper');
+    fireEvent.click(within(dialog()).getByText('Food'));
+    expect(within(dialog()).getByRole('radio', { name: 'Farm Fresh' }).getAttribute('aria-checked')).toBe('true');
+    expect(within(dialog()).getByRole('radio', { name: 'salmon' }).getAttribute('aria-checked')).toBe('true');
+    expect(within(dialog()).getByRole('radio', { name: '½' }).getAttribute('aria-checked')).toBe('true');
+  });
+
+  it('(8) + on a Usual day part asks Food or Medication, then lists only that kind', async () => {
+    await at('/usual/2026-10-15');
+    await screen.findByRole('heading', { name: 'Usual day' });
+    await screen.findAllByText('Cooked meal');
+    click('Add to Supper');
+    expect(within(dialog()).queryByText('Symptom')).toBeNull();
+    fireEvent.click(within(dialog()).getByText('Medication'));
+    expect(await screen.findByRole('heading', { name: 'Add medication to the usual day' })).toBeTruthy();
+    expect(within(dialog()).getByRole('radio', { name: 'Arvelin' })).toBeTruthy();
+    expect(within(dialog()).queryByRole('radio', { name: 'Farm Fresh' })).toBeNull();
+    fireEvent.click(within(dialog()).getByRole('radio', { name: 'Arvelin' }));
+    click('Save');
+    expect(await screen.findByText(/usual day/i, { selector: '.toast__text' })).toBeTruthy();
+    expect(await rows(`select day_part from schedule_slot where item_id = '${SEED.items.arvelin}' order by day_part`)).toEqual([
+      { day_part: 2 },
+      { day_part: 6 },
+    ]);
+  });
 });

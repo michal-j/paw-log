@@ -109,8 +109,9 @@ describe('add and edit', () => {
     click(/^Add$/);
     fireEvent.click(within(dialog()).getByText('Food'));
     expect(within(dialog()).getByText('For Thu 15 Oct · Dinner')).toBeTruthy();
-    click('Save');
-    expect(await within(dialog()).findByText('Pick a food.')).toBeTruthy();
+    // A new form starts from the last food logged (JCB-43, 9).
+    const foods = within(dialog()).getByRole('radiogroup', { name: 'Food' });
+    expect(within(foods).getAllByRole('radio').filter((r) => r.getAttribute('aria-checked') === 'true')).toHaveLength(1);
     fireEvent.click(within(dialog()).getByRole('radio', { name: 'Farm Fresh' }));
     fireEvent.click(within(dialog()).getByRole('radio', { name: 'chicken' }));
     fireEvent.click(within(dialog()).getByRole('radio', { name: '½' }));

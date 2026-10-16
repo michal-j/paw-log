@@ -1,9 +1,10 @@
 // Pieces shared by the entry, event and usual-day sheets.
-import { useId } from 'react';
+import { useId, useState } from 'react';
 import type { DayPart, EntryState, Item, PlainDate, Unit } from '../data';
 import { DoseMark } from '../components/DoseMark';
 import { Chip, Chips, Field } from '../components/Sheet';
-import { useI18n, type MessageKey } from '../i18n';
+import { fill, useI18n, type MessageKey } from '../i18n';
+import { ITEM_COLOURS } from './items';
 import { DAY_PARTS, markSize } from '../timeline/model';
 import { DECIMAL_UNITS, FRACTIONS, fractionOf, formatDecimal, parseAmount, unitKey, unitsFor, type KindGroup } from './amount';
 import { useFormat } from './format';
@@ -125,18 +126,90 @@ export function ItemPicker({
   );
 }
 
-export function FlavourPicker({ flavours, value, onPick }: { flavours: string[]; value: string; onPick: (f: string) => void }) {
+/**
+ * Flavour chips. With `canAdd` (food), "Add flavour" opens a field for a new one; the form adds it
+ * to the item's flavours when it saves. A flavour that is not in the list yet shows as a chip.
+ */
+export function FlavourPicker({
+  flavours,
+  value,
+  onPick,
+  canAdd = false,
+}: {
+  flavours: string[];
+  value: string;
+  onPick: (f: string) => void;
+  canAdd?: boolean;
+}) {
   const { t } = useI18n();
-  if (!flavours.length) return null;
+  const [adding, setAdding] = useState(false);
+  const [text, setText] = useState('');
+  const known = value && !flavours.includes(value) && !adding ? [...flavours, value] : flavours;
+  if (!known.length && !canAdd) return null;
   return (
     <Field label={t('flavour')}>
       <Chips label={t('flavour')}>
-        {flavours.map((x) => (
-          <Chip key={x} on={value === x} onClick={() => onPick(x)}>
+        {known.map((x) => (
+          <Chip
+            key={x}
+            on={!adding && value === x}
+            onClick={() => {
+              setAdding(false);
+              onPick(x);
+            }}
+          >
             {x}
           </Chip>
         ))}
+        {canAdd && (
+          <Chip
+            on={adding}
+            onClick={() => {
+              setAdding(true);
+              onPick(text.trim());
+            }}
+          >
+            {t('addFlavour')}
+          </Chip>
+        )}
       </Chips>
+      {adding && (
+        <input
+          className="input"
+          aria-label={t('flavourPh')}
+          placeholder={t('flavourPh')}
+          value={text}
+          autoFocus
+          onChange={(e) => {
+            setText(e.target.value);
+            onPick(e.target.value.trim());
+          }}
+        />
+      )}
+    </Field>
+  );
+}
+
+/** The item's colour: swatches of the design system's item colour tokens only. */
+export function ColourPicker({ value, size, onPick }: { value: string; size: 'food' | 'small'; onPick: (c: string) => void }) {
+  const { t } = useI18n();
+  return (
+    <Field label={t('colour')}>
+      <div className="swatches" role="radiogroup" aria-label={t('colour')}>
+        {ITEM_COLOURS.map((c, i) => (
+          <button
+            key={c}
+            type="button"
+            role="radio"
+            aria-checked={value === c}
+            aria-label={fill(t('colourN'), { n: i + 1 })}
+            className="swatch"
+            onClick={() => onPick(c)}
+          >
+            <DoseMark colour={c} size={size} state="given" />
+          </button>
+        ))}
+      </div>
     </Field>
   );
 }
