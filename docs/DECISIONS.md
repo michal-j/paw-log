@@ -14,6 +14,7 @@
 - Slice 1 scaffold (JCB-28) and slice 2a read-only Timeline in demo mode (JCB-29, PR #2) merged (16 Oct). Slice 2b (Supabase) split out as JCB-35; Supabase project still needs the CEO's OK.
 - Timeline rail touch area is 20px wide, below the 44px rule, so swipes over the Events column scroll normally (CEO, 16 Oct; Designer to revisit in JCB-37).
 - `Item.hiddenByDefault` added to the data model so treats and Calmora start hidden, per the default filters (16 Oct).
+- PM working agreement (16 Oct): the PM talks to the CEO in outcomes and recommendations, runs the subagents, Linear and docs; one CEO "go" per outcome covers commit, PR, QA fixes and merge (see `docs/PM.md`).
 - Working rules: short explanations, clarifying questions first, quality over quantity, no unauthorised access (confirm with the CEO).
 
 ## Open
