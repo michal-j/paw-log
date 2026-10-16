@@ -1,5 +1,5 @@
 -- Row-level security tests (JCB-35). Runs with `supabase test db` on a local Supabase stack,
--- and in CI with `npm run test:db` (PGlite plus a pgTAP shim, see tests/db/).
+-- and without Docker with `npm run test:db` (PGlite plus a pgTAP shim, see tests/db/).
 -- All data is fictional. Everything runs inside one transaction and is rolled back.
 begin;
 create extension if not exists pgtap with schema extensions;

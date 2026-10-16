@@ -86,5 +86,5 @@ The session is stored on the device and refreshed automatically, so you stay sig
 
 ## How the security works (for reference)
 - Every table has row-level security. A signed-in user can read and write only rows of a household they are a member of; signed-out visitors can read nothing. Households, members and dogs are read-only from the app; only the SQL Editor (step 6) creates them.
-- Proven by `supabase/tests/database/rls.test.sql` (48 checks), run in CI with `npm run test:db`.
+- Proven by `supabase/tests/database/rls.test.sql` (48 checks), run locally with `npm run test:db`.
 - The anon / publishable key in the app is public by design; the database rules above are what protect the data.
