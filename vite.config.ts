@@ -9,6 +9,19 @@ const colour = (name: string) => tokens.color.tokens.find((t) => t.name === name
 export default defineConfig({
   plugins: [
     react(),
+    {
+      // Dev only: once /harness.html has set its session cookie, every page is the harness, so a
+      // reload on /day/… stays on the fake backend instead of the unconfigured real app.
+      name: 'pawlog-harness-reload',
+      apply: 'serve',
+      configureServer(server) {
+        server.middlewares.use((req, _res, next) => {
+          const page = req.headers.accept?.includes('text/html') && !req.url?.startsWith('/harness.html');
+          if (page && /(?:^|;\s*)pawlog_harness=1/.test(req.headers.cookie ?? '')) req.url = '/harness.html';
+          next();
+        });
+      },
+    },
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['icon.svg', 'apple-touch-icon.png'],

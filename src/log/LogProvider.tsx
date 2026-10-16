@@ -181,6 +181,8 @@ export function LogProvider({ repository, children }: { repository: Repository; 
     const undo = toast?.undo;
     setToast(null);
     if (!undo) return;
+    // The past-days question belongs to the change being undone.
+    setSheet((s) => (s?.kind === 'backfill' ? null : s));
     enqueue(undo).then(reload, () => {
       reload();
       show(t('auth.errUnknown'));

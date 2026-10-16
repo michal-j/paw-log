@@ -169,7 +169,7 @@
 
 /* Fill on a day that already has entries: a quiet action under the day parts, away from the rows. */
 .day-fill-quiet { margin: var(--space-4) 0 var(--space-2); text-align: center; }
-.day-fill-quiet__text { margin: 0 0 var(--space-2); color: var(--color-ink-3); font: var(--type-body-weight) 12px / 16px var(--type-body-family); }
+.day-fill-quiet__text { margin: 0 0 var(--space-2); color: var(--color-ink-3); font: var(--type-small-weight) var(--type-small-size) / var(--type-small-line) var(--type-small-family); }
 .day-fill-quiet__btn { white-space: normal; }
 
 /* ---------- Section caption with the Usual day link ---------- */

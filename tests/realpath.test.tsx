@@ -169,7 +169,7 @@ describe('real data path', () => {
   it('(12) the Timeline reaches back to the usual-day start with empty days, and they open', async () => {
     await at('/', '2026-10-01');
     await screen.findByText('October 2026');
-    expect(screen.getByText(/Thursday 1 October/)).toBeTruthy();
+    expect(screen.getByText('Thursday 1 October: nothing logged')).toBeTruthy();
     fireEvent.click(screen.getByText(/Thursday 1 October/));
     expect(await screen.findByRole('heading', { name: /1 October 2026/ })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Fill with your usual day: 4' })).toBeTruthy();
@@ -259,7 +259,7 @@ describe('real data path', () => {
     expect(await screen.findByRole('heading', { name: 'Log past days?' })).toBeTruthy();
     expect(await screen.findByText('Log Arvelin as given on 2 past days (12 Oct – yesterday)? Days already logged for it stay as they are.')).toBeTruthy();
     click('Yes, log them');
-    expect(await screen.findByText('Logged on 2 days, 1 already logged')).toBeTruthy();
+    expect(await screen.findByText('Logged on 2 of 3 days, 1 already logged')).toBeTruthy();
     expect(
       await rows(`select date::text as d from entry where item_id = '${SEED.items.arvelin}' and day_part = 6 and schedule_slot_id is not null order by date`),
     ).toEqual([{ d: '2026-10-12' }, { d: '2026-10-14' }]);
@@ -278,7 +278,7 @@ describe('real data path', () => {
     fireEvent.change(within(dialog()).getByLabelText('Starts on'), { target: { value: '2026-10-14' } });
     click('Save');
     expect(await screen.findByText('Log Arvelin as given yesterday (14 Oct)? A day already logged for it stays as it is.')).toBeTruthy();
-    click('No, leave them');
+    click('No, leave it');
     await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
     expect(await rows(`select count(*)::int as n from entry`)).toEqual([{ n: 0 }]);
   });
@@ -315,6 +315,55 @@ describe('real data path', () => {
     const heights = [...list.children].reduce((sum, li) => sum + parseFloat((li as HTMLElement).style.height || '0'), 0);
     // 366 days of 44px plus 13 month bands of 28px.
     expect(heights).toBe(366 * 44 + 13 * 28);
+  });
+
+  it('(QA 1) moving only "Starts on" of a usual-day item back saves it and offers the past days', async () => {
+    await at('/usual/2026-10-15', '2026-10-06');
+    fireEvent.click(await screen.findByText('Arvelin'));
+    fireEvent.change(within(dialog()).getByLabelText('Starts on'), { target: { value: '2026-10-01' } });
+    click('Save');
+    expect(await screen.findByRole('heading', { name: 'Log past days?' })).toBeTruthy();
+    expect(await rows(`select active_from::text as d from schedule_slot where item_id = '${SEED.items.arvelin}'`)).toEqual([{ d: '2026-10-01' }]);
+    expect(await screen.findByText(/on 14 past days \(1 Oct – yesterday\)/)).toBeTruthy();
+  });
+
+  it('(QA 3) Undo on the toast closes the past-days question', async () => {
+    await at('/usual/2026-10-15', '2026-10-06');
+    fireEvent.click(await screen.findByText('Arvelin'));
+    fireEvent.change(within(dialog()).getByLabelText('Starts on'), { target: { value: '2026-10-01' } });
+    click('Save');
+    expect(await screen.findByRole('heading', { name: 'Log past days?' })).toBeTruthy();
+    click('Undo');
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+    await waitFor(async () =>
+      expect(await rows(`select active_from::text as d from schedule_slot where item_id = '${SEED.items.arvelin}'`)).toEqual([{ d: '2026-10-06' }]),
+    );
+  });
+
+  it('(QA 2) the Fill banner does not come and go: Given on an empty day keeps it, deleting the only item keeps it quiet', async () => {
+    await at('/day/2026-10-15');
+    fireEvent.click(await screen.findByRole('button', { name: 'Mark Arvelin as given' }));
+    expect(await screen.findByText('1 logged as given')).toBeTruthy();
+    expect(document.querySelector('.day-fill')).not.toBeNull(); // still the banner, now for 3
+    expect((await screen.findByText('Fill with your usual day: 3')).closest('.day-fill')).not.toBeNull();
+    cleanup();
+    await fake!.backend.close();
+    // A day opened with one entry: delete it; the removed row keeps the day "worked on", no banner.
+    await at('/day/2026-10-15');
+    fireEvent.click(await screen.findByRole('button', { name: 'Mark Arvelin as given' }));
+    await screen.findByText('1 logged as given');
+    cleanup();
+    window.history.replaceState(null, '', '/day/2026-10-15');
+    render(
+      <I18nProvider initial="en">
+        <App repository={fake!.repository(NOW)} />
+      </I18nProvider>,
+    );
+    fireEvent.click(await screen.findByText('Arvelin'));
+    click('Delete');
+    expect(await screen.findByText('Removed for this day')).toBeTruthy();
+    expect(document.querySelector('.day-fill')).toBeNull();
+    expect((await screen.findByRole('button', { name: 'Fill with your usual day: 3' })).closest('.day-fill-quiet')).not.toBeNull();
   });
 });
 

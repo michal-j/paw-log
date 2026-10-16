@@ -77,7 +77,12 @@ export function DayView({ date, onBack, onStep, onInvalid, onUsualDay }: Props) 
   const due = day ? day.parts.flatMap((p) => p.due) : [];
   const anyPlanned = day ? day.parts.some((p) => p.rows.length > 0) : false;
   // The prominent Fill banner is for a day with nothing logged; otherwise Fill is a quiet action below the parts.
-  const anyLogged = day ? day.parts.some((p) => p.entries.length > 0) : false;
+  // A removed item counts: the day was worked on. The choice is made when the day opens and kept
+  // while it stays open, so Given, a delete or Undo never make the banner jump in or out.
+  const anyLogged = day ? day.parts.some((p) => p.entries.length > 0 || p.rows.some((r) => r.kind === 'removed')) : false;
+  const [quietFor, setQuietFor] = useState<{ date: PlainDate; quiet: boolean } | null>(null);
+  if (day && quietFor?.date !== date) setQuietFor({ date, quiet: anyLogged });
+  const quietFill = quietFor?.date === date ? quietFor.quiet : anyLogged;
   const itemGroup = (itemId: string) => groupOf(records?.items.find((i) => i.id === itemId)?.kind ?? 'medication');
 
   const { busy, guard } = useBusy();
@@ -138,7 +143,7 @@ export function DayView({ date, onBack, onStep, onInvalid, onUsualDay }: Props) 
       </div>
 
       <div className="day__body" ref={bodyRef}>
-        {due.length > 0 && !anyLogged && (
+        {due.length > 0 && !quietFill && (
           <div className="day-card day-fill">
             <span className="day-fill__icon" aria-hidden="true">
               <RoutineIcon />
@@ -353,7 +358,7 @@ export function DayView({ date, onBack, onStep, onInvalid, onUsualDay }: Props) 
             ))}
           </ul>
         )}
-        {due.length > 0 && anyLogged && (
+        {due.length > 0 && quietFill && (
           <div className="day-fill-quiet">
             <p className="day-fill-quiet__text">{fillHead}</p>
             <button type="button" className="btn btn--ghost btn--md day-fill-quiet__btn" disabled={busy} onClick={() => give(due)}>

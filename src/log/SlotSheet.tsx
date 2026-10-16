@@ -60,6 +60,8 @@ export function SlotSheet({ date, part, slot, group: onlyGroup }: { date: PlainD
       err: null,
     };
   });
+  // The start the form opened with: moving it is a change of its own (JCB-43 QA).
+  const [openedFrom] = useState(form.from);
   if (!records) return null;
   const set = (patch: Partial<Form>) => setForm((x) => ({ ...x, ...patch }));
 
@@ -103,14 +105,20 @@ export function SlotSheet({ date, part, slot, group: onlyGroup }: { date: PlainD
     const course = form.length !== 'none';
     // Same item and amount: only the course length changed. The slot keeps its start and
     // "7 days" / "14 days" count from it, so a running course reads "day 2 of 14".
-    const lengthOnly = !!slot && sameValues(slot, values);
+    const same = !!slot && sameValues(slot, values);
+    const lengthOnly = same && form.from === openedFrom;
+    // Same values, only "Starts on" moved (earlier or later): the slot itself starts then.
+    const startOnly = same && !lengthOnly;
     // A slot that ended because of an earlier change (not a course) keeps that end under "No end".
     const end =
       form.length === 'none' && slot && !slot.course && slot.activeTo
         ? slot.activeTo
         : endFor(lengthOnly && slot ? slot.activeFrom : form.from, form.length, form.to);
-    const change =
-      lengthOnly && slot
+    const moved: ScheduleSlot | null =
+      startOnly && slot ? { ...slot, activeFrom: form.from, activeTo: end && end < form.from ? form.from : end, course: course && end !== null } : null;
+    const change = moved
+      ? { save: [moved], remove: [], slot: moved }
+      : lengthOnly && slot
         ? {
             save:
               end === slot.activeTo && course === !!slot.course

@@ -187,7 +187,7 @@ export function Timeline({ initialScrollTop = 0, dayHref, onOpenDay }: Props) {
 
   const summary = (row: DayRow) => {
     const flags = flagsFor(row.events, row.anySkipped, t);
-    return `${fmt.long(row.date)}: ${flags.length ? flags.join(', ') : t('copy.95')}`;
+    return `${fmt.long(row.date)}: ${flags.length ? flags.join(', ') : row.logged ? t('copy.95') : t('nothingLogged')}`;
   };
 
   const openDay = (date: PlainDate) => (e: MouseEvent<HTMLAnchorElement>) => {

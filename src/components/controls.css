@@ -86,7 +86,7 @@
   font: var(--type-button-weight) var(--type-button-size) / var(--type-button-line) var(--type-button-family);
   cursor: pointer;
 }
-.sheet__text { margin: 0; font: var(--type-body-weight) 15px / 21px var(--type-body-family); }
+.sheet__text { margin: 0; font: var(--type-body-weight) var(--type-body-size) / var(--type-body-line) var(--type-body-family); }
 /* A short sheet opened right after a save: room under the text for the toast (48px) that shows meanwhile. */
 .sheet__text--toast-room { margin-bottom: calc(48px + var(--space-4)); }
 .sheet__body { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 14px var(--space-4) 20px; }

@@ -149,6 +149,8 @@ export interface DayRow {
   badges: Badge[];
   events: HealthEvent[];
   anySkipped: boolean;
+  /** Anything logged (entries or events) on the day; empty past days are on the Timeline too. */
+  logged: boolean;
 }
 
 export interface MonthBand {
@@ -271,6 +273,7 @@ export function buildTimeline(input: {
       badges: badgesFor(dayEvents),
       events: dayEvents,
       anySkipped: dayEntries.some((e) => e.state === 'skipped'),
+      logged: dayEntries.length > 0 || dayEvents.length > 0,
     });
     y += DAY_ROW_H;
   }

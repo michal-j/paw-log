@@ -47,7 +47,8 @@ export function BackfillSheet({ slot }: { slot: ScheduleSlot }) {
       },
       () => {
         const skipped = total - added;
-        return skipped > 0 ? fill(t('toastBackfilledSkip'), { n: added, m: skipped }) : fill(t('toastBackfilled'), { n: added });
+        if (skipped > 0) return fill(t('toastBackfilledSkip'), { n: added, t: total, m: skipped });
+        return added === 1 ? t('toastBackfilledOne') : fill(t('toastBackfilled'), { n: added });
       },
     );
     if (ok) close();
@@ -60,10 +61,10 @@ export function BackfillSheet({ slot }: { slot: ScheduleSlot }) {
       footer={
         <>
           <button type="button" className="btn btn--ghost btn--lg" disabled={busy} onClick={close}>
-            {t('backfillNo')}
+            {t(days.length === 1 ? 'backfillNoOne' : 'backfillNo')}
           </button>
           <button type="button" className="btn btn--primary btn--lg" disabled={busy} onClick={guard(yes)}>
-            {t('backfillYes')}
+            {t(days.length === 1 ? 'backfillYesOne' : 'backfillYes')}
           </button>
         </>
       }
