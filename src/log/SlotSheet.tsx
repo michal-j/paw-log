@@ -8,6 +8,7 @@ import * as act from './actions';
 import { defaultUnitFor, groupOf, type KindGroup } from './amount';
 import { AmountFields, FlavourPicker, ItemPicker, OTHER, amountValue, type AmountValue } from './fields';
 import { useFormat } from './format';
+import { useBusy } from './useBusy';
 import { useLog } from './LogProvider';
 import { changeFrom, removeFrom, sameValues } from './plan';
 
@@ -34,6 +35,7 @@ export function SlotSheet({ date, part, slot }: { date: PlainDate; part: DayPart
   const { t } = useI18n();
   const f = useFormat();
   const { records, repository, run, close } = useLog();
+  const { busy, guard } = useBusy();
   const [form, setForm] = useState<Form>(() => {
     const item = slot && records?.items.find((i) => i.id === slot.itemId);
     const group = item ? groupOf(item.kind) : 'med';
@@ -46,7 +48,7 @@ export function SlotSheet({ date, part, slot }: { date: PlainDate; part: DayPart
       flavour: slot?.flavour ?? '',
       amount: amountValue(slot ? slot.amount : null, unit),
       from,
-      length: slot?.activeTo ? 'date' : 'none',
+      length: slot?.course && slot.activeTo ? 'date' : 'none',
       to: slot?.activeTo ?? null,
       err: null,
     };
@@ -90,14 +92,26 @@ export function SlotSheet({ date, part, slot }: { date: PlainDate; part: DayPart
       amount: form.amount.amount,
       unit: form.amount.unit,
     };
+    // "How long" set to a length or an end date makes a course ("day n of m"); No end does not.
+    const course = form.length !== 'none';
     // Same item and amount: only the course length changed. The slot keeps its start and
     // "7 days" / "14 days" count from it, so a running course reads "day 2 of 14".
     const lengthOnly = !!slot && sameValues(slot, values);
-    const end = endFor(lengthOnly && slot ? slot.activeFrom : form.from, form.length, form.to);
+    // A slot that ended because of an earlier change (not a course) keeps that end under "No end".
+    const end =
+      form.length === 'none' && slot && !slot.course && slot.activeTo
+        ? slot.activeTo
+        : endFor(lengthOnly && slot ? slot.activeFrom : form.from, form.length, form.to);
     const change =
       lengthOnly && slot
-        ? { save: end === slot.activeTo ? [] : [{ ...slot, activeTo: end && end < slot.activeFrom ? slot.activeFrom : end }], remove: [] }
-        : changeFrom(records.slots, slot ?? null, values, form.from, end, act.newId, records.dogId);
+        ? {
+            save:
+              end === slot.activeTo && course === !!slot.course
+                ? []
+                : [{ ...slot, activeTo: end && end < slot.activeFrom ? slot.activeFrom : end, course: course && end !== null }],
+            remove: [],
+          }
+        : changeFrom(records.slots, slot ?? null, { ...values, course }, form.from, end, act.newId, records.dogId);
     if (!change.save.length && !newItem) return close();
     if (
       await run(async () => {
@@ -122,11 +136,11 @@ export function SlotSheet({ date, part, slot }: { date: PlainDate; part: DayPart
       footer={
         <>
           {slot && (
-            <button type="button" className="btn btn--ghost btn--lg btn--danger" onClick={remove}>
+            <button type="button" className="btn btn--ghost btn--lg btn--danger" disabled={busy} onClick={guard(remove)}>
               {t('removeUsual')}
             </button>
           )}
-          <button type="button" className="btn btn--primary btn--lg" onClick={save}>
+          <button type="button" className="btn btn--primary btn--lg" disabled={busy} onClick={guard(save)}>
             {t('save')}
           </button>
         </>

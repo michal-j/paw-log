@@ -4,6 +4,7 @@ import { Chip, Chips, Field, Sheet } from '../components/Sheet';
 import { useI18n, type MessageKey } from '../i18n';
 import * as act from './actions';
 import { DateLine, OTHER } from './fields';
+import { useBusy } from './useBusy';
 import { useLog, type EventKind } from './LogProvider';
 import { SYMPTOMS, isIntensity, propsFor, symptomKey, symptomTitle } from './symptoms';
 
@@ -30,8 +31,8 @@ interface Form {
   ctxOpen: boolean;
   /** Symptom: a known symptom key, OTHER, or nothing picked yet. */
   symptom: MessageKey | typeof OTHER | null;
-  /** Other: the type. */
-  type: OtherType;
+  /** Other: the type; nothing until one is picked. */
+  type: OtherType | null;
   /** Free-text title: a typed symptom, the clinic, or what an "other" event was. */
   titleText: string;
   props: Record<string, string>;
@@ -47,7 +48,7 @@ function initial(kind: EventKind, date: PlainDate, event: HealthEvent | undefine
     date: event?.date ?? date,
     ctxOpen,
     symptom: event?.type === 'symptom' ? (known ?? OTHER) : null,
-    type: kind === 'other' && event ? (event.type as OtherType) : 'frontline',
+    type: kind === 'other' && event ? (event.type as OtherType) : null,
     titleText: event && !(event.type === 'symptom' && known) && (kind === 'vet' || kind === 'other' || kind === 'symptom') ? event.title : '',
     props: { ...(event?.props ?? {}) },
     intensity: event?.intensity ?? '',
@@ -73,6 +74,7 @@ export function EventSheet({
 }) {
   const { t } = useI18n();
   const { records, repository, run, close } = useLog();
+  const { busy, guard } = useBusy();
   const [form, setForm] = useState<Form>(() => initial(kind, date, event, ctxOpen));
   if (!records) return null;
   const set = (patch: Partial<Form>) => setForm((x) => ({ ...x, ...patch }));
@@ -93,10 +95,11 @@ export function EventSheet({
     }
     if (kind === 'vet') return title || detail ? { type: 'vet', title, detail, props: {}, intensity: null, alsoDone: form.alsoDone } : null;
     if (kind === 'note') return detail ? { type: 'note', title: '', detail, props: {}, intensity: null, alsoDone: [] } : null;
-    if (form.type === 'other' && !title) return null;
+    if (!form.type || (form.type === 'other' && !title)) return null;
     return { type: form.type, title: form.type === 'other' ? title : '', detail, props: {}, intensity: null, alsoDone: [] };
   };
 
+  const canSave = kind !== 'other' || form.type !== null;
   const save = async () => {
     const fields = build();
     if (!fields) return set({ err: true });
@@ -252,11 +255,11 @@ export function EventSheet({
       footer={
         <>
           {event && (
-            <button type="button" className="btn btn--ghost btn--lg btn--danger" onClick={remove}>
+            <button type="button" className="btn btn--ghost btn--lg btn--danger" disabled={busy} onClick={guard(remove)}>
               {t('delete')}
             </button>
           )}
-          <button type="button" className="btn btn--primary btn--lg" onClick={save}>
+          <button type="button" className="btn btn--primary btn--lg" disabled={busy || !canSave} onClick={guard(save)}>
             {t('save')}
           </button>
         </>

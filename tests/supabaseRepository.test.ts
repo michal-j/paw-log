@@ -172,13 +172,13 @@ describe('SupabaseRepository reads', () => {
   it('maps schedule slots and keeps only those active in the range', async () => {
     const f = withDog({
       schedule_slot: () => ({
-        data: [{ id: 's1', dog_id: DOG.id, item_id: 'i1', day_part: 6, flavour: '', amount: 0.15, unit: 'ml', active_from: '2026-09-01', active_to: null }],
+        data: [{ id: 's1', dog_id: DOG.id, item_id: 'i1', day_part: 6, flavour: '', amount: 0.15, unit: 'ml', active_from: '2026-09-01', active_to: null, is_course: false }],
         error: null,
       }),
     });
     const slots = await new SupabaseRepository(f.client).listScheduleSlots({ from: '2026-10-01', to: '2026-10-31' });
     expect(slots).toEqual([
-      { id: 's1', dogId: DOG.id, itemId: 'i1', dayPart: 6, flavour: '', amount: 0.15, unit: 'ml', activeFrom: '2026-09-01', activeTo: null },
+      { id: 's1', dogId: DOG.id, itemId: 'i1', dayPart: 6, flavour: '', amount: 0.15, unit: 'ml', activeFrom: '2026-09-01', activeTo: null, course: false },
     ]);
     const [q] = f.of('schedule_slot');
     expect(q?.calls).toContainEqual(['lte', 'active_from', '2026-10-31']);
@@ -283,8 +283,8 @@ describe('SupabaseRepository writes', () => {
     const id = 'c0000000-0000-4000-8000-000000000001';
     await repo.saveItem({ id, dogId: DOG.id, kind: 'medication', name: 'New', colour: 'mark-neutral', defaultDayPart: 1, activeFrom: '2026-10-15', activeTo: null, defaultUnit: 'pill' });
     expect(f.of('item')[0]?.has('upsert')?.[1]).toMatchObject({ id, kind: 'medication', default_unit: 'pill', flavours: [], conversion_unit: null, conversion_size: null, position: 0, hidden_by_default: false });
-    await repo.saveScheduleSlot({ id, dogId: DOG.id, itemId: 'i1', dayPart: 3, flavour: '', amount: 1, unit: 'sachet', activeFrom: '2026-10-14', activeTo: '2026-10-20' });
-    expect(f.of('schedule_slot')[0]?.has('upsert')?.[1]).toEqual({ id, dog_id: DOG.id, item_id: 'i1', day_part: 3, flavour: '', amount: 1, unit: 'sachet', active_from: '2026-10-14', active_to: '2026-10-20' });
+    await repo.saveScheduleSlot({ id, dogId: DOG.id, itemId: 'i1', dayPart: 3, flavour: '', amount: 1, unit: 'sachet', activeFrom: '2026-10-14', activeTo: '2026-10-20', course: true });
+    expect(f.of('schedule_slot')[0]?.has('upsert')?.[1]).toEqual({ id, dog_id: DOG.id, item_id: 'i1', day_part: 3, flavour: '', amount: 1, unit: 'sachet', active_from: '2026-10-14', active_to: '2026-10-20', is_course: true });
     await repo.deleteScheduleSlot(id);
     expect(f.of('schedule_slot')[1]?.calls).toEqual([['delete'], ['eq', 'id', id]]);
     await expect(repo.saveScheduleSlot({ id: 'slot-1', dogId: DOG.id, itemId: 'i1', dayPart: 3, flavour: '', amount: 1, unit: 'sachet', activeFrom: '2026-10-14', activeTo: null })).rejects.toThrow(/UUID/);

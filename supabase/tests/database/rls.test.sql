@@ -4,7 +4,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(63);
+select plan(64);
 
 -- Fixtures (as the postgres role, which bypasses RLS, like the bootstrap SQL).
 -- Household A: users a1, a2, dog A. Household B: user b1, dog B. User c belongs to no household.
@@ -184,6 +184,10 @@ select lives_ok(
     values ('60000000-0000-4000-8000-0000000000a2', '20000000-0000-4000-8000-00000000000a', '30000000-0000-4000-8000-00000000000a',
             6, 'turkey', 0.25, 'can', '2026-10-01')$$,
   'a schedule slot takes flavour, amount and unit');
+select throws_ok(
+  $$insert into public.schedule_slot (dog_id, item_id, day_part, amount, unit, active_from, is_course)
+    values ('20000000-0000-4000-8000-00000000000a', '30000000-0000-4000-8000-00000000000a', 3, 1, 'sachet', '2026-10-01', true)$$,
+  '23514', null, 'a course needs an end date');
 insert into public.entry (id, dog_id, date, day_part, item_id, schedule_slot_id, state)
   values ('40000000-0000-4000-8000-0000000000a5', '20000000-0000-4000-8000-00000000000a', '2026-10-07', 6,
           '30000000-0000-4000-8000-00000000000a', '60000000-0000-4000-8000-0000000000a2', 'given');

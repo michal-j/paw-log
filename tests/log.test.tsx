@@ -70,11 +70,35 @@ describe('fill and Given', () => {
     expect((await repo.listEntries({ from: '2026-10-15', to: '2026-10-15' })).filter((e) => e.dayPart === 2)).toHaveLength(3);
   });
 
-  it('shows no Given before a part is due', async () => {
+  it('before a part is due: "Later today", Given still offered, no Fill', async () => {
     at('/demo/day/2026-10-15', repoAt(7, 0));
     await screen.findAllByText('Bellavet');
-    expect(screen.queryByRole('button', { name: 'Mark Bellavet as given' })).toBeNull();
     expect(screen.getByText('Later today')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Mark Bellavet as given' })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: /Fill with your usual day/ })).toBeNull();
+  });
+
+  it('a double tap on Given writes once and keeps the first toast and its Undo', async () => {
+    const repo = repoAt(16, 30);
+    for (const e of await repo.listEntries({ from: '2026-10-15', to: '2026-10-15' })) if (e.dayPart === 2) await repo.deleteEntry(e.id);
+    at('/demo/day/2026-10-15', repo);
+    const given = await screen.findByRole('button', { name: 'Mark Bellavet as given' });
+    fireEvent.click(given);
+    fireEvent.click(given);
+    expect(await screen.findByText('1 logged as given')).toBeTruthy();
+    // A later tap on Fill for slots someone already filled adds nothing and keeps the toast.
+    const fillBtn = screen.getByRole('button', { name: /Fill with your usual day/ });
+    await repo.addPlannedEntries((await repo.listScheduleSlots({ from: '2026-10-15', to: '2026-10-15' })).filter((s) => s.dayPart === 2).map((s, i) => ({
+      id: `other-${i}`, dogId: s.dogId, date: '2026-10-15', dayPart: s.dayPart, itemId: s.itemId, scheduleSlotId: s.id, amount: s.amount, unit: s.unit, flavour: s.flavour, state: 'given' as const, note: '', createdBy: '',
+    })));
+    fireEvent.click(fillBtn);
+    await waitFor(() => expect(screen.queryByText(/0 logged/)).toBeNull());
+    expect(screen.getByText('1 logged as given')).toBeTruthy();
+    expect((await repo.listEntries({ from: '2026-10-15', to: '2026-10-15' })).filter((e) => e.itemId === 'item-bellavet' && e.dayPart === 2)).toHaveLength(1);
+    click('Undo');
+    await waitFor(async () =>
+      expect((await repo.listEntries({ from: '2026-10-15', to: '2026-10-15' })).some((e) => e.itemId === 'item-bellavet' && e.dayPart === 2)).toBe(false),
+    );
   });
 });
 
@@ -86,7 +110,7 @@ describe('add and edit', () => {
     fireEvent.click(within(dialog()).getByText('Food'));
     expect(within(dialog()).getByText('For Thu 15 Oct · Dinner')).toBeTruthy();
     click('Save');
-    expect(within(dialog()).getByText('Pick a food.')).toBeTruthy();
+    expect(await within(dialog()).findByText('Pick a food.')).toBeTruthy();
     fireEvent.click(within(dialog()).getByRole('radio', { name: 'Farm Fresh' }));
     fireEvent.click(within(dialog()).getByRole('radio', { name: 'chicken' }));
     fireEvent.click(within(dialog()).getByRole('radio', { name: '½' }));
@@ -96,6 +120,20 @@ describe('add and edit', () => {
     expect(await screen.findByText('Farm Fresh, chicken')).toBeTruthy();
     const added = (await repo.listEntries({ from: '2026-10-15' })).find((e) => e.itemId === 'item-farm');
     expect(added).toMatchObject({ dayPart: 4, amount: 0.5, unit: 'can', flavour: 'chicken', state: 'partial', scheduleSlotId: null });
+  });
+
+  it('a double tap on Save writes one entry', async () => {
+    const repo = at('/demo/day/2026-10-15');
+    await screen.findAllByText('Bellavet');
+    const before = (await repo.listEntries({ from: '2026-10-15' })).length;
+    click(/^Add$/);
+    fireEvent.click(within(dialog()).getByText('Food'));
+    fireEvent.click(within(dialog()).getByRole('radio', { name: 'Farm Fresh' }));
+    const save = screen.getByRole('button', { name: 'Save' });
+    fireEvent.click(save);
+    fireEvent.click(save);
+    expect(await screen.findByText('Saved')).toBeTruthy();
+    expect((await repo.listEntries({ from: '2026-10-15' })).length).toBe(before + 1);
   });
 
   it('edits an entry, including changing the item, and deletes it with Undo', async () => {
@@ -159,6 +197,8 @@ describe('add and edit', () => {
 
     click(/^Add$/);
     fireEvent.click(within(dialog()).getByText('Other'));
+    expect((screen.getByRole('button', { name: 'Save' }) as HTMLButtonElement).disabled).toBe(true); // no type picked yet
+    expect(within(dialog()).queryAllByRole('radio', { checked: true })).toHaveLength(0);
     fireEvent.click(within(dialog()).getByRole('radio', { name: 'Nail trimming' }));
     click('Save');
     expect(await screen.findByRole('button', { name: /^Nail trimming/ })).toBeTruthy();
@@ -189,15 +229,19 @@ describe('usual day and menu', () => {
 
   it('day-part times are editable in the menu and decide what is due today', async () => {
     const repo = at('/demo/day/2026-10-15', repoAt(7, 45));
-    expect(await screen.findByRole('button', { name: 'Mark Bellavet as given' })).toBeTruthy();
+    expect(await screen.findByText('Up to now: 1 not logged (07:45)')).toBeTruthy();
     click('Menu');
-    const breakfast = within(dialog()).getByLabelText('Breakfast');
-    fireEvent.change(breakfast, { target: { value: '08:00' } });
-    fireEvent.blur(breakfast);
+    const breakfast = within(dialog()).getByLabelText('Breakfast') as HTMLInputElement;
+    fireEvent.change(breakfast, { target: { value: '08:00' } }); // saved on change, no blur needed
     expect(await screen.findByText('Saved')).toBeTruthy();
     expect((await repo.getDayPartTimes())[2]).toBe('08:00');
+    click('Undo');
+    await waitFor(() => expect(breakfast.value).toBe('07:30')); // the field follows the Undo
+    fireEvent.change(breakfast, { target: { value: '08:00' } });
+    expect(await screen.findByText('Saved')).toBeTruthy();
     click('Close');
-    expect(screen.queryByRole('button', { name: 'Mark Bellavet as given' })).toBeNull();
+    await waitFor(() => expect(screen.queryByText(/Up to now/)).toBeNull());
+    expect(screen.getByText('Later today')).toBeTruthy();
   });
 
   it('resets demo data from the menu', async () => {

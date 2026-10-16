@@ -71,10 +71,23 @@ describe('matching entries to the usual day', () => {
 });
 
 describe('courses', () => {
-  it('counts day n of m from the slot dates', () => {
-    const g = slot('g', 3, 'gastrelle', '2026-10-14', '2026-10-20');
+  it('counts day n of m from the slot dates, for courses only', () => {
+    const g = slot('g', 3, 'gastrelle', '2026-10-14', '2026-10-20', { course: true });
     expect(courseDay(g, '2026-10-15')).toEqual({ n: 2, m: 7 });
     expect(courseDay(slot('x', 1, 'x'), '2026-10-15')).toBeNull();
+    // An end date alone (the slot was changed or removed from a date) is not a course.
+    expect(courseDay(slot('f', 4, 'farm', '2026-09-01', '2026-10-11'), '2026-09-01')).toBeNull();
+  });
+
+  it('changes and removals do not invent courses', () => {
+    const old = slot('o', 4, 'ocean', '2026-10-01');
+    const c = changeFrom([old], old, { itemId: 'ocean', dayPart: 4, flavour: '', amount: 2, unit: 'pill' }, '2026-10-15', undefined, ids, 'd');
+    expect(c.save.map((s) => !!s.course)).toEqual([false, false]);
+    expect(courseDay(c.save[0] as ScheduleSlot, '2026-10-10')).toBeNull();
+    const removed = removeFrom(slot('g', 3, 'g', '2026-10-14', '2026-10-20', { course: true }), '2026-10-16');
+    expect(removed.save[0]).toMatchObject({ activeTo: '2026-10-15', course: false });
+    const course = changeFrom([], null, { itemId: 'g', dayPart: 3, flavour: '', amount: 1, unit: 'sachet', course: true }, '2026-10-15', '2026-10-21', ids, 'd');
+    expect(courseDay(course.slot, '2026-10-16')).toEqual({ n: 2, m: 7 });
   });
 });
 

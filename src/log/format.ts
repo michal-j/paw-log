@@ -20,8 +20,6 @@ export const EVENT_LABEL: Partial<Record<EventType, MessageKey>> = {
   note: 'note.154',
 };
 
-const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
-
 /** Formatting that depends on the UI language: dates, amounts, day parts, event titles. */
 export function useFormat() {
   const { lang, t } = useI18n();
@@ -31,7 +29,7 @@ export function useFormat() {
     const dayMonth = make({ day: 'numeric', month: 'short' });
     return {
       /** "Thu 15 Oct" */
-      shortDate: (d: PlainDate) => cap(short.format(parseDate(d))),
+      shortDate: (d: PlainDate) => short.format(parseDate(d)),
       /** "15 Oct" */
       dayMonth: (d: PlainDate) => dayMonth.format(parseDate(d)),
       part: (p: DayPart) => t(PART_NAME[p]),

@@ -66,6 +66,8 @@ export interface ScheduleSlot {
   unit: Unit | null;
   activeFrom: PlainDate;
   activeTo: PlainDate | null;
+  /** A course set with "How long" (7 days, 14 days, an end date): the Day view shows "day n of m". Absent = not a course. */
+  course?: boolean;
 }
 
 /** Usual time `HH:MM` of each part of the day. */

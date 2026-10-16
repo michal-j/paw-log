@@ -54,6 +54,7 @@ interface ScheduleSlotRow {
   unit: Unit | null;
   active_from: string;
   active_to: string | null;
+  is_course: boolean | null;
 }
 interface DayPartRow {
   part: number;
@@ -91,7 +92,7 @@ interface EventRow {
 const DOG_COLUMNS = 'id, household_id, name';
 const ITEM_COLUMNS =
   'id, dog_id, kind, name, colour, default_day_part, active_from, active_to, hidden_by_default, position, default_unit, flavours, conversion_unit, conversion_size';
-const SLOT_COLUMNS = 'id, dog_id, item_id, day_part, flavour, amount, unit, active_from, active_to';
+const SLOT_COLUMNS = 'id, dog_id, item_id, day_part, flavour, amount, unit, active_from, active_to, is_course';
 const ENTRY_COLUMNS =
   'id, dog_id, date, day_part, item_id, schedule_slot_id, amount, unit, flavour, dose_text, state, note, created_by, updated_by';
 const EVENT_COLUMNS = 'id, dog_id, date, type, title, detail, intensity, props, also_done, issue_id';
@@ -166,6 +167,7 @@ export const toScheduleSlot = (r: ScheduleSlotRow): ScheduleSlot => ({
   unit: r.unit ?? null,
   activeFrom: r.active_from,
   activeTo: r.active_to,
+  course: !!r.is_course,
 });
 
 export const fromScheduleSlot = (s: ScheduleSlot) => ({
@@ -178,6 +180,7 @@ export const fromScheduleSlot = (s: ScheduleSlot) => ({
   unit: s.unit,
   active_from: s.activeFrom,
   active_to: s.activeTo,
+  is_course: !!s.course && s.activeTo !== null,
 });
 
 export const toEntry = (r: EntryRow): Entry => ({

@@ -42,7 +42,7 @@ interface LogApi {
    * Run a write, then reload and show `message` with Undo (when the write returns one).
    * On failure: reload and show the generic error. Resolves true on success.
    */
-  run: (work: () => Promise<Undo | null>, message: string | (() => string)) => Promise<boolean>;
+  run: (work: () => Promise<Undo | null>, message: string | (() => string | null)) => Promise<boolean>;
   /** Reload everything (after a reset, say). */
   reload: () => void;
   toast: Toast | null;
@@ -100,11 +100,12 @@ export function LogProvider({ repository, children }: { repository: Repository; 
   const reload = useCallback(() => setVersion((v) => v + 1), []);
 
   const run = useCallback(
-    async (work: () => Promise<Undo | null>, message: string | (() => string)) => {
+    async (work: () => Promise<Undo | null>, message: string | (() => string | null)) => {
       try {
         const undo = await work();
         reload();
-        show(typeof message === 'string' ? message : message(), undo ?? undefined);
+        const text = typeof message === 'string' ? message : message();
+        if (text !== null) show(text, undo ?? undefined);
         return true;
       } catch {
         reload();

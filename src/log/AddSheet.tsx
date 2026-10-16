@@ -5,18 +5,14 @@ import { BowlIcon, DotsIcon, NoteIcon, PillIcon } from '../components/icons';
 import { Sheet } from '../components/Sheet';
 import { useI18n, type MessageKey } from '../i18n';
 import { DAY_PARTS } from '../timeline/model';
-import { groupOf, type KindGroup } from './amount';
+import type { KindGroup } from './amount';
 import { DateLine } from './fields';
 import { useFormat } from './format';
 import { useLog, type EventKind, type Records } from './LogProvider';
-import { matchDay, slotsOn } from './plan';
 
-/** Without a part: the first part with an open usual-day item of that kind (food 4, medication 1 otherwise). */
-function firstOpenPart(records: Records, date: PlainDate, group: KindGroup): DayPart {
-  const { filled } = matchDay(date, records.slots, records.entries);
-  const kindOf = new Map(records.items.map((i) => [i.id, groupOf(i.kind)]));
-  const open = slotsOn(records.slots, date).filter((s) => !filled.has(s.id) && kindOf.get(s.itemId) === group);
-  return DAY_PARTS.find((p) => open.some((s) => s.dayPart === p)) ?? (group === 'food' ? 4 : 1);
+/** Without a part: the part of the day it is now (the last one whose usual time has passed). */
+export function partNow(times: Records['times'], now: string): DayPart {
+  return [...DAY_PARTS].reverse().find((p) => times[p] <= now) ?? 1;
 }
 
 /**
@@ -26,14 +22,14 @@ function firstOpenPart(records: Records, date: PlainDate, group: KindGroup): Day
 export function AddSheet({ date: initialDate, part }: { date: PlainDate; part?: DayPart }) {
   const { t } = useI18n();
   const f = useFormat();
-  const { records, open, close } = useLog();
+  const { records, repository, open, close } = useLog();
   const [date, setDate] = useState(initialDate);
   const [ctxOpen, setCtxOpen] = useState(false);
   const [atPart, setAtPart] = useState(part);
   if (!records) return null;
 
   const entry = (group: KindGroup) =>
-    open({ kind: 'entry', group, date, part: atPart ?? firstOpenPart(records, date, group), ctxOpen });
+    open({ kind: 'entry', group, date, part: atPart ?? partNow(records.times, repository.nowTime()), ctxOpen });
   const event = (type: EventKind) => open({ kind: 'event', type, date, ctxOpen });
 
   const option = (key: string, icon: ReactNode, label: MessageKey, onClick: () => void) => (

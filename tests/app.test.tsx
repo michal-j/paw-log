@@ -78,7 +78,7 @@ describe('day view', () => {
     expect(screen.getByText('After supper')).toBeTruthy();
     expect(screen.getByText('Nothing scheduled')).toBeTruthy();
     expect(screen.getByText('Refused')).toBeTruthy();
-    expect(screen.getByText('Half eaten')).toBeTruthy();
+    expect(screen.getByText('Partly eaten')).toBeTruthy(); // one term for partial food
     expect(screen.getByText('What happened')).toBeTruthy();
     expect(screen.getByRole('button', { name: /^Vet visit · Maple Vet/ })).toBeTruthy(); // tap to edit
     expect(screen.getByText('Restlessness')).toBeTruthy();

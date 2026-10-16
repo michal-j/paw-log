@@ -82,9 +82,12 @@ export function plannedEntry(slot: ScheduleSlot, date: PlainDate, id: string): E
 
 const daysBetween = (a: PlainDate, b: PlainDate) => Math.round((Date.parse(`${b}T00:00:00Z`) - Date.parse(`${a}T00:00:00Z`)) / 864e5);
 
-/** "Day n of m" for a slot with an end date (a course); null for a slot without one. */
+/**
+ * "Day n of m" for a course (a slot marked as one, with an end date); null otherwise. A slot that only
+ * ended because the usual day changed from a date, or was removed, is not a course.
+ */
 export function courseDay(slot: ScheduleSlot, date: PlainDate): { n: number; m: number } | null {
-  if (!slot.activeTo) return null;
+  if (!slot.course || !slot.activeTo) return null;
   return { n: daysBetween(slot.activeFrom, date) + 1, m: daysBetween(slot.activeFrom, slot.activeTo) + 1 };
 }
 
@@ -96,6 +99,8 @@ export interface SlotValues {
   flavour: string;
   amount: number | null;
   unit: Unit | null;
+  /** Set when "How long" was chosen; absent keeps the current slot's flag. */
+  course?: boolean;
 }
 
 /** What to write: slots to save (insert or update) and slot ids to delete. `slot` is the one that now holds the values. */
@@ -126,17 +131,21 @@ export function changeFrom(
   dogId: string,
 ): SlotChange {
   const cur = target ?? slots.find((s) => activeOn(s, from) && s.dayPart === values.dayPart && s.itemId === values.itemId) ?? null;
+  const { course: courseValue, ...rest } = values;
   if (!cur) {
-    const slot: ScheduleSlot = { id: newId(), dogId, ...values, activeFrom: from, activeTo: to ?? null };
+    const activeTo = to ?? null;
+    const slot: ScheduleSlot = { id: newId(), dogId, ...rest, activeFrom: from, activeTo, course: !!courseValue && activeTo !== null };
     return { save: [slot], remove: [], slot };
   }
   const end = to === undefined ? cur.activeTo : to;
+  const course = (courseValue ?? !!cur.course) && end !== null;
   if (cur.activeFrom >= from) {
-    const slot: ScheduleSlot = { ...cur, ...values, activeFrom: from, activeTo: end };
+    const slot: ScheduleSlot = { ...cur, ...rest, activeFrom: from, activeTo: end, course };
     return { save: [slot], remove: [], slot };
   }
-  const closed: ScheduleSlot = { ...cur, activeTo: shiftDate(from, -1) };
-  const slot: ScheduleSlot = { id: newId(), dogId: cur.dogId, ...values, activeFrom: from, activeTo: end };
+  // The old slot ends because of the change, not because a course ran out: not a course any more.
+  const closed: ScheduleSlot = { ...cur, activeTo: shiftDate(from, -1), course: false };
+  const slot: ScheduleSlot = { id: newId(), dogId: cur.dogId, ...rest, activeFrom: from, activeTo: end, course };
   return { save: [closed, slot], remove: [], slot };
 }
 
@@ -144,7 +153,8 @@ export function changeFrom(
 export function removeFrom(slot: ScheduleSlot, from: PlainDate): Omit<SlotChange, 'slot'> {
   if (slot.activeFrom >= from) return { save: [], remove: [slot.id] };
   if (slot.activeTo !== null && slot.activeTo < from) return { save: [], remove: [] };
-  return { save: [{ ...slot, activeTo: shiftDate(from, -1) }], remove: [] };
+  // Ended by a removal, not by a course running out.
+  return { save: [{ ...slot, activeTo: shiftDate(from, -1), course: false }], remove: [] };
 }
 
 // ---------- The Usual day screen ----------

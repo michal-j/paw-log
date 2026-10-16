@@ -163,6 +163,8 @@
   color: var(--color-mint-deep);
 }
 .day-fill__text { flex: 1; min-width: 0; }
+/* Keeps the banner's place (with its margins) after a fill, so the list does not move. */
+.day-fill-space { margin: var(--space-3) 0 var(--space-2); }
 .day-fill__head { margin: 0; font: 600 14px / 20px var(--type-body-family); }
 .day-fill__hint { margin: 2px 0 0; color: var(--color-ink-2); font: var(--type-body-weight) 13px / 18px var(--type-body-family); }
 .day-fill__btn { width: 100%; margin-top: 10px; white-space: normal; }

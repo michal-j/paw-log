@@ -26,16 +26,25 @@ export function MenuSheet({
   const { t } = useI18n();
   const f = useFormat();
   const { records, repository, run, close } = useLog();
-  const [times, setTimes] = useState<Partial<Record<DayPart, string>>>({});
+  // What is being typed; a part leaves this once its time is saved, so the field then shows the
+  // stored time (and follows an Undo).
+  const [draft, setDraft] = useState<Partial<Record<DayPart, string>>>({});
 
-  const commit = (part: DayPart) => {
-    const value = times[part];
+  const change = (part: DayPart, value: string) => {
+    setDraft((x) => ({ ...x, [part]: value }));
     const before = records?.times[part];
-    if (!value || !before || value === before || !TIME.test(value)) return;
+    if (!before || value === before || !TIME.test(value)) return;
     void run(async () => {
       await repository.saveDayPartTime(part, value);
       return () => repository.saveDayPartTime(part, before);
-    }, t('toastSaved'));
+    }, t('toastSaved')).then(() =>
+      setDraft((x) => {
+        if (x[part] !== value) return x; // typed again meanwhile
+        const next = { ...x };
+        delete next[part];
+        return next;
+      }),
+    );
   };
 
   return (
@@ -58,9 +67,8 @@ export function MenuSheet({
                 id={`part-time-${p}`}
                 className="input"
                 type="time"
-                value={times[p] ?? records?.times[p] ?? ''}
-                onChange={(e) => setTimes((x) => ({ ...x, [p]: e.target.value }))}
-                onBlur={() => commit(p)}
+                value={draft[p] ?? records?.times[p] ?? ''}
+                onChange={(e) => change(p, e.target.value)}
               />
             </li>
           ))}

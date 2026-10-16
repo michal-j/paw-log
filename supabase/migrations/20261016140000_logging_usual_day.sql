@@ -22,7 +22,11 @@ alter table public.schedule_slot
   add column flavour text not null default '',
   add column amount numeric check (amount is null or amount > 0),
   add column unit text check (unit is null or unit in ('pill', 'capsule', 'sachet', 'ml', 'drop', 'can', 'tray', 'g', 'piece')),
-  add column position integer not null default 0;
+  add column position integer not null default 0,
+  -- A course (set with "How long" on the Usual day): only then does the app show "day n of m".
+  -- A slot ended by a change from a date or a removal has active_to but is not a course.
+  add column is_course boolean not null default false,
+  add constraint schedule_slot_course_has_end check (not is_course or active_to is not null);
 
 -- Entry: structured amount. dose_text stays for rows written before this migration.
 alter table public.entry

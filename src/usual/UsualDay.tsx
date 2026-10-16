@@ -76,7 +76,11 @@ export function UsualDay({ date, onBack }: { date: PlainDate; onBack: () => void
                     const sub = upcoming
                       ? fill(t('fromD'), { d: f.dayMonth(slot.activeFrom), x: '' }).replace(/:\s*$/, '')
                       : [
-                          course && slot.activeTo ? `${fill(t('dayNofM'), course)}, ${fill(t('untilD'), { d: f.dayMonth(slot.activeTo) })}` : '',
+                          course && slot.activeTo
+                            ? `${fill(t('dayNofM'), course)}, ${fill(t('untilD'), { d: f.dayMonth(slot.activeTo) })}`
+                            : slot.activeTo
+                              ? fill(t('untilD'), { d: f.dayMonth(slot.activeTo) })
+                              : '',
                           next && next.amount !== null && next.unit
                             ? fill(t('fromD'), { d: f.dayMonth(next.activeFrom), x: f.amount(next.amount, next.unit, item?.conversion) })
                             : '',

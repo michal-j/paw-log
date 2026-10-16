@@ -7,6 +7,7 @@ import * as act from './actions';
 import { defaultUnitFor, groupOf, sameAmount, type KindGroup } from './amount';
 import { AmountFields, DateLine, FlavourPicker, ItemPicker, OTHER, StatePicker, amountValue, type AmountValue } from './fields';
 import { useFormat } from './format';
+import { useBusy } from './useBusy';
 import { useLog, type Records } from './LogProvider';
 import { changeFrom, matchDay, slotsOn } from './plan';
 
@@ -65,6 +66,7 @@ export function EntrySheet({
   const { t } = useI18n();
   const f = useFormat();
   const { records, repository, run, close } = useLog();
+  const { busy, guard } = useBusy();
   const edit = !!entry;
 
   const [form, setForm] = useState<Form>(() => {
@@ -189,11 +191,11 @@ export function EntrySheet({
       footer={
         <>
           {edit && (
-            <button type="button" className="btn btn--ghost btn--lg btn--danger" onClick={remove}>
+            <button type="button" className="btn btn--ghost btn--lg btn--danger" disabled={busy} onClick={guard(remove)}>
               {t('delete')}
             </button>
           )}
-          <button type="button" className="btn btn--primary btn--lg" onClick={save}>
+          <button type="button" className="btn btn--primary btn--lg" disabled={busy} onClick={guard(save)}>
             {t('save')}
           </button>
         </>

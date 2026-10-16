@@ -8,7 +8,8 @@
   "amount": 0.5,
   "unit": "pill",
   "activeFrom": "2026-09-20",
-  "activeTo": null
+  "activeTo": null,
+  "course": false
  },
  {
   "id": "slot-cooked-2",
@@ -19,7 +20,8 @@
   "amount": 0.3333333333333333,
   "unit": "tray",
   "activeFrom": "2026-09-01",
-  "activeTo": null
+  "activeTo": null,
+  "course": false
  },
  {
   "id": "slot-bellavet-2",
@@ -30,7 +32,8 @@
   "amount": 0.15,
   "unit": "ml",
   "activeFrom": "2026-09-25",
-  "activeTo": null
+  "activeTo": null,
+  "course": false
  },
  {
   "id": "slot-biomend-2",
@@ -41,7 +44,8 @@
   "amount": 1,
   "unit": "pill",
   "activeFrom": "2026-09-01",
-  "activeTo": null
+  "activeTo": null,
+  "course": false
  },
  {
   "id": "slot-gastrelle-3",
@@ -52,7 +56,8 @@
   "amount": 1,
   "unit": "sachet",
   "activeFrom": "2026-10-14",
-  "activeTo": "2026-10-20"
+  "activeTo": "2026-10-20",
+  "course": true
  },
  {
   "id": "slot-farm-4",
@@ -63,7 +68,8 @@
   "amount": 0.25,
   "unit": "can",
   "activeFrom": "2026-09-01",
-  "activeTo": "2026-10-11"
+  "activeTo": "2026-10-11",
+  "course": false
  },
  {
   "id": "slot-ocean-4",
@@ -74,7 +80,8 @@
   "amount": 0.5,
   "unit": "can",
   "activeFrom": "2026-10-12",
-  "activeTo": null
+  "activeTo": null,
+  "course": false
  },
  {
   "id": "slot-bellavet-4",
@@ -85,7 +92,8 @@
   "amount": 0.15,
   "unit": "ml",
   "activeFrom": "2026-09-25",
-  "activeTo": null
+  "activeTo": null,
+  "course": false
  },
  {
   "id": "slot-arvelin-5",
@@ -96,7 +104,8 @@
   "amount": 0.5,
   "unit": "pill",
   "activeFrom": "2026-09-20",
-  "activeTo": null
+  "activeTo": null,
+  "course": false
  },
  {
   "id": "slot-farm-6",
@@ -107,7 +116,8 @@
   "amount": 0.25,
   "unit": "can",
   "activeFrom": "2026-09-01",
-  "activeTo": "2026-10-11"
+  "activeTo": "2026-10-11",
+  "course": false
  },
  {
   "id": "slot-ocean-6",
@@ -118,7 +128,8 @@
   "amount": 0.5,
   "unit": "can",
   "activeFrom": "2026-10-12",
-  "activeTo": null
+  "activeTo": null,
+  "course": false
  },
  {
   "id": "slot-bellavet-6",
@@ -129,7 +140,8 @@
   "amount": 0.15,
   "unit": "ml",
   "activeFrom": "2026-09-25",
-  "activeTo": null
+  "activeTo": null,
+  "course": false
  },
  {
   "id": "slot-calmora-7",
@@ -140,6 +152,7 @@
   "amount": 1,
   "unit": "capsule",
   "activeFrom": "2026-09-01",
-  "activeTo": "2026-09-19"
+  "activeTo": "2026-09-19",
+  "course": true
  }
 ]

@@ -29,7 +29,7 @@
   color: var(--color-on-mint);
 }
 .btn--primary:active { opacity: 0.78; }
-.btn--primary:disabled { opacity: 0.45; cursor: default; }
+.btn--primary:disabled, .btn--ghost:disabled { opacity: 0.45; cursor: default; }
 .btn--danger { color: var(--color-danger); }
 .btn--lg { min-height: 50px; padding: 0 18px; font-size: 16px; }
 .btn--md { min-height: 44px; padding: 0 var(--space-3); }
@@ -177,6 +177,8 @@ select.input { padding: 0 var(--space-2); }
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
 }
+/* 36px chip, 44px target: the hit area extends 4px up and down; chips are at least 44px wide. */
+.chip { min-width: 44px; justify-content: center; }
 .chip::after { content: ''; position: absolute; left: 0; right: 0; top: -4px; bottom: -4px; }
 .chip[aria-checked='true'], .chip[aria-pressed='true'] { border-color: var(--color-mint-line); background: var(--color-mint-bg); box-shadow: none; color: var(--color-mint-deep); }
 .chip:active { opacity: 0.6; }

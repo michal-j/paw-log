@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { DayPart, Entry, HealthEvent, PlainDate } from '../data';
 import { fill, useI18n, type MessageKey } from '../i18n';
 import { DoseMark } from '../components/DoseMark';
@@ -14,11 +14,12 @@ import { LOCALE, useFormat } from '../log/format';
 import { useLog } from '../log/LogProvider';
 import { plannedEntry } from '../log/plan';
 import { symptomDetail } from '../log/symptoms';
+import { useBusy } from '../log/useBusy';
 import { BADGE_FOR, buildDay, dayBounds, inBounds, type DayEntry, type PlannedRow } from './model';
 import './day.css';
 
 /** Tag after an item that was not simply given: "Refused" and "Half eaten". */
-const STATE_TAG: Partial<Record<DayEntry['state'], MessageKey>> = { skipped: 'tagR', partial: 'copy.72' };
+const STATE_TAG: Partial<Record<DayEntry['state'], MessageKey>> = { skipped: 'tagR', partial: 'name.98' };
 const ALSO_LABEL: Record<string, MessageKey> = { anal_glands: 'label.117', nails: 'label.118' };
 
 interface Props {
@@ -71,17 +72,24 @@ export function DayView({ date, onBack, onStep, onInvalid, onUsualDay }: Props) 
   const anyPlanned = day ? day.parts.some((p) => p.rows.length > 0) : false;
   const itemGroup = (itemId: string) => groupOf(records?.items.find((i) => i.id === itemId)?.kind ?? 'medication');
 
-  const give = (rows: PlannedRow[]) => {
-    let added = rows.length;
-    return run(
+  const { busy, guard } = useBusy();
+  // When a fill empties the banner, its space stays for this day so the list does not jump under the finger.
+  const banner = useRef<HTMLDivElement>(null);
+  const [reserve, setReserve] = useState<{ date: PlainDate; height: number } | null>(null);
+  const giveGuarded = guard(async (rows: PlannedRow[], bannerHeight: number | undefined) => {
+    if (bannerHeight) setReserve({ date, height: bannerHeight });
+    let added = 0;
+    await run(
       async () => {
         const res = await act.addPlanned(repository, rows.map((r) => plannedEntry(r.slot, date, act.newId())));
         added = res.added;
         return res.undo;
       },
-      () => fill(t('toastFilled'), { n: added }),
+      // Nothing new (someone already logged them): keep the toast that is showing, and its Undo.
+      () => (added ? fill(t('toastFilled'), { n: added }) : null),
     );
-  };
+  });
+  const give = (rows: PlannedRow[]) => giveGuarded(rows, banner.current?.offsetHeight);
 
   const editEntry = (e: Entry) => open({ kind: 'entry', group: itemGroup(e.itemId), date: e.date, part: e.dayPart, entry: e });
   const editEvent = (e: HealthEvent) => {
@@ -111,8 +119,9 @@ export function DayView({ date, onBack, onStep, onInvalid, onUsualDay }: Props) 
       </div>
 
       <div className="day__body">
+        {due.length === 0 && reserve?.date === date && <div className="day-fill-space" style={{ height: reserve.height }} aria-hidden="true" />}
         {due.length > 0 && (
-          <div className="day-card day-fill">
+          <div ref={banner} className="day-card day-fill">
             <span className="day-fill__icon" aria-hidden="true">
               <RoutineIcon />
             </span>
@@ -121,7 +130,7 @@ export function DayView({ date, onBack, onStep, onInvalid, onUsualDay }: Props) 
                 {date === today ? `${fill(t('fillTodayH'), { n: due.length })} (${now})` : fill(t('fillPastH'), { n: due.length })}
               </p>
               <p className="day-fill__hint">{t('fillHint')}</p>
-              <button type="button" className="btn btn--primary btn--md day-fill__btn" onClick={() => give(due)}>
+              <button type="button" className="btn btn--primary btn--md day-fill__btn" disabled={busy} onClick={() => give(due)}>
                 {fill(t('fillBtn'), { n: due.length })}
               </button>
             </div>
@@ -256,14 +265,18 @@ export function DayView({ date, onBack, onStep, onInvalid, onUsualDay }: Props) 
                                 <span className="day-item__sub">{subText}</span>
                               </span>
                             </button>
-                            {r.due && (
-                              <button type="button" className="btn btn--ghost day-give" aria-label={fill(t('markGiven'), { name })} onClick={() => give([r])}>
-                                <span className="btn__icon">
-                                  <CheckIcon />
-                                </span>
-                                {t('name.96')}
-                              </button>
-                            )}
+                            <button
+                              type="button"
+                              className="btn btn--ghost day-give"
+                              aria-label={fill(t('markGiven'), { name })}
+                              disabled={busy}
+                              onClick={() => give([r])}
+                            >
+                              <span className="btn__icon">
+                                <CheckIcon />
+                              </span>
+                              {t('name.96')}
+                            </button>
                           </li>
                         );
                       }
@@ -287,7 +300,7 @@ export function DayView({ date, onBack, onStep, onInvalid, onUsualDay }: Props) 
                     })}
                     {p.due.length > 1 && (
                       <li className="day-item day-item--all">
-                        <button type="button" className="btn btn--ghost day-give" onClick={() => give(p.due)}>
+                        <button type="button" className="btn btn--ghost day-give" disabled={busy} onClick={() => give(p.due)}>
                           <span className="btn__icon">
                             <CheckIcon />
                           </span>
