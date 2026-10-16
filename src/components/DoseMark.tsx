@@ -1,5 +1,6 @@
 import type { CSSProperties } from 'react';
 import type { MarkSize, MarkState } from '../timeline/model';
+import './marks.css';
 
 /** Only token-shaped names reach CSS; anything else falls back to the neutral mark colour. */
 const TOKEN_NAME = /^[a-z0-9-]+$/;
