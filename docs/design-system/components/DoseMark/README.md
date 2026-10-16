@@ -1,0 +1,3 @@
+The circle that records one meal, medication or treat on the timeline and calendar.
+
+Size is meaning: 16px circle = food, 11px circle = medication or treat. Fill colour comes from `food-*`, `med-*` or `treat`; the 1.5px ring is the same colour mixed 20% darker, so pastel fills stay visible on white. State is shape: solid = given, hollow (white fill, ring only) = skipped or refused, half-filled from the bottom = partly eaten. Never signal state by colour alone and never use squares. Pair every new item with a colour token before using it. The consumer provides colour, size and state.

@@ -1,0 +1,3 @@
+A bottom sheet for jump-to-date, filters and add flows.
+
+White, `radius-sheet` on the top corners, `shadow-sheet`, 16px side padding, a 36 by 4px grabber in `line-strong`. A scrim of `ink` at about 30% sits behind it and fades in 180ms; the sheet rises in 220ms. Inputs are 50px high, 16px text (stops iOS zoom), `radius-md`, `surface-tint` fill, `line-strong` border, a 3px `mint` focus glow. Max height about 640px; the body scrolls, the heading and action row stay. The consumer provides the heading, body and actions.

@@ -1,0 +1,3 @@
+The chip that marks a health event on a day. Five kinds: vet visit (plus cross and count), symptoms ("!" and count), photo (camera), Frontline ("F"), deworming ("D").
+
+Each kind has four tokens: `badge-<kind>-top`, `-bottom` (vertical gradient), `-ink` (glyph and text) and `-line` (1px border), plus `shadow-badge`. Size 18px high, `radius-sm`, `badge` text, 4px side padding; the `mini` size for calendar cells is 13px high, `radius-xs`, 9px text. The glyph is `currentColor`. The same component appears in the timeline Events column, the calendar cell, the matrix event rows, the Key legend and the day-view heading; never restyle it per screen. A row of badges wraps and is centred in its column. The consumer provides the kind and the count.

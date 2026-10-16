@@ -1,0 +1,3 @@
+A toggle for filters: which medications, food and events the timeline shows.
+
+36px high, `radius-md`. Off: white gradient, `line-strong` border, `shadow-button`. On: `mint-bg` fill, `mint-line` border, `mint-deep` label, no shadow. A medication or food chip starts with its pastel circle in the same colour as the timeline. Expose state with `aria-pressed`. The consumer provides label, colour and state.

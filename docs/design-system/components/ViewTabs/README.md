@@ -1,0 +1,3 @@
+The view switcher under the app title: an underline tab bar with Timeline, Calendar and Matrix.
+
+Equal-width tabs, 40px high, `button` weight. Active label `ink`, inactive `ink-2`. A 2px `mint` underline, inset 12px each side, slides to the active tab in 200ms. The bar sits on a 1px `line` bottom border. Three tabs at most; more views belong in a menu. The consumer provides tab labels and the active index.
