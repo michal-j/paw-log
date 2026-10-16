@@ -1,54 +1,78 @@
-# Add and edit: logging proposal (JCB-25)
+# Logging: add, edit and the usual day (JCB-25, round 2)
 
-This is a proposal for the CEO to review. Nothing is built from it until he approves it.
+This is a proposal for the CEO. Nothing gets built until he approves it. Round 2 follows his review of round 1. The goal is to get real data flowing quickly; he will refine it after that.
 
-Following the CEO's priority change, flows a, b, c and e are worked out in detail, with one recommended way each. Flow d (backfilling a date range) is only a sketch.
+## How to open it
+- `add-edit-prototype.html` opens straight from disk. You can also serve the repo root on any port except 5173 or 5174, for example `python3 -m http.server 8137`.
+- The frame is 390x844. On a wide screen, a **Flows** panel next to the frame jumps to each flow and switches between EN and PL. On a phone, the language switch is in the Timeline header (the same place as in R10).
+- The data is fictional and comes from `data/demo`. Today is Thu 15 Oct and the **prototype clock reads 16:30**. Changes reset when you reload. Deep links (for example `#lang=pl&screen=usual`) are listed in `applyHash()`.
 
-## Open it
-- `add-edit-prototype.html` opens straight from disk. You can also serve the repo root on any free port, for example `python3 -m http.server 8137`, and open `/design/proposals/add-edit/add-edit-prototype.html`.
-- The phone frame is 390x844. On a wide screen a **Flows** panel next to it jumps to each flow and switches between EN and PL. On a phone, use the `EN | PL` button in the header.
-- All data is fictional and comes from `data/demo` via `sample-data.js`. Today is 15 Oct, and that day is cut after day part 3 so it shows a day still in progress. Changes reset when you reload.
-- Deep links (used for the screenshots) look like `#lang=pl&date=2026-10-14&open=edit:4:ocean`. See `applyHash()` in the file.
+## What changed since round 1
+1. **The look is R10.** The Day view, header, day-part card (sun icons, uppercase part names, 26px **+**), event cards, sheets (20px title, 12px labels, 50px inputs, 50px Save), chips and navbar all reuse R10's markup and sizes. The new pieces (fill banner, planned rows, toast) follow R10's existing patterns.
+2. **Bugs fixed.** A sheet now opens once. Choosing a type, symptom, amount or unit updates only the sheet's content: no reload, and the scroll position is kept. **Change** on the "For …" line opens the date and part-of-day inputs once, and they stay open, even when you switch from + Add to a form.
+3. **One way to add.** **+ Add** in the navbar is the single entry point, with six options: Food, Medication, Symptom, Vet visit, Note, Other. Opened from the Day view, it uses that day's date. A day part's **+** opens the same sheet with that part already set, showing only Food and Medication. The top tiles and "Extra item" are gone. Tapping a planned row logs or adjusts that item in its part.
+   - **Treats sit under Food.** They are eaten (so "partly eaten" applies), they come in flavours and pieces, and R10's filters already group them with Food.
+4. **Structured amounts.** Amount is a fraction chip (¼ ⅓ ½ ⅔ ¾ 1 1½ 2 3, or Other for a free number). ml and g get a decimal field instead. Unit is a set of chips: pill, ml, sachet, capsule or drop for medication; can, tray, g or piece for food. Food also has a **Flavour** selector (Farm Fresh: turkey, salmon or chicken). The note field stays for anything else. Displays stay short: "½ can", "1 sachet". Bellavet keeps "0,15 ml (1,5 bars)" because the item stores a conversion of 1 bar = 0,1 ml.
+5. **Symptoms have their own properties** (table below). There are at most three chip rows plus Details, and all of them are optional.
+6. **Usual day (the routine).** A new screen opens from **Usual day ›** next to "Parts of the day" in every Day view. It shows the seven parts with their times and items, and each item's amount, flavour and course ("day 2 of 7, until 20 Oct").
+   - **+** on a part adds an item.
+   - Tapping an item lets you change its amount from a date, set how long it runs (no end, 7 days, 14 days, or an end date), or remove it from a date on.
+   - Changes start on the date you pick, so days already logged stay as they were.
+   - The Day view banner now says what it does: "Up to now: 3 not logged (16:30) → **Fill with your usual day: 3**".
+   - **Today, filling covers only the parts whose time has passed.** Later parts show "Later today" and have no **Given** button.
+   - When you log something that is not in the usual day, the form offers "Add to the usual day from this day on". When the amount differs from the usual one, it offers "Make this the usual amount from this day on".
+7. **Kept from round 1:** tap any row to edit it, **Given** in one tap, Undo on fill and delete, and the dashed "planned" circle.
 
-## The idea
-Most days follow the **usual schedule** (the seven day parts). The Day view shows each scheduled item as **planned** (a dashed circle and "Not logged yet") until someone logs it. You confirm the usual and correct the exceptions. You do not type a day from scratch.
+## Properties per symptom (please confirm)
+| Symptom | Properties (chips, all optional) | Shown as |
+|---|---|---|
+| Poo | Consistency: normal, soft, diarrhea · Colour: normal, dark, light, with blood · Amount: small, medium, a lot | "diarrhea · dark · medium amount" |
+| Vomit | How many times: 1×, 2×, 3×+ · When: in the morning, at midday, in the evening, at night | "1× in the morning" |
+| Leakage | Amount: small, medium, a lot | "small amount" |
+| Panting, Stomach rumbling, Heartburn, Fear, Restlessness, Reflux, Other | Intensity: small, medium, a lot | "a lot" |
 
-## Flows (recommended version)
-| | Flow | How it works | Taps |
-|---|---|---|---|
-| a | Log from the Day view | A planned row has a **Given** button: one tap logs it with the usual dose. If a day part has 2 or more planned items, its header shows **All given**. Tapping the row itself, or **+** on a day part, opens the Entry sheet: item chips (scheduled ones first), dose prefilled with the usual dose plus recent doses as chips, Given / Skipped / Partly eaten (partly is for food only), and an optional note. | 1 |
-| a | Log from **+ Add** | The sheet has date chips (Today, Yesterday, Other date). Below them is **Next up**: the first day part that still has planned items, with **Log as given** and **Open day**. The rest is a list: Extra item (a treat, an extra dose, anything off schedule), Symptom, Vet visit, Note, Other event, and Fill several days. | 2 |
-| b | Edit or delete | Tap any logged row. The same Entry sheet opens with the dose, state and note editable, and **Change** to move the entry to another date or day part. If you change the dose, a checkbox appears: "Make this the usual dose from this day on". **Delete** acts at once and shows an **Undo** toast; there is no confirm dialog. Events edit the same way: tap the card or the symptom row. | 2 to 3 |
-| c | Fill a day | The Day view has a banner, "N not logged yet", with **Fill day as usual** (or **Fill the rest as usual** if part of the day is logged). It logs every planned item as given, never overwrites what is already logged, and shows **Undo**. Then you fix the exceptions as in b. | 1 + fixes |
-| e | Log an event | The Day view has four tiles (Symptom, Vet visit, Note, Other event), and + Add has the same entries. **Symptom**: pick one of the 9 types or Other with free text, an optional intensity (small, medium, a lot) and optional details. **Vet visit**: clinic as free text with past clinics as chips, plus reason and findings. **Note**: free text. **Other event**: Frontline, Deworming, Anal glands, Nail trimming or Other (with a title), plus optional details. No attachments. | 3 to 4 |
-| d | Backfill a range (sketch) | **+ Add → Fill several days**: choose From and To. A summary reads "7 days · 28 entries as usual". Days that already have entries stay as they are. Then correct single days in the Day view. Build it last, if at all: for a few missed days, the Day view's previous-day arrow plus **Fill day** is almost as fast. | 3 |
+Every symptom also has an optional Details field (free text).
 
 ## Decisions needed from the CEO
-1. **Usual schedule as the basis for logging.** For launch, the developer seeds it once from the household's real schedule in Supabase. After that, dose changes go through "Make this the usual dose". A screen for editing the usual day (adding or ending a medication course) comes later. Until it exists, starting or stopping a medicine needs the developer. **Recommend: accept this for launch.**
-2. **Filling today also fills day parts that have not happened yet** (for example supper, if you fill at noon). **Recommend: accept it.** Undo and per-part **All given** cover the daily routine; fill is mainly an evening action and a backfill action.
-3. **Treats and Calmora are not in the usual schedule.** They are logged as an Extra item. Please confirm.
-4. **Delete without a confirm dialog, with Undo for about 5 seconds.** Please confirm.
-5. **Items typed under "Other"** become a new item with the neutral colour (`mark-neutral`) until the PM gives them a colour token. Please confirm, or limit the list to known items.
-6. **Notes and other non-badge events** (anal glands, nails, other) show on the Day view but have **no badge on the Timeline**: the EventBadge component has five kinds only. **Recommend: leave it for now** and revisit with JCB-26/JCB-37.
+1. **Times for each part of the day** (proposed: 07:00, 07:30, 12:00, 15:00, 18:00, 20:00, 22:00). They decide what "up to now" means today. Should they be editable on the Usual day screen? (They are not editable yet.)
+2. **Where the Usual day lives:** the **Usual day ›** link in the Day view (my recommendation) and/or Pinned or a settings screen.
+3. **The symptom property table above:** are the values right? Should colour include "with blood"?
+4. **Unit lists, the fraction chips and the comma decimal in English** ("0,15 ml"). The reviewed copy uses a comma in EN too.
+5. **Treats under Food**, and new items typed under "Other" getting the neutral colour until the PM assigns a colour token.
+6. **Delete has no confirmation**, only Undo, as in round 1.
 
-## New components and tokens (need PM approval before build)
-- **DoseMark, new state `planned`**: a dashed `ink-3` ring with a `surface` fill, sized like the item (16 or 11px). It appears only in the Day view and the sheets, never on the Timeline, Calendar or Matrix.
-- **Toast** (new): a `surface` card with `radius-lg` and `shadow-sheet`, sitting above the navbar. It holds one message and an optional **Undo** text button in `mint-deep`, and stays about 5s.
-- **Entry row** (the Day view row): a 44px row with a mark, name, dose and an optional state/note line. A planned row adds a ghost **Given** button (34px, with a 44px hit area).
-- **Chip** used as single select (`role="radio"`): this extends how Chip is used; it is not a new style. Context row in Sheet: one line with the date and day part, and **Change** to expand the inputs.
-- **No new tokens.** The scrim and the input focus glow use `color-mix` on existing tokens (`ink`, `mint`).
+## New components and tokens (need PM approval)
+- **DoseMark state `planned`:** a dashed `ink-3` ring. It is used only in the Day view, never on the Timeline, Calendar or Matrix.
+- **Toast with Undo.**
+- **Planned row with a Given button.**
+- **Amount picker:** fraction chips plus a unit chip row, built from the existing Chip component in single-select (`role="radio"`) mode.
+- **Usual day screen:** built from the existing Day view part card.
+- **No new tokens.** State tags use the `badge-sym-*` tokens (refused) and the `badge-worm-*` tokens (half eaten), in place of R10's hard-coded hex values.
 
 ## Data-model impact (`docs/ENGINEERING.md` draft)
-- **New `schedule_slot`** (dog, day_part, item, dose_text, sort, active_from, active_to). It replaces `item.defaultDayPart`, because one item can sit in several parts (Bellavet in 2, 4 and 6). "Make this the usual dose" ends the current slot the day before and opens a new one from that date.
-- **`entry`**: add `schedule_slot_id` (nullable), `updated_by` and `updated_at`. Add a unique index on (date, schedule_slot_id) where the slot is set. With that, Fill is an insert that does nothing on conflict, so two people filling the same day cannot create duplicates. Repeated extra items such as treats stay allowed.
-- **`event`**: add type `note` and a nullable `intensity` (small, medium, a lot) for symptoms. The symptom name stays free text in `title`; the 9 known names map to translated labels.
-- "Day 2 of 7" for Gastrelle is typed into the dose text today. **Recommend: derive it from the slot's active dates** (relates to JCB-10). Fill uses the plain usual dose.
+- **Routine = `schedule_slot`** (dog, day_part, item, flavour, amount, unit, active_from, active_to, sort).
+  - Changing a slot from a date closes the old row the day before and opens a new one.
+  - A course is just `active_to`.
+  - "Day N of M" is derived from the slot's dates and is no longer typed into the dose.
+  - It replaces `item.defaultDayPart`.
+- **`day_part`** (dog, part 1–7, time): the usual time of each part.
+- **`item`:** add `default_unit`, the list of flavours (or a small `item_variant` table), and an optional `unit_conversion` (Bellavet: 1 bar = 0,1 ml).
+- **`entry`:** replace `dose_text` with `amount` (numeric), `unit` (text) and `flavour` (text, nullable). Keep `note`. Add `schedule_slot_id` (nullable), with a unique index on (date, schedule_slot_id), so that two people filling the same day cannot create duplicates. Add `updated_by` and `updated_at`.
+- **`event`:** add type `note`, `props` (jsonb, the symptom properties above) and `also_done` (text[], for the vet visit chips). The symptom name stays in `title`.
+- **Migrating the demo data:** the free-text doses in `data/demo` convert cleanly. The prototype parses them: "½ can" becomes 0.5 can, and "chicken · 2" becomes a chicken treat, 2 pieces.
 
 ## Timeline geometry
-**Nothing changes on the Timeline**: no new rows, no new columns, and planned items are not drawn. The banner, planned rows and tiles are in the Day view, which has no fixed geometry. The "Timeline" screen in the prototype is a stand-in list for navigation only.
+Nothing changes. Planned items, the banner and the Usual day screen do not touch the Timeline, Calendar or Matrix. The "Timeline" in the prototype is only a list for getting around.
 
-## Checked
-- 390x844 in EN and PL; screenshots are in `screens/`.
-- Touch targets: rows and the **+** button are 44px. **Given** and **All given** are 34px with a 44px hit area. Chips are 36px with an extended hit area. Tiles are 56px. Sheet buttons are 48px.
-- Polish fits. Known trims: the context row cuts long Polish day parts ("Między śniadaniem a obiad…"); the full name shows under **Change**. Two Day view tiles wrap to two lines in Polish ("Wizyta u weta", "Inne zdarzenie").
-- New strings: `copy-proposal.csv` (57 EN/PL pairs). Its numbering continues from the reviewed CSV (186+). The reviewed CSV is unchanged.
+## How this was checked
+- 390x844, EN and PL, 18 screenshots in `screens/`.
+- Flows clicked through in the browser:
+  - Change stays open.
+  - Switching type keeps the same sheet.
+  - A Poo symptom with properties saves.
+  - Food at ¼ can, partly eaten, offers "make usual".
+  - Fill, then Undo.
+  - Changing a usual-day amount.
+- Touch targets: rows 44px; **Given** 28px visible with a 44px hit area; chips 36px with an extended hit area; **+** 44px; Save 50px.
+- Polish fits. Known wraps: long Polish dose lines next to **Podane** wrap to two lines, and the date line stays on one line.
+- `copy-proposal.csv`: 103 new EN/PL pairs, numbered 186+. It replaces round 1's list. The reviewed CSV is unchanged.
