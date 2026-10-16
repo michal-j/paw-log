@@ -1,5 +1,5 @@
 class Component extends DCLogic {
-  state = { screen: 'timeline', view: 'timeline', back: 'timeline', sel: '2026-10-14', topDate: '2026-10-15', topOff: 0, keyOpen: false, partsOpen: false,  lang: 'en', sheet: null, form: null, addDate: '2026-10-15', addPart: 0, scrub: null, issueBack: 'tracked', off: { treat: true, zyl: true } };
+  state = { screen: 'timeline', view: 'timeline', back: 'timeline', sel: '2026-10-14', topDate: '2026-10-15', topOff: 0, keyOpen: false, partsOpen: false,  lang: 'en', sheet: null, form: null, addDate: '2026-10-15', addPart: 0, scrub: null, issueBack: 'tracked', off: { treat: true, calmora: true } };
 
   componentDidUpdate(prevProps, prevState) {
     try {
@@ -32,7 +32,7 @@ class Component extends DCLogic {
     const iso = (d) => d.getUTCFullYear() + '-' + pad(d.getUTCMonth() + 1) + '-' + pad(d.getUTCDate());
     const shift = (s, n) => { const d = parse(s); d.setUTCDate(d.getUTCDate() + n); return iso(d); };
     const fmt = (s, o) => parse(s).toLocaleDateString(loc, Object.assign({ timeZone: 'UTC' }, o));
-    const C = { cook: '#BFE04A', john: '#C99D6C', brit: '#FF9585', levo: '#86B1F7', prop: '#FFB85C', gas: '#B59BF2', bio: '#5DCFC8', treat: '#F486C3', zyl: '#A8B3C0', ink: '#0E1512' };
+    const C = { cook: '#BFE04A', farm: '#C99D6C', ocean: '#FF9585', arvelin: '#86B1F7', bellavet: '#FFB85C', gastrelle: '#B59BF2', biomend: '#5DCFC8', treat: '#F486C3', calmora: '#A8B3C0', ink: '#0E1512' };
     const ACC = '#0A7A52';
     const MEALBG = 'rgba(31,211,138,0.06)';
     const MEALSH = 'inset 1px 0 0 #E3EBE7, inset -1px 0 0 #E3EBE7';
@@ -76,9 +76,9 @@ class Component extends DCLogic {
     const PVERT = [tr('Before bkf.', 'Przed śn.'), tr('Breakfast', 'Śniadanie'), tr('Bkf → dinner', 'Śn. → obiad'), tr('Dinner', 'Obiad'), tr('Dinner → sup.', 'Obiad → kol.'), tr('Supper', 'Kolacja'), tr('After supper', 'Po kolacji')];
     const MEAL = [false, true, false, true, false, true, false];
     const LANES = [
-      ['p1levo', 1, 'levo', C.levo, 11, 'Arvelin'], ['p2cook', 2, 'meals', C.cook, 16, tr('Breakfast', 'Śniadanie')], ['p2prop', 2, 'prop', C.prop, 11, 'Bellavet'], ['p2bio', 2, 'bio', C.bio, 11, 'Biomend'],
-      ['p3gas', 3, 'gas', C.gas, 11, 'Gastrelle'], ['p3treat', 3, 'treat', C.treat, 11, tr('Treats', 'Smaczki')], ['p4food', 4, 'meals', null, 16, tr('Dinner', 'Obiad')], ['p4prop', 4, 'prop', C.prop, 11, 'Bellavet'],
-      ['p5levo', 5, 'levo', C.levo, 11, 'Arvelin'], ['p6food', 6, 'meals', null, 16, tr('Supper', 'Kolacja')], ['p6prop', 6, 'prop', C.prop, 11, 'Bellavet'], ['p7zyl', 7, 'zyl', C.zyl, 11, 'Calmora']
+      ['p1arvelin', 1, 'arvelin', C.arvelin, 11, 'Arvelin'], ['p2cook', 2, 'meals', C.cook, 16, tr('Breakfast', 'Śniadanie')], ['p2bellavet', 2, 'bellavet', C.bellavet, 11, 'Bellavet'], ['p2biomend', 2, 'biomend', C.biomend, 11, 'Biomend'],
+      ['p3gastrelle', 3, 'gastrelle', C.gastrelle, 11, 'Gastrelle'], ['p3treat', 3, 'treat', C.treat, 11, tr('Treats', 'Smaczki')], ['p4food', 4, 'meals', null, 16, tr('Dinner', 'Obiad')], ['p4bellavet', 4, 'bellavet', C.bellavet, 11, 'Bellavet'],
+      ['p5arvelin', 5, 'arvelin', C.arvelin, 11, 'Arvelin'], ['p6food', 6, 'meals', null, 16, tr('Supper', 'Kolacja')], ['p6bellavet', 6, 'bellavet', C.bellavet, 11, 'Bellavet'], ['p7calmora', 7, 'calmora', C.calmora, 11, 'Calmora']
     ].map((a) => ({ key: a[0], part: a[1], fid: a[2], color: a[3], size: a[4], w: a[4] + 4, name: a[5] }));
     const partLanes = [0, 1, 2, 3, 4, 5, 6].map((pi) => LANES.filter((l) => l.part === pi + 1 && on(l.fid)));
     const COLW = partLanes.map((ls, pi) => (pi === 6 && !ls.length) ? 0 : Math.max(MEAL[pi] ? 44 : (pi === 6 ? 36 : 24), ls.reduce((a, l) => a + l.w, 0) + 8));
@@ -87,29 +87,29 @@ class Component extends DCLogic {
       const out = [];
       if (s < START || s > TODAY) return out;
       const isT = s === TODAY;
-      const john = s <= '2026-10-11';
-      const fc = john ? C.john : C.brit;
-      const fn = john ? tr('Farm Fresh, turkey', 'Farm Fresh, indyk') : tr('Ocean Blend, salmon', 'Ocean Blend, łosoś');
-      const fs = john ? 'Farm Fresh' : 'Ocean Blend';
-      const fp = john ? tr('¼ can', '¼ puszki') : tr('½ can', '½ puszki');
+      const farm = s <= '2026-10-11';
+      const fc = farm ? C.farm : C.ocean;
+      const fn = farm ? tr('Farm Fresh, turkey', 'Farm Fresh, indyk') : tr('Ocean Blend, salmon', 'Ocean Blend, łosoś');
+      const fs = farm ? 'Farm Fresh' : 'Ocean Blend';
+      const fp = farm ? tr('¼ can', '¼ puszki') : tr('½ can', '½ puszki');
       const tagR = tr('Refused', 'Nie chciała');
       const add = (part, id, name, short, dose, color, state, tag) => out.push({ part: part, lane: 'p' + part + id, name: name, short: short, dose: dose, color: color, state: state, tag: state === 'skipped' || state === 'half' ? tag : '' });
-      const levo = s >= '2026-09-20', prop = s >= '2026-09-25', gas = s >= '2026-10-15' && s <= '2026-10-20';
-      const gasN = Math.round((parse(s) - parse('2026-10-14')) / 86400000) + 1;
+      const arvelin = s >= '2026-09-20', bellavet = s >= '2026-09-25', gastrelle = s >= '2026-10-15' && s <= '2026-10-20';
+      const gastrelleN = Math.round((parse(s) - parse('2026-10-14')) / 86400000) + 1;
       const half = tr('½ pill', '½ tabl.');
       const pd = '0,15 ml (1,5 bars)';
-      if (levo) add(1, 'levo', 'Arvelin', 'Arvelin', half, C.levo, 'given', '');
+      if (arvelin) add(1, 'arvelin', 'Arvelin', 'Arvelin', half, C.arvelin, 'given', '');
       add(2, 'cook', tr('Cooked meal', 'Gotowany posiłek'), tr('Breakfast', 'Śniadanie'), tr('⅓ tray', '⅓ tacki'), C.cook, s === '2026-10-14' ? 'skipped' : 'given', tagR);
-      if (prop && !isT) add(2, 'prop', 'Bellavet', 'Bellavet', pd, C.prop, 'given', '');
-      add(2, 'bio', 'Biomend', 'Biomend', tr('1 pill', '1 tabl.'), C.bio, 'given', '');
-      if (gas) add(3, 'gas', 'Gastrelle', 'Gastrelle', tr('1 sachet · day ', '1 saszetka · dzień ') + gasN + tr(' of 7', ' z 7'), C.gas, 'given', '');
+      if (bellavet && !isT) add(2, 'bellavet', 'Bellavet', 'Bellavet', pd, C.bellavet, 'given', '');
+      add(2, 'biomend', 'Biomend', 'Biomend', tr('1 pill', '1 tabl.'), C.biomend, 'given', '');
+      if (gastrelle) add(3, 'gastrelle', 'Gastrelle', 'Gastrelle', tr('1 sachet · day ', '1 saszetka · dzień ') + gastrelleN + tr(' of 7', ' z 7'), C.gastrelle, 'given', '');
       if (Number(s.slice(8)) % 3 === 0 || s === '2026-10-14') add(3, 'treat', tr('Treat', 'Smaczek'), tr('Treats', 'Smaczki'), tr('chicken · 2', 'kurczak · 2'), C.treat, 'given', '');
       add(4, 'food', fn, tr('Dinner', 'Obiad'), fp, fc, s === '2026-10-14' ? 'half' : 'given', tr('Half eaten', 'Zjadła pół'));
-      if (prop) add(4, 'prop', 'Bellavet', 'Bellavet', pd, C.prop, 'given', '');
-      if (levo) add(5, 'levo', 'Arvelin', 'Arvelin', half, C.levo, 'given', '');
+      if (bellavet) add(4, 'bellavet', 'Bellavet', 'Bellavet', pd, C.bellavet, 'given', '');
+      if (arvelin) add(5, 'arvelin', 'Arvelin', 'Arvelin', half, C.arvelin, 'given', '');
       add(6, 'food', fn, tr('Supper', 'Kolacja'), fp, fc, 'given', '');
-      if (prop) add(6, 'prop', 'Bellavet', 'Bellavet', pd, C.prop, 'given', '');
-      if (s <= '2026-09-19') add(7, 'zyl', 'Calmora', 'Calmora', tr('1 capsule', '1 kaps.'), C.zyl, 'given', '');
+      if (bellavet) add(6, 'bellavet', 'Bellavet', 'Bellavet', pd, C.bellavet, 'given', '');
+      if (s <= '2026-09-19') add(7, 'calmora', 'Calmora', 'Calmora', tr('1 capsule', '1 kaps.'), C.calmora, 'given', '');
       return out;
     };
 
@@ -146,7 +146,7 @@ class Component extends DCLogic {
       if (state === 'half') return base + 'background:' + lvlBg(color, '#fff') + ';border:1px solid ' + ring;
       return base + 'background:' + color + ';border:1px solid ' + ring;
     };
-    const FOODBG = 'linear-gradient(90deg,' + C.john + ' 50%,' + C.brit + ' 50%)';
+    const FOODBG = 'linear-gradient(90deg,' + C.farm + ' 50%,' + C.ocean + ' 50%)';
     // ---- shared event badge system (timeline, calendar, matrix, key) ----
     const BTONE = {
       vet: 'background:linear-gradient(180deg,#E9FAF2,#D3F3E4);color:#0A7A52;border:1px solid #A8E6CB',
@@ -382,7 +382,7 @@ class Component extends DCLogic {
     }
 
     // ---------- Filters ----------
-    const DEFOFF = ['treat', 'zyl'];
+    const DEFOFF = ['treat', 'calmora'];
     const offKeys = Object.keys(st.off).filter((k) => st.off[k]).sort();
     const filtersActive = offKeys.join(',') !== DEFOFF.slice().sort().join(',');
     const toggle = (fid) => () => { const o = Object.assign({}, st.off); if (o[fid]) delete o[fid]; else o[fid] = true; this.setState({ off: o }); };
@@ -392,7 +392,7 @@ class Component extends DCLogic {
     };
     const filterGroups = [
       { title: tr('Food', 'Jedzenie'), chips: [chip('meals', tr('Meals', 'Posiłki'), C.cook), chip('treat', tr('Treats', 'Smaczki'), C.treat)] },
-      { title: tr('Medication', 'Leki'), chips: [chip('levo', 'Arvelin', C.levo), chip('prop', 'Bellavet', C.prop), chip('gas', 'Gastrelle', C.gas), chip('bio', 'Biomend', C.bio), chip('zyl', 'Calmora', C.zyl), chip('frontline', 'Frontline', '#1F2328'), chip('deworm', tr('Deworming pill', 'Odrobaczanie'), '#1F2328')] },
+      { title: tr('Medication', 'Leki'), chips: [chip('arvelin', 'Arvelin', C.arvelin), chip('bellavet', 'Bellavet', C.bellavet), chip('gastrelle', 'Gastrelle', C.gastrelle), chip('biomend', 'Biomend', C.biomend), chip('calmora', 'Calmora', C.calmora), chip('frontline', 'Frontline', '#1F2328'), chip('deworm', tr('Deworming pill', 'Odrobaczanie'), '#1F2328')] },
       { title: tr('Symptoms', 'Objawy'), chips: SYMIDS.map((id) => chip(id, SYMNAME[id], '#D93B4A')) },
       { title: tr('Events', 'Wydarzenia'), chips: [chip('vet', tr('Vet visits', 'Wizyty u weta'), '#1F2328'), chip('photo', tr('Photos', 'Zdjęcia'), '#1F2328')] }
     ];
@@ -511,7 +511,7 @@ class Component extends DCLogic {
       railUp: () => { this._drag = false; this.setState({ scrub: null }); },
       openJump: () => this.setState({ sheet: 'jump' }),
       openFilter: () => this.setState({ sheet: 'filter' }),
-      filterReset: () => this.setState({ off: { treat: true, zyl: true } }),
+      filterReset: () => this.setState({ off: { treat: true, calmora: true } }),
       filterAll: () => this.setState({ off: {} }),
       closeSheets: () => this.setState({ sheet: null, form: null }),
       openIssueFromDay: () => this.setState({ screen: 'issue', issueBack: 'day' }),

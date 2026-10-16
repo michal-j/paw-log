@@ -4,6 +4,12 @@ Format: [Keep a Changelog](https://keepachangelog.com). "Unreleased" means not y
 
 ## Unreleased
 
+### Changed
+- Renamed legacy prototype keys (colour map, lane ids, flags) in `design/prototype/` and the Cover preview to neutral names matching the fictional sample data; no visual or behaviour change (JCB-36).
+
+### Added
+- `npm run check:secrets` also fails on locally blocked words from a git-ignored `.secret-words` file and/or `PAWLOG_BLOCKED_WORDS` (JCB-36).
+
 ## 2026-10-16
 
 ### Added
