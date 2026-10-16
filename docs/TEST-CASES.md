@@ -1,6 +1,6 @@
 # Test cases
 
-Automated: `npm test` (Vitest, `tests/`). Manual cases below are for the checks automation does not cover. Viewport for manual checks: 390x844 first, then tablet and desktop.
+Automated: `npm test` (Vitest, `tests/`) and `npm run test:db` (row-level security, `supabase/tests/database/`). Manual cases below are for the checks automation does not cover. Viewport for manual checks: 390x844 first, then tablet and desktop.
 
 | # | Case | Steps | Expected | Automated |
 |---|---|---|---|---|
@@ -20,3 +20,14 @@ Automated: `npm test` (Vitest, `tests/`). Manual cases below are for the checks 
 | 14 | Key bar | Scroll the list; tap the Key bar; tap again | Key date and lane labels follow the top row; legend opens with Marks and badge names; closes again | `tests/app.test.tsx` (toggle), manual (follow) |
 | 15 | Tick rail | Drag down the rail on the right, all the way to the bottom; then swipe vertically over the Events column next to it | List scrubs; a dark bubble shows the top date or month; the mint tick is the nearest tick at or above the finger; at the bottom the Key shows 1 Sep; release hides the bubble; swiping over the Events column scrolls normally | `tests/timeline.test.ts` (maths), manual (drag, swipe) |
 | 16 | Widths and Polish | `/demo` at 390x844, 768 and desktop, EN and PL | No horizontal page scroll; Polish Key labels, "KLUCZ" with its chevron and band titles fit; EN/PL and Key bar at least 44px high | manual |
+| 17 | Row-level security | Run `npm run test:db` | 48 checks pass: anon reads and writes nothing; a member sees and edits only their household; cannot join another household, create households or dogs, or move rows across dogs; one entry per slot per day; created_by/updated_by set by the database | `supabase/tests/database/rls.test.sql` |
+| 18 | Repository mapping | Run `npm test` | Rows map to app types and back, date range and dog filters applied, all pages read, errors carry the database code, slot conflicts become `DuplicateSlotEntryError`, non-UUID ids refused | `tests/supabaseRepository.test.ts` |
+| 19 | Sign-in flow | Open `/` with Supabase settings; enter e-mail; tap Send code; type the 6-digit code from the e-mail | E-mail shows the code and no link; a full code signs in without another tap; timeline shows the household's data | `tests/auth.test.tsx` (flow with a fake), manual (real e-mail, after the runbook) |
+| 20 | Sign-in errors | Enter a bad address; an address with no account; a wrong code; tap Send a new code twice quickly | "Enter a valid e-mail address."; "This e-mail has no PawLog account."; "Wrong or expired code..."; "Too many tries..." | `tests/auth.test.tsx`, manual (rate limit) |
+| 21 | No sign-up | Try an e-mail that is not one of the two accounts | No account is created (Authentication > Users unchanged) | manual |
+| 22 | Session persists | Sign in on the installed iPhone PWA, close it from the app switcher, reopen | Timeline opens without signing in again | manual |
+| 23 | Sign out | Tap Sign out, confirm; on another try, Cancel | Back to sign-in on this device; the other phone stays signed in; Cancel keeps the session | `tests/auth.test.tsx` (confirm), manual (other device) |
+| 24 | Not connected | Build without `VITE_SUPABASE_URL`, open `/` | "PawLog is not connected" with an Open the demo button; no crash | `tests/auth.test.tsx` |
+| 25 | Demo unchanged | Open `/demo`, watch the network panel | Timeline as before; no request leaves the site; no Sign out button | manual |
+| 26 | Account without household | Sign in with an account that has no `member` row | "This account is not linked to a dog yet..." and Sign out | `tests/auth.test.tsx` |
+| 27 | Sign-in widths and Polish | Sign-in, code step and the signed-in top bar at 390x844, 768, desktop, EN and PL | Nothing clipped; buttons at least 44px; "Wyloguj" fits beside EN/PL at 390 | manual |

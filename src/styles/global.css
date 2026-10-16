@@ -56,6 +56,7 @@ body {
   font: var(--type-title-weight) var(--type-title-size) / var(--type-title-line) var(--type-title-family);
   letter-spacing: var(--type-title-tracking);
 }
+.bar__actions { display: flex; align-items: center; gap: var(--space-2); }
 .lang { display: flex; gap: var(--space-1); }
 .lang-btn {
   min-height: 44px;

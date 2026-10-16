@@ -92,3 +92,20 @@ export function buildTokensCss(tokens) {
   parts.push('}', '');
   return parts.join('\n');
 }
+
+/**
+ * Merge the reviewed catalogue with draft ones (docs/copy/copy-proposal-*.csv, pending CEO review).
+ * A draft may only add keys: reusing a reviewed key fails, so a draft can never overwrite reviewed copy.
+ */
+export function mergeCatalogues(base, ...drafts) {
+  const en = { ...base.en };
+  const pl = { ...base.pl };
+  for (const draft of drafts) {
+    for (const key of Object.keys(draft.en)) {
+      if (key in en) throw new Error(`Draft copy reuses catalogue key ${key}`);
+      en[key] = draft.en[key];
+      pl[key] = draft.pl[key];
+    }
+  }
+  return { en, pl };
+}

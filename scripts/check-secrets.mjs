@@ -9,6 +9,7 @@ const patterns = [
   [/service[_-]?role/i, 'service-role key reference', true],
   [/https:\/\/[a-z0-9]{20}\.supabase\.co/i, 'concrete Supabase project URL'],
   [/eyJ[A-Za-z0-9_-]{20,}\.[A-Za-z0-9_-]{20,}\./, 'JWT-looking token'],
+  [/sb_secret_[A-Za-z0-9_-]{8,}/, 'Supabase secret key'],
 ];
 let bad = 0;
 for (const f of files) {
