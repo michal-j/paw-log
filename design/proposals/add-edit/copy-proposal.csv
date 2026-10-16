@@ -1,0 +1,58 @@
+﻿#,Where (code name),English,Polish,EN chars,PL chars,Fit note,Your notes
+186,tileOther,Other event,Inne zdarzenie,11,14,narrow slot - check fit,JCB-25 proposal
+187,notLoggedN,{n} not logged yet,Niezapisane: {n},18,16,narrow slot - check fit,JCB-25 proposal. {n} is a count
+188,fillDay,Fill day as usual,Uzupełnij dzień jak zwykle,17,26,narrow slot - check fit,JCB-25 proposal
+189,fillRest,Fill the rest as usual,Uzupełnij resztę jak zwykle,22,27,narrow slot - check fit,JCB-25 proposal
+190,fillHint,Logs everything still open on the usual schedule as given. Then fix what was different.,"Zapisuje wszystko, co zostało z typowego planu, jako podane. Potem popraw to, co było inaczej.",87,94,,JCB-25 proposal
+191,allGiven,All given,Wszystko podane,9,15,narrow slot - check fit,JCB-25 proposal
+192,markGiven,Mark {name} as given,Oznacz {name} jako podane,20,25,,JCB-25 proposal. Screen reader label; {name} is the item name
+193,editItem,Edit {name},Edytuj: {name},11,14,,JCB-25 proposal. Screen reader label
+194,logItem,Log {name},Zapisz: {name},10,14,,JCB-25 proposal. Screen reader label
+195,planned,Not logged yet,Jeszcze niezapisane,14,19,,JCB-25 proposal
+196,toastFilled,{n} entries logged as given,Zapisano jako podane: {n},27,25,,JCB-25 proposal. {n} is a count
+197,toastDeleted,Entry deleted,Wpis usunięty,13,13,,JCB-25 proposal
+198,toastEventDeleted,Event deleted,Zdarzenie usunięte,13,18,,JCB-25 proposal
+199,toastSaved,Saved,Zapisano,5,8,,JCB-25 proposal
+200,undo,Undo,Cofnij,4,6,narrow slot - check fit,JCB-25 proposal
+201,editEntry,Edit entry,Edytuj wpis,10,11,,JCB-25 proposal
+202,delete,Delete,Usuń,6,4,narrow slot - check fit,JCB-25 proposal
+203,date,Date,Data,4,4,,JCB-25 proposal
+204,dayPart,Day part,Pora dnia,8,9,,JCB-25 proposal
+205,change,Change,Zmień,6,5,narrow slot - check fit,JCB-25 proposal
+206,other,Other,Inne,5,4,,JCB-25 proposal
+207,otherItemPh,e.g. chew stick,np. gryzak,15,10,,JCB-25 proposal
+208,usual,Usual,Zwykle,5,6,,JCB-25 proposal
+209,makeUsual,Make this the usual dose from this day on,Ustaw jako zwykłą dawkę od tego dnia,41,36,,JCB-25 proposal
+210,optional,optional,opcjonalnie,8,11,,JCB-25 proposal
+211,pickItem,Pick an item or type one.,Wybierz pozycję lub wpisz własną.,25,33,,JCB-25 proposal
+212,addEvent,Add event,Dodaj zdarzenie,9,15,,JCB-25 proposal
+213,editEvent,Edit event,Edytuj zdarzenie,10,16,,JCB-25 proposal
+214,type,Type,Rodzaj,4,6,,JCB-25 proposal
+215,otherSymptomPh,Describe the symptom,Opisz objaw,20,11,,JCB-25 proposal
+216,pickSymptom,Pick a symptom or describe it.,Wybierz objaw lub go opisz.,30,27,,JCB-25 proposal
+217,writeNote,Write the note first.,Najpierw wpisz notatkę.,21,23,,JCB-25 proposal
+218,writeClinic,Add the clinic or what was done.,Wpisz klinikę lub co zrobiono.,32,30,,JCB-25 proposal
+219,titleLbl,What was it,Co to było,11,10,,JCB-25 proposal
+220,titlePh,e.g. Grooming,np. Strzyżenie,13,14,,JCB-25 proposal
+221,writeTitle,Say what it was.,"Napisz, co to było.",16,19,,JCB-25 proposal
+222,nextUp,Next up · {part},Następne · {part},16,17,,JCB-25 proposal
+223,logAsGiven,Log as given,Zapisz jako podane,12,18,narrow slot - check fit,JCB-25 proposal
+224,openDay,Open day,Otwórz dzień,8,12,narrow slot - check fit,JCB-25 proposal
+225,allLogged,Everything on the usual schedule is logged for this day.,Wszystko z typowego planu jest zapisane dla tego dnia.,56,54,,JCB-25 proposal
+226,otherDate,Other date,Inna data,10,9,narrow slot - check fit,JCB-25 proposal
+227,extraItem,Extra item,Dodatkowa pozycja,10,17,,JCB-25 proposal
+228,extraHint,"A treat, an extra dose, anything off schedule","Przysmak, dodatkowa dawka, coś spoza planu",45,42,,JCB-25 proposal
+229,otherEventHint,"Frontline, deworming, glands, nails","Frontline, odrobaczanie, gruczoły, pazury",35,41,,JCB-25 proposal
+230,fillSeveral,Fill several days,Uzupełnij kilka dni,17,19,,JCB-25 proposal. Sketch only (backfill)
+231,fillSeveralHint,Backfill a date range from the usual schedule,Uzupełnij zakres dat według typowego planu,45,42,,JCB-25 proposal. Sketch only (backfill)
+232,from,From,Od,4,2,,JCB-25 proposal. Sketch only (backfill)
+233,to,To,Do,2,2,,JCB-25 proposal. Sketch only (backfill)
+234,rangeSummary,{d} days · {n} entries as usual,Dni: {d} · wpisy jak zwykle: {n},31,32,,JCB-25 proposal. Sketch only (backfill)
+235,rangeKeep,Anything already logged on these days stays as it is.,"To, co już zapisano w tych dniach, zostaje bez zmian.",53,53,,JCB-25 proposal. Sketch only (backfill)
+236,fillNDays,Fill {d} days,Uzupełnij dni: {d},13,18,narrow slot - check fit,JCB-25 proposal. Sketch only (backfill)
+237,sketch,Sketch,Szkic,6,5,narrow slot - check fit,"JCB-25 proposal. Prototype label, not shipped"
+238,loggedOf,{a} of {b} logged,Zapisano {a} z {b},17,18,,JCB-25 proposal
+239,notLogged,Not logged,Brak wpisów,10,11,,JCB-25 proposal. Prototype stand-in list
+240,standIn,"Stand-in for the R10 Timeline, which does not change. Pick a day.","Zastępuje oś czasu z R10, która się nie zmienia. Wybierz dzień.",65,63,,"JCB-25 proposal. Prototype only, not shipped"
+241,notInScope,Not part of this proposal,Poza zakresem tej propozycji,25,28,,"JCB-25 proposal. Prototype only, not shipped"
+242,endRange,The end date is before the start date.,Data końcowa jest przed początkową.,38,35,,JCB-25 proposal. Sketch only (backfill)
