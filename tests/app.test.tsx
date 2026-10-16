@@ -29,6 +29,7 @@ describe('timeline home', () => {
     fireEvent.click(screen.getByRole('button', { name: 'PL' }));
     expect(screen.getByText(/Demo z przykładowymi danymi/)).toBeTruthy();
     expect(screen.getByText('październik 2026')).toBeTruthy();
+    expect(screen.getByText(/14 października: .*Niepokój, Wymioty/)).toBeTruthy();
     expect(screen.getByRole('button', { name: /Klucz dla dnia poniżej/ })).toBeTruthy();
     expect(localStorage.getItem('pawlog.lang')).toBe('pl');
   });

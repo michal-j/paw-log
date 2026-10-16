@@ -1,14 +1,17 @@
 import { useEffect, useMemo, useRef, useState, type PointerEvent, type ReactNode } from 'react';
 import type { HealthEvent, Item, Repository } from '../data';
 import { useI18n, type Lang, type MessageKey } from '../i18n';
+import { symptomLabel } from './labels';
 import { DoseMark, colourVar } from '../components/DoseMark';
 import { EventBadge } from '../components/EventBadge';
-import { DATE_COL_W, EVENTS_MIN_W, PART_TICK_INSET, PART_TICK_MAX, RAIL_W, ROW_INSET, SCRUB_GAP, SCRUB_LIFT, TICK } from './geometry';
+import { DATE_COL_W, EVENTS_MIN_W, PART_TICK_INSET, PART_TICK_MAX, RAIL_W, ROW_INSET, SCRUB_GAP, SCRUB_LIFT, TICK, TICK_H } from './geometry';
 import {
   activeTickOffset,
   buildTimeline,
   parseDate,
+  railFraction,
   railScrollTop,
+  tailHeight,
   rowIndexAt,
   topDayAt,
   type BadgeKind,
@@ -65,6 +68,19 @@ export function Timeline({ repository }: { repository: Repository }) {
   const [scrubY, setScrubY] = useState<number | null>(null);
   const listRef = useRef<HTMLDivElement>(null);
   const dragging = useRef(false);
+  const [viewport, setViewport] = useState(0);
+
+  // The tail must let the oldest day reach the top, so it depends on the list's visible height.
+  useEffect(() => {
+    const el = listRef.current;
+    if (!el) return;
+    const measure = () => setViewport(el.clientHeight);
+    measure();
+    if (typeof ResizeObserver === 'undefined') return;
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [data]);
 
   useEffect(() => {
     let live = true;
@@ -95,7 +111,7 @@ export function Timeline({ repository }: { repository: Repository }) {
 
   if (!data) return <div className="timeline" />;
   const { timeline, items } = data;
-  const { rows, columns, ticks, total } = timeline;
+  const { rows, columns, ticks, span } = timeline;
   const topRow: Row | undefined = rows[topIndex];
   const keyDay = topDayAt(rows, topRow?.top ?? 0);
   const activeTick = activeTickOffset(ticks, topRow?.top ?? 0);
@@ -112,7 +128,8 @@ export function Timeline({ repository }: { repository: Repository }) {
     if (!list) return;
     const rect = e.currentTarget.getBoundingClientRect();
     const y = e.clientY - rect.top;
-    list.scrollTop = railScrollTop(y / rect.height, total, list.scrollHeight - list.clientHeight);
+    // Ticks sit at f * (height - TICK_H) (see the tick style below), so invert the same mapping.
+    list.scrollTop = railScrollTop(y / (rect.height - TICK_H), span, list.scrollHeight - list.clientHeight);
     setScrubY(Math.max(0, Math.min(rect.height, y)));
     onScroll();
   };
@@ -137,7 +154,10 @@ export function Timeline({ repository }: { repository: Repository }) {
         >
           <span className="tl-key__date" style={{ width: DATE_COL_W }}>
             <span className="tl-key__word">
-              {t('key')} <span aria-hidden="true">{keyOpen ? '▴' : '▾'}</span>
+              {t('key')}
+              <svg className={`tl-key__chev${keyOpen ? ' tl-key__chev--open' : ''}`} viewBox="0 0 6 4" aria-hidden="true">
+                <path d="M0 0h6L3 4z" fill="currentColor" />
+              </svg>
             </span>
             <span className="tl-key__day">{keyDay ? fmt.dayMonth(keyDay.date) : ''}</span>
           </span>
@@ -229,7 +249,7 @@ export function Timeline({ repository }: { repository: Repository }) {
               ),
             )}
           </ul>
-          <div className="tl-tail" style={{ height: total - (rows.at(-1)?.top ?? 0) - (rows.at(-1)?.height ?? 0) }} />
+          <div className="tl-tail" style={{ height: tailHeight(viewport) }} />
         </div>
 
         <div
@@ -240,7 +260,7 @@ export function Timeline({ repository }: { repository: Repository }) {
           aria-orientation="vertical"
           aria-valuemin={0}
           aria-valuemax={100}
-          aria-valuenow={Math.round(((topRow?.top ?? 0) / total) * 100)}
+          aria-valuenow={Math.round(railFraction(topRow?.top ?? 0, span) * 100)}
           aria-label={t('railAria')}
           onPointerDown={(e) => {
             try {
@@ -264,11 +284,12 @@ export function Timeline({ repository }: { repository: Repository }) {
           {ticks.map((k) => {
             const active = k.offset === activeTick;
             const g = active ? TICK.active : TICK[k.kind];
+            const f = railFraction(k.offset, span);
             return (
               <span
                 key={`${k.kind}-${k.offset}`}
                 className={`tl-tick tl-tick--${active ? 'active' : k.kind}`}
-                style={{ top: `${(k.offset / total) * 100}%`, width: g.w, right: g.right }}
+                style={{ top: `calc(${f * 100}% - ${f * TICK_H}px)`, width: g.w, right: g.right, height: TICK_H }}
               />
             );
           })}
@@ -309,7 +330,7 @@ function flagsFor(events: HealthEvent[], anySkipped: boolean, t: (k: MessageKey)
   const out: string[] = [];
   const vet = events.filter((e) => e.type === 'vet').length;
   if (vet) out.push(vet > 1 ? `${t('copy.101')} ×${vet}` : t('copy.101'));
-  const syms = events.filter((e) => e.type === 'symptom').map((e) => e.title);
+  const syms = events.filter((e) => e.type === 'symptom').map((e) => symptomLabel(e.title, t));
   if (syms.length) out.push(syms.join(', '));
   if (events.some((e) => e.type === 'photo')) out.push(t('copy.103'));
   if (events.some((e) => e.type === 'frontline')) out.push(t('kFront'));

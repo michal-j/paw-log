@@ -6,7 +6,7 @@
 export const DAY_ROW_H = 44;
 /** Height of a month band for a month that has data, px. */
 export const MONTH_BAND_H = 28;
-/** Empty space after the last row so the oldest day can scroll to the top, px. */
+/** Minimum empty space after the last row, px; the real tail is list height minus one day row (model.ts tailHeight). */
 export const LIST_TAIL_H = 120;
 /** Width of the date column on the left of each row, px. */
 export const DATE_COL_W = 44;
@@ -29,6 +29,8 @@ export const MEAL_COL_MIN = 44;
 export const LAST_PART_COL_MIN = 36;
 export const OTHER_COL_MIN = 24;
 
+/** Rail tick thickness, px; ticks are kept inside the rail at both ends. */
+export const TICK_H = 2;
 /** Rail tick lengths and right offsets, px. */
 export const TICK = {
   active: { w: 16, right: 2 },

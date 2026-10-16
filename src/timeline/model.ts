@@ -170,8 +170,13 @@ export interface Timeline {
   columns: Column[];
   rows: Row[];
   ticks: Tick[];
-  /** Total scroll height used for the rail: rows plus the tail. */
-  total: number;
+  /** Height of all rows (bands and days), without the tail. */
+  contentHeight: number;
+  /**
+   * The rail's scroll range: the scroll position at which the oldest day is the top row.
+   * Rail top = 0 (today), rail bottom = span (first record); ticks and dragging both use it.
+   */
+  span: number;
   start: PlainDate;
   today: PlainDate;
 }
@@ -242,7 +247,8 @@ export function buildTimeline(input: {
     });
     y += DAY_ROW_H;
   }
-  return { columns, rows, ticks, total: y + LIST_TAIL_H, start, today };
+  const oldest = rows.at(-1);
+  return { columns, rows, ticks, contentHeight: y, span: oldest ? oldest.top : 0, start, today };
 }
 
 function groupByDate<T extends { date: PlainDate }>(list: T[]): Map<PlainDate, T[]> {
@@ -285,8 +291,21 @@ export function activeTickOffset(ticks: Tick[], topRowOffset: number): number {
   return act;
 }
 
-/** Map a pointer position on the rail (0 = top, 1 = bottom) to a list scroll position. */
-export function railScrollTop(fraction: number, total: number, maxScroll: number): number {
+/**
+ * Space after the last row so the oldest day can scroll to the top of a list `viewport` px tall.
+ * Never shorter than LIST_TAIL_H.
+ */
+export function tailHeight(viewport: number): number {
+  return Math.max(LIST_TAIL_H, viewport - DAY_ROW_H);
+}
+
+/** Map a pointer position on the rail (0 = top, 1 = bottom) to a list scroll position within the span. */
+export function railScrollTop(fraction: number, span: number, maxScroll: number = span): number {
   const f = Math.max(0, Math.min(1, fraction));
-  return Math.max(0, Math.min(f * total, maxScroll));
+  return Math.max(0, Math.min(f * span, maxScroll));
+}
+
+/** Where a row offset sits on the rail, 0 to 1 (inverse of railScrollTop). */
+export function railFraction(offset: number, span: number): number {
+  return span > 0 ? Math.max(0, Math.min(1, offset / span)) : 0;
 }

@@ -9,7 +9,9 @@ import {
   datesNewestFirst,
   markSize,
   markState,
+  railFraction,
   railScrollTop,
+  tailHeight,
   rowIndexAt,
   shiftDate,
   topDayAt,
@@ -75,7 +77,8 @@ describe('row derivation (demo data)', () => {
       expect(r.height).toBe(r.kind === 'band' ? MONTH_BAND_H : DAY_ROW_H);
       y += r.height;
     }
-    expect(tl.total).toBe(2 * MONTH_BAND_H + 45 * DAY_ROW_H + LIST_TAIL_H);
+    expect(tl.contentHeight).toBe(2 * MONTH_BAND_H + 45 * DAY_ROW_H);
+    expect(tl.span).toBe(day(tl, '2026-09-01').top);
   });
 
   it('puts rail ticks on month bands, Sundays and today', async () => {
@@ -184,8 +187,41 @@ describe('scroll maths', () => {
     expect(activeTickOffset(ticks, 200)).toBe(200);
   });
   it('maps the rail to a clamped scroll position', () => {
-    expect(railScrollTop(0.5, 1000, 800)).toBe(500);
-    expect(railScrollTop(1.2, 1000, 800)).toBe(800);
-    expect(railScrollTop(-1, 1000, 800)).toBe(0);
+    expect(railScrollTop(0.5, 1000)).toBe(500);
+    expect(railScrollTop(1.2, 1000)).toBe(1000);
+    expect(railScrollTop(-1, 1000)).toBe(0);
+    expect(railScrollTop(1, 1000, 800)).toBe(800);
+  });
+
+  it('maps the whole rail onto today..first record, with ticks under the finger (390x844 list)', async () => {
+    const tl = await demoTimeline();
+    const viewport = 560; // list height at 390x844 with banner, header, Key and parts bar
+    const maxScroll = tl.contentHeight + tailHeight(viewport) - viewport;
+    expect(maxScroll).toBeGreaterThanOrEqual(tl.span); // the tail lets 1 Sep reach the top
+    expect(topDayAt(tl.rows, railScrollTop(1, tl.span, maxScroll))?.date).toBe('2026-09-01');
+    expect(topDayAt(tl.rows, railScrollTop(0, tl.span, maxScroll))?.date).toBe('2026-10-15');
+    for (const k of tl.ticks) {
+      // dragging to a tick's position scrolls exactly to that tick's row
+      expect(railScrollTop(railFraction(k.offset, tl.span), tl.span, maxScroll)).toBeCloseTo(k.offset);
+    }
+    const sepBand = tl.rows.find((r) => r.kind === 'band' && r.month === '2026-09')!;
+    expect(railFraction(sepBand.top, tl.span)).toBeGreaterThan(0.25);
+    expect(railFraction(sepBand.top, tl.span)).toBeLessThan(0.4);
+  });
+
+  it('keeps a minimum tail', () => {
+    expect(tailHeight(0)).toBe(LIST_TAIL_H);
+    expect(tailHeight(600)).toBe(600 - DAY_ROW_H);
+  });
+});
+
+describe('symptom labels', () => {
+  it('translates known symptom types and keeps free text', async () => {
+    const { symptomLabel } = await import('../src/timeline/labels');
+    const { translate } = await import('../src/i18n');
+    const pl = (k: string) => translate('pl', k);
+    expect(symptomLabel('Heartburn', pl)).toBe('Zgaga');
+    expect(symptomLabel('stomach rumbling', pl)).toBe('Burczenie w brzuchu');
+    expect(symptomLabel('Sneezing', pl)).toBe('Sneezing');
   });
 });

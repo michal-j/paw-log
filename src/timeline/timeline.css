@@ -76,7 +76,10 @@
   cursor: pointer;
 }
 .tl-key__date { flex: none; align-self: stretch; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 2px; }
-.tl-key__word { font-size: 10px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; white-space: nowrap; color: var(--color-mint-deep); }
+.tl-key__word { display: inline-flex; align-items: center; gap: 1px; font-size: 10px; font-weight: 700; letter-spacing: 0.01em; text-transform: uppercase; white-space: nowrap; color: var(--color-mint-deep); }
+/* Chevron is a 6px glyph, not a text arrow, so "KLUCZ" plus chevron fits the 44px date column. */
+.tl-key__chev { width: 6px; height: 4px; flex: none; }
+.tl-key__chev--open { transform: rotate(180deg); }
 .tl-key__day { font-size: 10px; font-weight: 600; line-height: 12px; color: var(--color-ink-3); font-variant-numeric: tabular-nums; white-space: nowrap; }
 .tl-key .tl-col { align-items: flex-end; align-self: stretch; }
 .tl-key__lane { display: flex; flex-direction: column; align-items: center; gap: 3px; }
@@ -198,9 +201,9 @@
   background: var(--color-surface-tint);
   cursor: ns-resize;
 }
-/* The rail is 20px wide by design; widen the hit area to 44px over the Events column's edge. */
-.tl-rail::after { content: ''; position: absolute; top: 0; bottom: 0; right: 0; left: -24px; }
-.tl-tick { position: absolute; height: 2px; border-radius: var(--radius-xs); pointer-events: none; }
+/* No hit-area extension: an overlay over the Events column would turn vertical swipes there into
+   scrubbing (touch-action: none). Scrubbing starts only on the 20px track, which is full list height. */
+.tl-tick { position: absolute; border-radius: var(--radius-xs); pointer-events: none; }
 .tl-tick--week { background: var(--color-line-strong); }
 .tl-tick--month, .tl-tick--year { background: var(--color-mark-neutral); }
 .tl-tick--active { background: var(--color-mint); }
