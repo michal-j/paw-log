@@ -4,7 +4,7 @@
   "dogId": "dog-demo",
   "date": "2026-09-08",
   "type": "frontline",
-  "title": "Frontline",
+  "title": "",
   "detail": "Monthly flea and tick treatment given. Time of day not tracked.",
   "issueId": null
  },
@@ -13,7 +13,7 @@
   "dogId": "dog-demo",
   "date": "2026-09-12",
   "type": "deworming",
-  "title": "Deworming pill",
+  "title": "",
   "detail": "Given every 6 months. Next one due in March.",
   "issueId": null
  },
@@ -23,8 +23,9 @@
   "date": "2026-09-20",
   "type": "symptom",
   "title": "Reflux",
-  "detail": "medium",
-  "issueId": null
+  "detail": "",
+  "issueId": null,
+  "intensity": "medium"
  },
  {
   "id": "event-004",
@@ -32,8 +33,9 @@
   "date": "2026-09-20",
   "type": "symptom",
   "title": "Panting",
-  "detail": "small",
-  "issueId": null
+  "detail": "",
+  "issueId": null,
+  "intensity": "small"
  },
  {
   "id": "event-005",
@@ -41,8 +43,9 @@
   "date": "2026-09-28",
   "type": "symptom",
   "title": "Fear",
-  "detail": "a lot",
-  "issueId": null
+  "detail": "",
+  "issueId": null,
+  "intensity": "large"
  },
  {
   "id": "event-006",
@@ -50,8 +53,11 @@
   "date": "2026-10-03",
   "type": "symptom",
   "title": "Leakage",
-  "detail": "small amount · small",
-  "issueId": null
+  "detail": "",
+  "issueId": null,
+  "props": {
+   "quantity": "small"
+  }
  },
  {
   "id": "event-007",
@@ -68,15 +74,20 @@
   "date": "2026-10-06",
   "type": "symptom",
   "title": "Poo",
-  "detail": "diarrhea · dark · medium amount",
-  "issueId": null
+  "detail": "",
+  "issueId": null,
+  "props": {
+   "consistency": "diarrhea",
+   "colour": "dark",
+   "quantity": "medium"
+  }
  },
  {
   "id": "event-009",
   "dogId": "dog-demo",
   "date": "2026-10-08",
   "type": "frontline",
-  "title": "Frontline",
+  "title": "",
   "detail": "Monthly flea and tick treatment given. Time of day not tracked.",
   "issueId": null
  },
@@ -86,8 +97,9 @@
   "date": "2026-10-09",
   "type": "symptom",
   "title": "Heartburn",
-  "detail": "medium",
-  "issueId": null
+  "detail": "",
+  "issueId": null,
+  "intensity": "medium"
  },
  {
   "id": "event-011",
@@ -104,8 +116,9 @@
   "date": "2026-10-12",
   "type": "symptom",
   "title": "Stomach rumbling",
-  "detail": "small",
-  "issueId": null
+  "detail": "",
+  "issueId": null,
+  "intensity": "small"
  },
  {
   "id": "event-013",
@@ -113,8 +126,13 @@
   "date": "2026-10-12",
   "type": "symptom",
   "title": "Poo",
-  "detail": "soft · normal colour · small",
-  "issueId": null
+  "detail": "",
+  "issueId": null,
+  "props": {
+   "consistency": "soft",
+   "colour": "normal",
+   "quantity": "small"
+  }
  },
  {
   "id": "event-014",
@@ -122,8 +140,9 @@
   "date": "2026-10-14",
   "type": "symptom",
   "title": "Restlessness",
-  "detail": "a lot. Restless night and day. Refused breakfast. Weak and confused on walks, lay down a few times.",
-  "issueId": null
+  "detail": "Restless night and day. Refused breakfast. Weak and confused on walks, lay down a few times.",
+  "issueId": null,
+  "intensity": "large"
  },
  {
   "id": "event-015",
@@ -131,8 +150,12 @@
   "date": "2026-10-14",
   "type": "symptom",
   "title": "Vomit",
-  "detail": "1× in the morning",
-  "issueId": null
+  "detail": "",
+  "issueId": null,
+  "props": {
+   "times": "1",
+   "when": "morning"
+  }
  },
  {
   "id": "event-016",
@@ -149,7 +172,11 @@
   "date": "2026-10-14",
   "type": "vet",
   "title": "Riverside Vet",
-  "detail": "Blood pressure check: high, 150–160. Further consultation. Also done: anal glands expressed, nail trimming.",
-  "issueId": null
+  "detail": "Blood pressure check: high, 150–160. Further consultation.",
+  "issueId": null,
+  "alsoDone": [
+   "anal_glands",
+   "nails"
+  ]
  }
 ]

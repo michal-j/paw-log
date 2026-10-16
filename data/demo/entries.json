@@ -5,10 +5,13 @@
   "date": "2026-09-01",
   "dayPart": 2,
   "itemId": "item-cooked",
-  "doseText": "⅓ tray",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-cooked-2",
+  "amount": 0.3333333333333333,
+  "unit": "tray",
+  "flavour": ""
  },
  {
   "id": "entry-002",
@@ -16,10 +19,13 @@
   "date": "2026-09-01",
   "dayPart": 2,
   "itemId": "item-biomend",
-  "doseText": "1 pill",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-biomend-2",
+  "amount": 1,
+  "unit": "pill",
+  "flavour": ""
  },
  {
   "id": "entry-003",
@@ -27,10 +33,13 @@
   "date": "2026-09-01",
   "dayPart": 4,
   "itemId": "item-farm",
-  "doseText": "¼ can",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-farm-4",
+  "amount": 0.25,
+  "unit": "can",
+  "flavour": "turkey"
  },
  {
   "id": "entry-004",
@@ -38,10 +47,13 @@
   "date": "2026-09-01",
   "dayPart": 6,
   "itemId": "item-farm",
-  "doseText": "¼ can",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-farm-6",
+  "amount": 0.25,
+  "unit": "can",
+  "flavour": "turkey"
  },
  {
   "id": "entry-005",
@@ -49,10 +61,13 @@
   "date": "2026-09-01",
   "dayPart": 7,
   "itemId": "item-calmora",
-  "doseText": "1 capsule",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-calmora-7",
+  "amount": 1,
+  "unit": "capsule",
+  "flavour": ""
  },
  {
   "id": "entry-006",
@@ -60,10 +75,13 @@
   "date": "2026-09-02",
   "dayPart": 2,
   "itemId": "item-cooked",
-  "doseText": "⅓ tray",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-cooked-2",
+  "amount": 0.3333333333333333,
+  "unit": "tray",
+  "flavour": ""
  },
  {
   "id": "entry-007",
@@ -71,10 +89,13 @@
   "date": "2026-09-02",
   "dayPart": 2,
   "itemId": "item-biomend",
-  "doseText": "1 pill",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-biomend-2",
+  "amount": 1,
+  "unit": "pill",
+  "flavour": ""
  },
  {
   "id": "entry-008",
@@ -82,10 +103,13 @@
   "date": "2026-09-02",
   "dayPart": 4,
   "itemId": "item-farm",
-  "doseText": "¼ can",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-farm-4",
+  "amount": 0.25,
+  "unit": "can",
+  "flavour": "turkey"
  },
  {
   "id": "entry-009",
@@ -93,10 +117,13 @@
   "date": "2026-09-02",
   "dayPart": 6,
   "itemId": "item-farm",
-  "doseText": "¼ can",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-farm-6",
+  "amount": 0.25,
+  "unit": "can",
+  "flavour": "turkey"
  },
  {
   "id": "entry-010",
@@ -104,10 +131,13 @@
   "date": "2026-09-02",
   "dayPart": 7,
   "itemId": "item-calmora",
-  "doseText": "1 capsule",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-calmora-7",
+  "amount": 1,
+  "unit": "capsule",
+  "flavour": ""
  },
  {
   "id": "entry-011",
@@ -115,10 +145,13 @@
   "date": "2026-09-03",
   "dayPart": 2,
   "itemId": "item-cooked",
-  "doseText": "⅓ tray",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-cooked-2",
+  "amount": 0.3333333333333333,
+  "unit": "tray",
+  "flavour": ""
  },
  {
   "id": "entry-012",
@@ -126,10 +159,13 @@
   "date": "2026-09-03",
   "dayPart": 2,
   "itemId": "item-biomend",
-  "doseText": "1 pill",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-biomend-2",
+  "amount": 1,
+  "unit": "pill",
+  "flavour": ""
  },
  {
   "id": "entry-013",
@@ -137,10 +173,13 @@
   "date": "2026-09-03",
   "dayPart": 3,
   "itemId": "item-treat",
-  "doseText": "chicken · 2",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": null,
+  "amount": 2,
+  "unit": "piece",
+  "flavour": "chicken"
  },
  {
   "id": "entry-014",
@@ -148,10 +187,13 @@
   "date": "2026-09-03",
   "dayPart": 4,
   "itemId": "item-farm",
-  "doseText": "¼ can",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-farm-4",
+  "amount": 0.25,
+  "unit": "can",
+  "flavour": "turkey"
  },
  {
   "id": "entry-015",
@@ -159,10 +201,13 @@
   "date": "2026-09-03",
   "dayPart": 6,
   "itemId": "item-farm",
-  "doseText": "¼ can",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-farm-6",
+  "amount": 0.25,
+  "unit": "can",
+  "flavour": "turkey"
  },
  {
   "id": "entry-016",
@@ -170,10 +215,13 @@
   "date": "2026-09-03",
   "dayPart": 7,
   "itemId": "item-calmora",
-  "doseText": "1 capsule",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-calmora-7",
+  "amount": 1,
+  "unit": "capsule",
+  "flavour": ""
  },
  {
   "id": "entry-017",
@@ -181,10 +229,13 @@
   "date": "2026-09-04",
   "dayPart": 2,
   "itemId": "item-cooked",
-  "doseText": "⅓ tray",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-cooked-2",
+  "amount": 0.3333333333333333,
+  "unit": "tray",
+  "flavour": ""
  },
  {
   "id": "entry-018",
@@ -192,10 +243,13 @@
   "date": "2026-09-04",
   "dayPart": 2,
   "itemId": "item-biomend",
-  "doseText": "1 pill",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-biomend-2",
+  "amount": 1,
+  "unit": "pill",
+  "flavour": ""
  },
  {
   "id": "entry-019",
@@ -203,10 +257,13 @@
   "date": "2026-09-04",
   "dayPart": 4,
   "itemId": "item-farm",
-  "doseText": "¼ can",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-farm-4",
+  "amount": 0.25,
+  "unit": "can",
+  "flavour": "turkey"
  },
  {
   "id": "entry-020",
@@ -214,10 +271,13 @@
   "date": "2026-09-04",
   "dayPart": 6,
   "itemId": "item-farm",
-  "doseText": "¼ can",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-farm-6",
+  "amount": 0.25,
+  "unit": "can",
+  "flavour": "turkey"
  },
  {
   "id": "entry-021",
@@ -225,10 +285,13 @@
   "date": "2026-09-04",
   "dayPart": 7,
   "itemId": "item-calmora",
-  "doseText": "1 capsule",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-calmora-7",
+  "amount": 1,
+  "unit": "capsule",
+  "flavour": ""
  },
  {
   "id": "entry-022",
@@ -236,10 +299,13 @@
   "date": "2026-09-05",
   "dayPart": 2,
   "itemId": "item-cooked",
-  "doseText": "⅓ tray",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-cooked-2",
+  "amount": 0.3333333333333333,
+  "unit": "tray",
+  "flavour": ""
  },
  {
   "id": "entry-023",
@@ -247,10 +313,13 @@
   "date": "2026-09-05",
   "dayPart": 2,
   "itemId": "item-biomend",
-  "doseText": "1 pill",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-biomend-2",
+  "amount": 1,
+  "unit": "pill",
+  "flavour": ""
  },
  {
   "id": "entry-024",
@@ -258,10 +327,13 @@
   "date": "2026-09-05",
   "dayPart": 4,
   "itemId": "item-farm",
-  "doseText": "¼ can",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-farm-4",
+  "amount": 0.25,
+  "unit": "can",
+  "flavour": "turkey"
  },
  {
   "id": "entry-025",
@@ -269,10 +341,13 @@
   "date": "2026-09-05",
   "dayPart": 6,
   "itemId": "item-farm",
-  "doseText": "¼ can",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-farm-6",
+  "amount": 0.25,
+  "unit": "can",
+  "flavour": "turkey"
  },
  {
   "id": "entry-026",
@@ -280,10 +355,13 @@
   "date": "2026-09-05",
   "dayPart": 7,
   "itemId": "item-calmora",
-  "doseText": "1 capsule",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-calmora-7",
+  "amount": 1,
+  "unit": "capsule",
+  "flavour": ""
  },
  {
   "id": "entry-027",
@@ -291,10 +369,13 @@
   "date": "2026-09-06",
   "dayPart": 2,
   "itemId": "item-cooked",
-  "doseText": "⅓ tray",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-cooked-2",
+  "amount": 0.3333333333333333,
+  "unit": "tray",
+  "flavour": ""
  },
  {
   "id": "entry-028",
@@ -302,10 +383,13 @@
   "date": "2026-09-06",
   "dayPart": 2,
   "itemId": "item-biomend",
-  "doseText": "1 pill",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-biomend-2",
+  "amount": 1,
+  "unit": "pill",
+  "flavour": ""
  },
  {
   "id": "entry-029",
@@ -313,10 +397,13 @@
   "date": "2026-09-06",
   "dayPart": 3,
   "itemId": "item-treat",
-  "doseText": "chicken · 2",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": null,
+  "amount": 2,
+  "unit": "piece",
+  "flavour": "chicken"
  },
  {
   "id": "entry-030",
@@ -324,10 +411,13 @@
   "date": "2026-09-06",
   "dayPart": 4,
   "itemId": "item-farm",
-  "doseText": "¼ can",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-farm-4",
+  "amount": 0.25,
+  "unit": "can",
+  "flavour": "turkey"
  },
  {
   "id": "entry-031",
@@ -335,10 +425,13 @@
   "date": "2026-09-06",
   "dayPart": 6,
   "itemId": "item-farm",
-  "doseText": "¼ can",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-farm-6",
+  "amount": 0.25,
+  "unit": "can",
+  "flavour": "turkey"
  },
  {
   "id": "entry-032",
@@ -346,10 +439,13 @@
   "date": "2026-09-06",
   "dayPart": 7,
   "itemId": "item-calmora",
-  "doseText": "1 capsule",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-calmora-7",
+  "amount": 1,
+  "unit": "capsule",
+  "flavour": ""
  },
  {
   "id": "entry-033",
@@ -357,10 +453,13 @@
   "date": "2026-09-07",
   "dayPart": 2,
   "itemId": "item-cooked",
-  "doseText": "⅓ tray",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-cooked-2",
+  "amount": 0.3333333333333333,
+  "unit": "tray",
+  "flavour": ""
  },
  {
   "id": "entry-034",
@@ -368,10 +467,13 @@
   "date": "2026-09-07",
   "dayPart": 2,
   "itemId": "item-biomend",
-  "doseText": "1 pill",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-biomend-2",
+  "amount": 1,
+  "unit": "pill",
+  "flavour": ""
  },
  {
   "id": "entry-035",
@@ -379,10 +481,13 @@
   "date": "2026-09-07",
   "dayPart": 4,
   "itemId": "item-farm",
-  "doseText": "¼ can",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-farm-4",
+  "amount": 0.25,
+  "unit": "can",
+  "flavour": "turkey"
  },
  {
   "id": "entry-036",
@@ -390,10 +495,13 @@
   "date": "2026-09-07",
   "dayPart": 6,
   "itemId": "item-farm",
-  "doseText": "¼ can",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-farm-6",
+  "amount": 0.25,
+  "unit": "can",
+  "flavour": "turkey"
  },
  {
   "id": "entry-037",
@@ -401,10 +509,13 @@
   "date": "2026-09-07",
   "dayPart": 7,
   "itemId": "item-calmora",
-  "doseText": "1 capsule",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-calmora-7",
+  "amount": 1,
+  "unit": "capsule",
+  "flavour": ""
  },
  {
   "id": "entry-038",
@@ -412,10 +523,13 @@
   "date": "2026-09-08",
   "dayPart": 2,
   "itemId": "item-cooked",
-  "doseText": "⅓ tray",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-cooked-2",
+  "amount": 0.3333333333333333,
+  "unit": "tray",
+  "flavour": ""
  },
  {
   "id": "entry-039",
@@ -423,10 +537,13 @@
   "date": "2026-09-08",
   "dayPart": 2,
   "itemId": "item-biomend",
-  "doseText": "1 pill",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-biomend-2",
+  "amount": 1,
+  "unit": "pill",
+  "flavour": ""
  },
  {
   "id": "entry-040",
@@ -434,10 +551,13 @@
   "date": "2026-09-08",
   "dayPart": 4,
   "itemId": "item-farm",
-  "doseText": "¼ can",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-farm-4",
+  "amount": 0.25,
+  "unit": "can",
+  "flavour": "turkey"
  },
  {
   "id": "entry-041",
@@ -445,10 +565,13 @@
   "date": "2026-09-08",
   "dayPart": 6,
   "itemId": "item-farm",
-  "doseText": "¼ can",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-farm-6",
+  "amount": 0.25,
+  "unit": "can",
+  "flavour": "turkey"
  },
  {
   "id": "entry-042",
@@ -456,10 +579,13 @@
   "date": "2026-09-08",
   "dayPart": 7,
   "itemId": "item-calmora",
-  "doseText": "1 capsule",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-calmora-7",
+  "amount": 1,
+  "unit": "capsule",
+  "flavour": ""
  },
  {
   "id": "entry-043",
@@ -467,10 +593,13 @@
   "date": "2026-09-09",
   "dayPart": 2,
   "itemId": "item-cooked",
-  "doseText": "⅓ tray",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-cooked-2",
+  "amount": 0.3333333333333333,
+  "unit": "tray",
+  "flavour": ""
  },
  {
   "id": "entry-044",
@@ -478,10 +607,13 @@
   "date": "2026-09-09",
   "dayPart": 2,
   "itemId": "item-biomend",
-  "doseText": "1 pill",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-biomend-2",
+  "amount": 1,
+  "unit": "pill",
+  "flavour": ""
  },
  {
   "id": "entry-045",
@@ -489,10 +621,13 @@
   "date": "2026-09-09",
   "dayPart": 3,
   "itemId": "item-treat",
-  "doseText": "chicken · 2",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": null,
+  "amount": 2,
+  "unit": "piece",
+  "flavour": "chicken"
  },
  {
   "id": "entry-046",
@@ -500,10 +635,13 @@
   "date": "2026-09-09",
   "dayPart": 4,
   "itemId": "item-farm",
-  "doseText": "¼ can",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-farm-4",
+  "amount": 0.25,
+  "unit": "can",
+  "flavour": "turkey"
  },
  {
   "id": "entry-047",
@@ -511,10 +649,13 @@
   "date": "2026-09-09",
   "dayPart": 6,
   "itemId": "item-farm",
-  "doseText": "¼ can",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-farm-6",
+  "amount": 0.25,
+  "unit": "can",
+  "flavour": "turkey"
  },
  {
   "id": "entry-048",
@@ -522,10 +663,13 @@
   "date": "2026-09-09",
   "dayPart": 7,
   "itemId": "item-calmora",
-  "doseText": "1 capsule",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-calmora-7",
+  "amount": 1,
+  "unit": "capsule",
+  "flavour": ""
  },
  {
   "id": "entry-049",
@@ -533,10 +677,13 @@
   "date": "2026-09-10",
   "dayPart": 2,
   "itemId": "item-cooked",
-  "doseText": "⅓ tray",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-cooked-2",
+  "amount": 0.3333333333333333,
+  "unit": "tray",
+  "flavour": ""
  },
  {
   "id": "entry-050",
@@ -544,10 +691,13 @@
   "date": "2026-09-10",
   "dayPart": 2,
   "itemId": "item-biomend",
-  "doseText": "1 pill",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-biomend-2",
+  "amount": 1,
+  "unit": "pill",
+  "flavour": ""
  },
  {
   "id": "entry-051",
@@ -555,10 +705,13 @@
   "date": "2026-09-10",
   "dayPart": 4,
   "itemId": "item-farm",
-  "doseText": "¼ can",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-farm-4",
+  "amount": 0.25,
+  "unit": "can",
+  "flavour": "turkey"
  },
  {
   "id": "entry-052",
@@ -566,10 +719,13 @@
   "date": "2026-09-10",
   "dayPart": 6,
   "itemId": "item-farm",
-  "doseText": "¼ can",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-farm-6",
+  "amount": 0.25,
+  "unit": "can",
+  "flavour": "turkey"
  },
  {
   "id": "entry-053",
@@ -577,10 +733,13 @@
   "date": "2026-09-10",
   "dayPart": 7,
   "itemId": "item-calmora",
-  "doseText": "1 capsule",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-calmora-7",
+  "amount": 1,
+  "unit": "capsule",
+  "flavour": ""
  },
  {
   "id": "entry-054",
@@ -588,10 +747,13 @@
   "date": "2026-09-11",
   "dayPart": 2,
   "itemId": "item-cooked",
-  "doseText": "⅓ tray",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-cooked-2",
+  "amount": 0.3333333333333333,
+  "unit": "tray",
+  "flavour": ""
  },
  {
   "id": "entry-055",
@@ -599,10 +761,13 @@
   "date": "2026-09-11",
   "dayPart": 2,
   "itemId": "item-biomend",
-  "doseText": "1 pill",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-biomend-2",
+  "amount": 1,
+  "unit": "pill",
+  "flavour": ""
  },
  {
   "id": "entry-056",
@@ -610,10 +775,13 @@
   "date": "2026-09-11",
   "dayPart": 4,
   "itemId": "item-farm",
-  "doseText": "¼ can",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-farm-4",
+  "amount": 0.25,
+  "unit": "can",
+  "flavour": "turkey"
  },
  {
   "id": "entry-057",
@@ -621,10 +789,13 @@
   "date": "2026-09-11",
   "dayPart": 6,
   "itemId": "item-farm",
-  "doseText": "¼ can",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-farm-6",
+  "amount": 0.25,
+  "unit": "can",
+  "flavour": "turkey"
  },
  {
   "id": "entry-058",
@@ -632,10 +803,13 @@
   "date": "2026-09-11",
   "dayPart": 7,
   "itemId": "item-calmora",
-  "doseText": "1 capsule",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-calmora-7",
+  "amount": 1,
+  "unit": "capsule",
+  "flavour": ""
  },
  {
   "id": "entry-059",
@@ -643,10 +817,13 @@
   "date": "2026-09-12",
   "dayPart": 2,
   "itemId": "item-cooked",
-  "doseText": "⅓ tray",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-cooked-2",
+  "amount": 0.3333333333333333,
+  "unit": "tray",
+  "flavour": ""
  },
  {
   "id": "entry-060",
@@ -654,10 +831,13 @@
   "date": "2026-09-12",
   "dayPart": 2,
   "itemId": "item-biomend",
-  "doseText": "1 pill",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-biomend-2",
+  "amount": 1,
+  "unit": "pill",
+  "flavour": ""
  },
  {
   "id": "entry-061",
@@ -665,10 +845,13 @@
   "date": "2026-09-12",
   "dayPart": 3,
   "itemId": "item-treat",
-  "doseText": "chicken · 2",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": null,
+  "amount": 2,
+  "unit": "piece",
+  "flavour": "chicken"
  },
  {
   "id": "entry-062",
@@ -676,10 +859,13 @@
   "date": "2026-09-12",
   "dayPart": 4,
   "itemId": "item-farm",
-  "doseText": "¼ can",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-farm-4",
+  "amount": 0.25,
+  "unit": "can",
+  "flavour": "turkey"
  },
  {
   "id": "entry-063",
@@ -687,10 +873,13 @@
   "date": "2026-09-12",
   "dayPart": 6,
   "itemId": "item-farm",
-  "doseText": "¼ can",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-farm-6",
+  "amount": 0.25,
+  "unit": "can",
+  "flavour": "turkey"
  },
  {
   "id": "entry-064",
@@ -698,10 +887,13 @@
   "date": "2026-09-12",
   "dayPart": 7,
   "itemId": "item-calmora",
-  "doseText": "1 capsule",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-calmora-7",
+  "amount": 1,
+  "unit": "capsule",
+  "flavour": ""
  },
  {
   "id": "entry-065",
@@ -709,10 +901,13 @@
   "date": "2026-09-13",
   "dayPart": 2,
   "itemId": "item-cooked",
-  "doseText": "⅓ tray",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-cooked-2",
+  "amount": 0.3333333333333333,
+  "unit": "tray",
+  "flavour": ""
  },
  {
   "id": "entry-066",
@@ -720,10 +915,13 @@
   "date": "2026-09-13",
   "dayPart": 2,
   "itemId": "item-biomend",
-  "doseText": "1 pill",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-biomend-2",
+  "amount": 1,
+  "unit": "pill",
+  "flavour": ""
  },
  {
   "id": "entry-067",
@@ -731,10 +929,13 @@
   "date": "2026-09-13",
   "dayPart": 4,
   "itemId": "item-farm",
-  "doseText": "¼ can",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-farm-4",
+  "amount": 0.25,
+  "unit": "can",
+  "flavour": "turkey"
  },
  {
   "id": "entry-068",
@@ -742,10 +943,13 @@
   "date": "2026-09-13",
   "dayPart": 6,
   "itemId": "item-farm",
-  "doseText": "¼ can",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-farm-6",
+  "amount": 0.25,
+  "unit": "can",
+  "flavour": "turkey"
  },
  {
   "id": "entry-069",
@@ -753,10 +957,13 @@
   "date": "2026-09-13",
   "dayPart": 7,
   "itemId": "item-calmora",
-  "doseText": "1 capsule",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-calmora-7",
+  "amount": 1,
+  "unit": "capsule",
+  "flavour": ""
  },
  {
   "id": "entry-070",
@@ -764,10 +971,13 @@
   "date": "2026-09-14",
   "dayPart": 2,
   "itemId": "item-cooked",
-  "doseText": "⅓ tray",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-cooked-2",
+  "amount": 0.3333333333333333,
+  "unit": "tray",
+  "flavour": ""
  },
  {
   "id": "entry-071",
@@ -775,10 +985,13 @@
   "date": "2026-09-14",
   "dayPart": 2,
   "itemId": "item-biomend",
-  "doseText": "1 pill",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-biomend-2",
+  "amount": 1,
+  "unit": "pill",
+  "flavour": ""
  },
  {
   "id": "entry-072",
@@ -786,10 +999,13 @@
   "date": "2026-09-14",
   "dayPart": 4,
   "itemId": "item-farm",
-  "doseText": "¼ can",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-farm-4",
+  "amount": 0.25,
+  "unit": "can",
+  "flavour": "turkey"
  },
  {
   "id": "entry-073",
@@ -797,10 +1013,13 @@
   "date": "2026-09-14",
   "dayPart": 6,
   "itemId": "item-farm",
-  "doseText": "¼ can",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-farm-6",
+  "amount": 0.25,
+  "unit": "can",
+  "flavour": "turkey"
  },
  {
   "id": "entry-074",
@@ -808,10 +1027,13 @@
   "date": "2026-09-14",
   "dayPart": 7,
   "itemId": "item-calmora",
-  "doseText": "1 capsule",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-calmora-7",
+  "amount": 1,
+  "unit": "capsule",
+  "flavour": ""
  },
  {
   "id": "entry-075",
@@ -819,10 +1041,13 @@
   "date": "2026-09-15",
   "dayPart": 2,
   "itemId": "item-cooked",
-  "doseText": "⅓ tray",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-cooked-2",
+  "amount": 0.3333333333333333,
+  "unit": "tray",
+  "flavour": ""
  },
  {
   "id": "entry-076",
@@ -830,10 +1055,13 @@
   "date": "2026-09-15",
   "dayPart": 2,
   "itemId": "item-biomend",
-  "doseText": "1 pill",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-biomend-2",
+  "amount": 1,
+  "unit": "pill",
+  "flavour": ""
  },
  {
   "id": "entry-077",
@@ -841,10 +1069,13 @@
   "date": "2026-09-15",
   "dayPart": 3,
   "itemId": "item-treat",
-  "doseText": "chicken · 2",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": null,
+  "amount": 2,
+  "unit": "piece",
+  "flavour": "chicken"
  },
  {
   "id": "entry-078",
@@ -852,10 +1083,13 @@
   "date": "2026-09-15",
   "dayPart": 4,
   "itemId": "item-farm",
-  "doseText": "¼ can",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-farm-4",
+  "amount": 0.25,
+  "unit": "can",
+  "flavour": "turkey"
  },
  {
   "id": "entry-079",
@@ -863,10 +1097,13 @@
   "date": "2026-09-15",
   "dayPart": 6,
   "itemId": "item-farm",
-  "doseText": "¼ can",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-farm-6",
+  "amount": 0.25,
+  "unit": "can",
+  "flavour": "turkey"
  },
  {
   "id": "entry-080",
@@ -874,10 +1111,13 @@
   "date": "2026-09-15",
   "dayPart": 7,
   "itemId": "item-calmora",
-  "doseText": "1 capsule",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-calmora-7",
+  "amount": 1,
+  "unit": "capsule",
+  "flavour": ""
  },
  {
   "id": "entry-081",
@@ -885,10 +1125,13 @@
   "date": "2026-09-16",
   "dayPart": 2,
   "itemId": "item-cooked",
-  "doseText": "⅓ tray",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-cooked-2",
+  "amount": 0.3333333333333333,
+  "unit": "tray",
+  "flavour": ""
  },
  {
   "id": "entry-082",
@@ -896,10 +1139,13 @@
   "date": "2026-09-16",
   "dayPart": 2,
   "itemId": "item-biomend",
-  "doseText": "1 pill",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-biomend-2",
+  "amount": 1,
+  "unit": "pill",
+  "flavour": ""
  },
  {
   "id": "entry-083",
@@ -907,10 +1153,13 @@
   "date": "2026-09-16",
   "dayPart": 4,
   "itemId": "item-farm",
-  "doseText": "¼ can",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-farm-4",
+  "amount": 0.25,
+  "unit": "can",
+  "flavour": "turkey"
  },
  {
   "id": "entry-084",
@@ -918,10 +1167,13 @@
   "date": "2026-09-16",
   "dayPart": 6,
   "itemId": "item-farm",
-  "doseText": "¼ can",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-farm-6",
+  "amount": 0.25,
+  "unit": "can",
+  "flavour": "turkey"
  },
  {
   "id": "entry-085",
@@ -929,10 +1181,13 @@
   "date": "2026-09-16",
   "dayPart": 7,
   "itemId": "item-calmora",
-  "doseText": "1 capsule",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-calmora-7",
+  "amount": 1,
+  "unit": "capsule",
+  "flavour": ""
  },
  {
   "id": "entry-086",
@@ -940,10 +1195,13 @@
   "date": "2026-09-17",
   "dayPart": 2,
   "itemId": "item-cooked",
-  "doseText": "⅓ tray",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-cooked-2",
+  "amount": 0.3333333333333333,
+  "unit": "tray",
+  "flavour": ""
  },
  {
   "id": "entry-087",
@@ -951,10 +1209,13 @@
   "date": "2026-09-17",
   "dayPart": 2,
   "itemId": "item-biomend",
-  "doseText": "1 pill",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-biomend-2",
+  "amount": 1,
+  "unit": "pill",
+  "flavour": ""
  },
  {
   "id": "entry-088",
@@ -962,10 +1223,13 @@
   "date": "2026-09-17",
   "dayPart": 4,
   "itemId": "item-farm",
-  "doseText": "¼ can",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-farm-4",
+  "amount": 0.25,
+  "unit": "can",
+  "flavour": "turkey"
  },
  {
   "id": "entry-089",
@@ -973,10 +1237,13 @@
   "date": "2026-09-17",
   "dayPart": 6,
   "itemId": "item-farm",
-  "doseText": "¼ can",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-farm-6",
+  "amount": 0.25,
+  "unit": "can",
+  "flavour": "turkey"
  },
  {
   "id": "entry-090",
@@ -984,10 +1251,13 @@
   "date": "2026-09-17",
   "dayPart": 7,
   "itemId": "item-calmora",
-  "doseText": "1 capsule",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-calmora-7",
+  "amount": 1,
+  "unit": "capsule",
+  "flavour": ""
  },
  {
   "id": "entry-091",
@@ -995,10 +1265,13 @@
   "date": "2026-09-18",
   "dayPart": 2,
   "itemId": "item-cooked",
-  "doseText": "⅓ tray",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-cooked-2",
+  "amount": 0.3333333333333333,
+  "unit": "tray",
+  "flavour": ""
  },
  {
   "id": "entry-092",
@@ -1006,10 +1279,13 @@
   "date": "2026-09-18",
   "dayPart": 2,
   "itemId": "item-biomend",
-  "doseText": "1 pill",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-biomend-2",
+  "amount": 1,
+  "unit": "pill",
+  "flavour": ""
  },
  {
   "id": "entry-093",
@@ -1017,10 +1293,13 @@
   "date": "2026-09-18",
   "dayPart": 3,
   "itemId": "item-treat",
-  "doseText": "chicken · 2",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": null,
+  "amount": 2,
+  "unit": "piece",
+  "flavour": "chicken"
  },
  {
   "id": "entry-094",
@@ -1028,10 +1307,13 @@
   "date": "2026-09-18",
   "dayPart": 4,
   "itemId": "item-farm",
-  "doseText": "¼ can",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-farm-4",
+  "amount": 0.25,
+  "unit": "can",
+  "flavour": "turkey"
  },
  {
   "id": "entry-095",
@@ -1039,10 +1321,13 @@
   "date": "2026-09-18",
   "dayPart": 6,
   "itemId": "item-farm",
-  "doseText": "¼ can",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-farm-6",
+  "amount": 0.25,
+  "unit": "can",
+  "flavour": "turkey"
  },
  {
   "id": "entry-096",
@@ -1050,10 +1335,13 @@
   "date": "2026-09-18",
   "dayPart": 7,
   "itemId": "item-calmora",
-  "doseText": "1 capsule",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-calmora-7",
+  "amount": 1,
+  "unit": "capsule",
+  "flavour": ""
  },
  {
   "id": "entry-097",
@@ -1061,10 +1349,13 @@
   "date": "2026-09-19",
   "dayPart": 2,
   "itemId": "item-cooked",
-  "doseText": "⅓ tray",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-cooked-2",
+  "amount": 0.3333333333333333,
+  "unit": "tray",
+  "flavour": ""
  },
  {
   "id": "entry-098",
@@ -1072,10 +1363,13 @@
   "date": "2026-09-19",
   "dayPart": 2,
   "itemId": "item-biomend",
-  "doseText": "1 pill",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-biomend-2",
+  "amount": 1,
+  "unit": "pill",
+  "flavour": ""
  },
  {
   "id": "entry-099",
@@ -1083,10 +1377,13 @@
   "date": "2026-09-19",
   "dayPart": 4,
   "itemId": "item-farm",
-  "doseText": "¼ can",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-farm-4",
+  "amount": 0.25,
+  "unit": "can",
+  "flavour": "turkey"
  },
  {
   "id": "entry-100",
@@ -1094,10 +1391,13 @@
   "date": "2026-09-19",
   "dayPart": 6,
   "itemId": "item-farm",
-  "doseText": "¼ can",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-farm-6",
+  "amount": 0.25,
+  "unit": "can",
+  "flavour": "turkey"
  },
  {
   "id": "entry-101",
@@ -1105,10 +1405,13 @@
   "date": "2026-09-19",
   "dayPart": 7,
   "itemId": "item-calmora",
-  "doseText": "1 capsule",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-calmora-7",
+  "amount": 1,
+  "unit": "capsule",
+  "flavour": ""
  },
  {
   "id": "entry-102",
@@ -1116,10 +1419,13 @@
   "date": "2026-09-20",
   "dayPart": 1,
   "itemId": "item-arvelin",
-  "doseText": "½ pill",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-arvelin-1",
+  "amount": 0.5,
+  "unit": "pill",
+  "flavour": ""
  },
  {
   "id": "entry-103",
@@ -1127,10 +1433,13 @@
   "date": "2026-09-20",
   "dayPart": 2,
   "itemId": "item-cooked",
-  "doseText": "⅓ tray",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-cooked-2",
+  "amount": 0.3333333333333333,
+  "unit": "tray",
+  "flavour": ""
  },
  {
   "id": "entry-104",
@@ -1138,10 +1447,13 @@
   "date": "2026-09-20",
   "dayPart": 2,
   "itemId": "item-biomend",
-  "doseText": "1 pill",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-biomend-2",
+  "amount": 1,
+  "unit": "pill",
+  "flavour": ""
  },
  {
   "id": "entry-105",
@@ -1149,10 +1461,13 @@
   "date": "2026-09-20",
   "dayPart": 4,
   "itemId": "item-farm",
-  "doseText": "¼ can",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-farm-4",
+  "amount": 0.25,
+  "unit": "can",
+  "flavour": "turkey"
  },
  {
   "id": "entry-106",
@@ -1160,10 +1475,13 @@
   "date": "2026-09-20",
   "dayPart": 5,
   "itemId": "item-arvelin",
-  "doseText": "½ pill",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-arvelin-5",
+  "amount": 0.5,
+  "unit": "pill",
+  "flavour": ""
  },
  {
   "id": "entry-107",
@@ -1171,10 +1489,13 @@
   "date": "2026-09-20",
   "dayPart": 6,
   "itemId": "item-farm",
-  "doseText": "¼ can",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-farm-6",
+  "amount": 0.25,
+  "unit": "can",
+  "flavour": "turkey"
  },
  {
   "id": "entry-108",
@@ -1182,10 +1503,13 @@
   "date": "2026-09-21",
   "dayPart": 1,
   "itemId": "item-arvelin",
-  "doseText": "½ pill",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-arvelin-1",
+  "amount": 0.5,
+  "unit": "pill",
+  "flavour": ""
  },
  {
   "id": "entry-109",
@@ -1193,10 +1517,13 @@
   "date": "2026-09-21",
   "dayPart": 2,
   "itemId": "item-cooked",
-  "doseText": "⅓ tray",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-cooked-2",
+  "amount": 0.3333333333333333,
+  "unit": "tray",
+  "flavour": ""
  },
  {
   "id": "entry-110",
@@ -1204,10 +1531,13 @@
   "date": "2026-09-21",
   "dayPart": 2,
   "itemId": "item-biomend",
-  "doseText": "1 pill",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-biomend-2",
+  "amount": 1,
+  "unit": "pill",
+  "flavour": ""
  },
  {
   "id": "entry-111",
@@ -1215,10 +1545,13 @@
   "date": "2026-09-21",
   "dayPart": 3,
   "itemId": "item-treat",
-  "doseText": "chicken · 2",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": null,
+  "amount": 2,
+  "unit": "piece",
+  "flavour": "chicken"
  },
  {
   "id": "entry-112",
@@ -1226,10 +1559,13 @@
   "date": "2026-09-21",
   "dayPart": 4,
   "itemId": "item-farm",
-  "doseText": "¼ can",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-farm-4",
+  "amount": 0.25,
+  "unit": "can",
+  "flavour": "turkey"
  },
  {
   "id": "entry-113",
@@ -1237,10 +1573,13 @@
   "date": "2026-09-21",
   "dayPart": 5,
   "itemId": "item-arvelin",
-  "doseText": "½ pill",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-arvelin-5",
+  "amount": 0.5,
+  "unit": "pill",
+  "flavour": ""
  },
  {
   "id": "entry-114",
@@ -1248,10 +1587,13 @@
   "date": "2026-09-21",
   "dayPart": 6,
   "itemId": "item-farm",
-  "doseText": "¼ can",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-farm-6",
+  "amount": 0.25,
+  "unit": "can",
+  "flavour": "turkey"
  },
  {
   "id": "entry-115",
@@ -1259,10 +1601,13 @@
   "date": "2026-09-22",
   "dayPart": 1,
   "itemId": "item-arvelin",
-  "doseText": "½ pill",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-arvelin-1",
+  "amount": 0.5,
+  "unit": "pill",
+  "flavour": ""
  },
  {
   "id": "entry-116",
@@ -1270,10 +1615,13 @@
   "date": "2026-09-22",
   "dayPart": 2,
   "itemId": "item-cooked",
-  "doseText": "⅓ tray",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-cooked-2",
+  "amount": 0.3333333333333333,
+  "unit": "tray",
+  "flavour": ""
  },
  {
   "id": "entry-117",
@@ -1281,10 +1629,13 @@
   "date": "2026-09-22",
   "dayPart": 2,
   "itemId": "item-biomend",
-  "doseText": "1 pill",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-biomend-2",
+  "amount": 1,
+  "unit": "pill",
+  "flavour": ""
  },
  {
   "id": "entry-118",
@@ -1292,10 +1643,13 @@
   "date": "2026-09-22",
   "dayPart": 4,
   "itemId": "item-farm",
-  "doseText": "¼ can",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-farm-4",
+  "amount": 0.25,
+  "unit": "can",
+  "flavour": "turkey"
  },
  {
   "id": "entry-119",
@@ -1303,10 +1657,13 @@
   "date": "2026-09-22",
   "dayPart": 5,
   "itemId": "item-arvelin",
-  "doseText": "½ pill",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-arvelin-5",
+  "amount": 0.5,
+  "unit": "pill",
+  "flavour": ""
  },
  {
   "id": "entry-120",
@@ -1314,10 +1671,13 @@
   "date": "2026-09-22",
   "dayPart": 6,
   "itemId": "item-farm",
-  "doseText": "¼ can",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-farm-6",
+  "amount": 0.25,
+  "unit": "can",
+  "flavour": "turkey"
  },
  {
   "id": "entry-121",
@@ -1325,10 +1685,13 @@
   "date": "2026-09-23",
   "dayPart": 1,
   "itemId": "item-arvelin",
-  "doseText": "½ pill",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-arvelin-1",
+  "amount": 0.5,
+  "unit": "pill",
+  "flavour": ""
  },
  {
   "id": "entry-122",
@@ -1336,10 +1699,13 @@
   "date": "2026-09-23",
   "dayPart": 2,
   "itemId": "item-cooked",
-  "doseText": "⅓ tray",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-cooked-2",
+  "amount": 0.3333333333333333,
+  "unit": "tray",
+  "flavour": ""
  },
  {
   "id": "entry-123",
@@ -1347,10 +1713,13 @@
   "date": "2026-09-23",
   "dayPart": 2,
   "itemId": "item-biomend",
-  "doseText": "1 pill",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-biomend-2",
+  "amount": 1,
+  "unit": "pill",
+  "flavour": ""
  },
  {
   "id": "entry-124",
@@ -1358,10 +1727,13 @@
   "date": "2026-09-23",
   "dayPart": 4,
   "itemId": "item-farm",
-  "doseText": "¼ can",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-farm-4",
+  "amount": 0.25,
+  "unit": "can",
+  "flavour": "turkey"
  },
  {
   "id": "entry-125",
@@ -1369,10 +1741,13 @@
   "date": "2026-09-23",
   "dayPart": 5,
   "itemId": "item-arvelin",
-  "doseText": "½ pill",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-arvelin-5",
+  "amount": 0.5,
+  "unit": "pill",
+  "flavour": ""
  },
  {
   "id": "entry-126",
@@ -1380,10 +1755,13 @@
   "date": "2026-09-23",
   "dayPart": 6,
   "itemId": "item-farm",
-  "doseText": "¼ can",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-farm-6",
+  "amount": 0.25,
+  "unit": "can",
+  "flavour": "turkey"
  },
  {
   "id": "entry-127",
@@ -1391,10 +1769,13 @@
   "date": "2026-09-24",
   "dayPart": 1,
   "itemId": "item-arvelin",
-  "doseText": "½ pill",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-arvelin-1",
+  "amount": 0.5,
+  "unit": "pill",
+  "flavour": ""
  },
  {
   "id": "entry-128",
@@ -1402,10 +1783,13 @@
   "date": "2026-09-24",
   "dayPart": 2,
   "itemId": "item-cooked",
-  "doseText": "⅓ tray",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-cooked-2",
+  "amount": 0.3333333333333333,
+  "unit": "tray",
+  "flavour": ""
  },
  {
   "id": "entry-129",
@@ -1413,10 +1797,13 @@
   "date": "2026-09-24",
   "dayPart": 2,
   "itemId": "item-biomend",
-  "doseText": "1 pill",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-biomend-2",
+  "amount": 1,
+  "unit": "pill",
+  "flavour": ""
  },
  {
   "id": "entry-130",
@@ -1424,10 +1811,13 @@
   "date": "2026-09-24",
   "dayPart": 3,
   "itemId": "item-treat",
-  "doseText": "chicken · 2",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": null,
+  "amount": 2,
+  "unit": "piece",
+  "flavour": "chicken"
  },
  {
   "id": "entry-131",
@@ -1435,10 +1825,13 @@
   "date": "2026-09-24",
   "dayPart": 4,
   "itemId": "item-farm",
-  "doseText": "¼ can",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-farm-4",
+  "amount": 0.25,
+  "unit": "can",
+  "flavour": "turkey"
  },
  {
   "id": "entry-132",
@@ -1446,10 +1839,13 @@
   "date": "2026-09-24",
   "dayPart": 5,
   "itemId": "item-arvelin",
-  "doseText": "½ pill",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-arvelin-5",
+  "amount": 0.5,
+  "unit": "pill",
+  "flavour": ""
  },
  {
   "id": "entry-133",
@@ -1457,10 +1853,13 @@
   "date": "2026-09-24",
   "dayPart": 6,
   "itemId": "item-farm",
-  "doseText": "¼ can",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-farm-6",
+  "amount": 0.25,
+  "unit": "can",
+  "flavour": "turkey"
  },
  {
   "id": "entry-134",
@@ -1468,10 +1867,13 @@
   "date": "2026-09-25",
   "dayPart": 1,
   "itemId": "item-arvelin",
-  "doseText": "½ pill",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-arvelin-1",
+  "amount": 0.5,
+  "unit": "pill",
+  "flavour": ""
  },
  {
   "id": "entry-135",
@@ -1479,10 +1881,13 @@
   "date": "2026-09-25",
   "dayPart": 2,
   "itemId": "item-cooked",
-  "doseText": "⅓ tray",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-cooked-2",
+  "amount": 0.3333333333333333,
+  "unit": "tray",
+  "flavour": ""
  },
  {
   "id": "entry-136",
@@ -1490,10 +1895,13 @@
   "date": "2026-09-25",
   "dayPart": 2,
   "itemId": "item-bellavet",
-  "doseText": "0,15 ml (1,5 bars)",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-bellavet-2",
+  "amount": 0.15,
+  "unit": "ml",
+  "flavour": ""
  },
  {
   "id": "entry-137",
@@ -1501,10 +1909,13 @@
   "date": "2026-09-25",
   "dayPart": 2,
   "itemId": "item-biomend",
-  "doseText": "1 pill",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-biomend-2",
+  "amount": 1,
+  "unit": "pill",
+  "flavour": ""
  },
  {
   "id": "entry-138",
@@ -1512,10 +1923,13 @@
   "date": "2026-09-25",
   "dayPart": 4,
   "itemId": "item-farm",
-  "doseText": "¼ can",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-farm-4",
+  "amount": 0.25,
+  "unit": "can",
+  "flavour": "turkey"
  },
  {
   "id": "entry-139",
@@ -1523,10 +1937,13 @@
   "date": "2026-09-25",
   "dayPart": 4,
   "itemId": "item-bellavet",
-  "doseText": "0,15 ml (1,5 bars)",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-bellavet-4",
+  "amount": 0.15,
+  "unit": "ml",
+  "flavour": ""
  },
  {
   "id": "entry-140",
@@ -1534,10 +1951,13 @@
   "date": "2026-09-25",
   "dayPart": 5,
   "itemId": "item-arvelin",
-  "doseText": "½ pill",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-arvelin-5",
+  "amount": 0.5,
+  "unit": "pill",
+  "flavour": ""
  },
  {
   "id": "entry-141",
@@ -1545,10 +1965,13 @@
   "date": "2026-09-25",
   "dayPart": 6,
   "itemId": "item-farm",
-  "doseText": "¼ can",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-farm-6",
+  "amount": 0.25,
+  "unit": "can",
+  "flavour": "turkey"
  },
  {
   "id": "entry-142",
@@ -1556,10 +1979,13 @@
   "date": "2026-09-25",
   "dayPart": 6,
   "itemId": "item-bellavet",
-  "doseText": "0,15 ml (1,5 bars)",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-bellavet-6",
+  "amount": 0.15,
+  "unit": "ml",
+  "flavour": ""
  },
  {
   "id": "entry-143",
@@ -1567,10 +1993,13 @@
   "date": "2026-09-26",
   "dayPart": 1,
   "itemId": "item-arvelin",
-  "doseText": "½ pill",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-arvelin-1",
+  "amount": 0.5,
+  "unit": "pill",
+  "flavour": ""
  },
  {
   "id": "entry-144",
@@ -1578,10 +2007,13 @@
   "date": "2026-09-26",
   "dayPart": 2,
   "itemId": "item-cooked",
-  "doseText": "⅓ tray",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-cooked-2",
+  "amount": 0.3333333333333333,
+  "unit": "tray",
+  "flavour": ""
  },
  {
   "id": "entry-145",
@@ -1589,10 +2021,13 @@
   "date": "2026-09-26",
   "dayPart": 2,
   "itemId": "item-bellavet",
-  "doseText": "0,15 ml (1,5 bars)",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-bellavet-2",
+  "amount": 0.15,
+  "unit": "ml",
+  "flavour": ""
  },
  {
   "id": "entry-146",
@@ -1600,10 +2035,13 @@
   "date": "2026-09-26",
   "dayPart": 2,
   "itemId": "item-biomend",
-  "doseText": "1 pill",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-biomend-2",
+  "amount": 1,
+  "unit": "pill",
+  "flavour": ""
  },
  {
   "id": "entry-147",
@@ -1611,10 +2049,13 @@
   "date": "2026-09-26",
   "dayPart": 4,
   "itemId": "item-farm",
-  "doseText": "¼ can",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-farm-4",
+  "amount": 0.25,
+  "unit": "can",
+  "flavour": "turkey"
  },
  {
   "id": "entry-148",
@@ -1622,10 +2063,13 @@
   "date": "2026-09-26",
   "dayPart": 4,
   "itemId": "item-bellavet",
-  "doseText": "0,15 ml (1,5 bars)",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-bellavet-4",
+  "amount": 0.15,
+  "unit": "ml",
+  "flavour": ""
  },
  {
   "id": "entry-149",
@@ -1633,10 +2077,13 @@
   "date": "2026-09-26",
   "dayPart": 5,
   "itemId": "item-arvelin",
-  "doseText": "½ pill",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-arvelin-5",
+  "amount": 0.5,
+  "unit": "pill",
+  "flavour": ""
  },
  {
   "id": "entry-150",
@@ -1644,10 +2091,13 @@
   "date": "2026-09-26",
   "dayPart": 6,
   "itemId": "item-farm",
-  "doseText": "¼ can",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-farm-6",
+  "amount": 0.25,
+  "unit": "can",
+  "flavour": "turkey"
  },
  {
   "id": "entry-151",
@@ -1655,10 +2105,13 @@
   "date": "2026-09-26",
   "dayPart": 6,
   "itemId": "item-bellavet",
-  "doseText": "0,15 ml (1,5 bars)",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-bellavet-6",
+  "amount": 0.15,
+  "unit": "ml",
+  "flavour": ""
  },
  {
   "id": "entry-152",
@@ -1666,10 +2119,13 @@
   "date": "2026-09-27",
   "dayPart": 1,
   "itemId": "item-arvelin",
-  "doseText": "½ pill",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-arvelin-1",
+  "amount": 0.5,
+  "unit": "pill",
+  "flavour": ""
  },
  {
   "id": "entry-153",
@@ -1677,10 +2133,13 @@
   "date": "2026-09-27",
   "dayPart": 2,
   "itemId": "item-cooked",
-  "doseText": "⅓ tray",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-cooked-2",
+  "amount": 0.3333333333333333,
+  "unit": "tray",
+  "flavour": ""
  },
  {
   "id": "entry-154",
@@ -1688,10 +2147,13 @@
   "date": "2026-09-27",
   "dayPart": 2,
   "itemId": "item-bellavet",
-  "doseText": "0,15 ml (1,5 bars)",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-bellavet-2",
+  "amount": 0.15,
+  "unit": "ml",
+  "flavour": ""
  },
  {
   "id": "entry-155",
@@ -1699,10 +2161,13 @@
   "date": "2026-09-27",
   "dayPart": 2,
   "itemId": "item-biomend",
-  "doseText": "1 pill",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-biomend-2",
+  "amount": 1,
+  "unit": "pill",
+  "flavour": ""
  },
  {
   "id": "entry-156",
@@ -1710,10 +2175,13 @@
   "date": "2026-09-27",
   "dayPart": 3,
   "itemId": "item-treat",
-  "doseText": "chicken · 2",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": null,
+  "amount": 2,
+  "unit": "piece",
+  "flavour": "chicken"
  },
  {
   "id": "entry-157",
@@ -1721,10 +2189,13 @@
   "date": "2026-09-27",
   "dayPart": 4,
   "itemId": "item-farm",
-  "doseText": "¼ can",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-farm-4",
+  "amount": 0.25,
+  "unit": "can",
+  "flavour": "turkey"
  },
  {
   "id": "entry-158",
@@ -1732,10 +2203,13 @@
   "date": "2026-09-27",
   "dayPart": 4,
   "itemId": "item-bellavet",
-  "doseText": "0,15 ml (1,5 bars)",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-bellavet-4",
+  "amount": 0.15,
+  "unit": "ml",
+  "flavour": ""
  },
  {
   "id": "entry-159",
@@ -1743,10 +2217,13 @@
   "date": "2026-09-27",
   "dayPart": 5,
   "itemId": "item-arvelin",
-  "doseText": "½ pill",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-arvelin-5",
+  "amount": 0.5,
+  "unit": "pill",
+  "flavour": ""
  },
  {
   "id": "entry-160",
@@ -1754,10 +2231,13 @@
   "date": "2026-09-27",
   "dayPart": 6,
   "itemId": "item-farm",
-  "doseText": "¼ can",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-farm-6",
+  "amount": 0.25,
+  "unit": "can",
+  "flavour": "turkey"
  },
  {
   "id": "entry-161",
@@ -1765,10 +2245,13 @@
   "date": "2026-09-27",
   "dayPart": 6,
   "itemId": "item-bellavet",
-  "doseText": "0,15 ml (1,5 bars)",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-bellavet-6",
+  "amount": 0.15,
+  "unit": "ml",
+  "flavour": ""
  },
  {
   "id": "entry-162",
@@ -1776,10 +2259,13 @@
   "date": "2026-09-28",
   "dayPart": 1,
   "itemId": "item-arvelin",
-  "doseText": "½ pill",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-arvelin-1",
+  "amount": 0.5,
+  "unit": "pill",
+  "flavour": ""
  },
  {
   "id": "entry-163",
@@ -1787,10 +2273,13 @@
   "date": "2026-09-28",
   "dayPart": 2,
   "itemId": "item-cooked",
-  "doseText": "⅓ tray",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-cooked-2",
+  "amount": 0.3333333333333333,
+  "unit": "tray",
+  "flavour": ""
  },
  {
   "id": "entry-164",
@@ -1798,10 +2287,13 @@
   "date": "2026-09-28",
   "dayPart": 2,
   "itemId": "item-bellavet",
-  "doseText": "0,15 ml (1,5 bars)",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-bellavet-2",
+  "amount": 0.15,
+  "unit": "ml",
+  "flavour": ""
  },
  {
   "id": "entry-165",
@@ -1809,10 +2301,13 @@
   "date": "2026-09-28",
   "dayPart": 2,
   "itemId": "item-biomend",
-  "doseText": "1 pill",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-biomend-2",
+  "amount": 1,
+  "unit": "pill",
+  "flavour": ""
  },
  {
   "id": "entry-166",
@@ -1820,10 +2315,13 @@
   "date": "2026-09-28",
   "dayPart": 4,
   "itemId": "item-farm",
-  "doseText": "¼ can",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-farm-4",
+  "amount": 0.25,
+  "unit": "can",
+  "flavour": "turkey"
  },
  {
   "id": "entry-167",
@@ -1831,10 +2329,13 @@
   "date": "2026-09-28",
   "dayPart": 4,
   "itemId": "item-bellavet",
-  "doseText": "0,15 ml (1,5 bars)",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-bellavet-4",
+  "amount": 0.15,
+  "unit": "ml",
+  "flavour": ""
  },
  {
   "id": "entry-168",
@@ -1842,10 +2343,13 @@
   "date": "2026-09-28",
   "dayPart": 5,
   "itemId": "item-arvelin",
-  "doseText": "½ pill",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-arvelin-5",
+  "amount": 0.5,
+  "unit": "pill",
+  "flavour": ""
  },
  {
   "id": "entry-169",
@@ -1853,10 +2357,13 @@
   "date": "2026-09-28",
   "dayPart": 6,
   "itemId": "item-farm",
-  "doseText": "¼ can",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-farm-6",
+  "amount": 0.25,
+  "unit": "can",
+  "flavour": "turkey"
  },
  {
   "id": "entry-170",
@@ -1864,10 +2371,13 @@
   "date": "2026-09-28",
   "dayPart": 6,
   "itemId": "item-bellavet",
-  "doseText": "0,15 ml (1,5 bars)",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-bellavet-6",
+  "amount": 0.15,
+  "unit": "ml",
+  "flavour": ""
  },
  {
   "id": "entry-171",
@@ -1875,10 +2385,13 @@
   "date": "2026-09-29",
   "dayPart": 1,
   "itemId": "item-arvelin",
-  "doseText": "½ pill",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-arvelin-1",
+  "amount": 0.5,
+  "unit": "pill",
+  "flavour": ""
  },
  {
   "id": "entry-172",
@@ -1886,10 +2399,13 @@
   "date": "2026-09-29",
   "dayPart": 2,
   "itemId": "item-cooked",
-  "doseText": "⅓ tray",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-cooked-2",
+  "amount": 0.3333333333333333,
+  "unit": "tray",
+  "flavour": ""
  },
  {
   "id": "entry-173",
@@ -1897,10 +2413,13 @@
   "date": "2026-09-29",
   "dayPart": 2,
   "itemId": "item-bellavet",
-  "doseText": "0,15 ml (1,5 bars)",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-bellavet-2",
+  "amount": 0.15,
+  "unit": "ml",
+  "flavour": ""
  },
  {
   "id": "entry-174",
@@ -1908,10 +2427,13 @@
   "date": "2026-09-29",
   "dayPart": 2,
   "itemId": "item-biomend",
-  "doseText": "1 pill",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-biomend-2",
+  "amount": 1,
+  "unit": "pill",
+  "flavour": ""
  },
  {
   "id": "entry-175",
@@ -1919,10 +2441,13 @@
   "date": "2026-09-29",
   "dayPart": 4,
   "itemId": "item-farm",
-  "doseText": "¼ can",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-farm-4",
+  "amount": 0.25,
+  "unit": "can",
+  "flavour": "turkey"
  },
  {
   "id": "entry-176",
@@ -1930,10 +2455,13 @@
   "date": "2026-09-29",
   "dayPart": 4,
   "itemId": "item-bellavet",
-  "doseText": "0,15 ml (1,5 bars)",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-bellavet-4",
+  "amount": 0.15,
+  "unit": "ml",
+  "flavour": ""
  },
  {
   "id": "entry-177",
@@ -1941,10 +2469,13 @@
   "date": "2026-09-29",
   "dayPart": 5,
   "itemId": "item-arvelin",
-  "doseText": "½ pill",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-arvelin-5",
+  "amount": 0.5,
+  "unit": "pill",
+  "flavour": ""
  },
  {
   "id": "entry-178",
@@ -1952,10 +2483,13 @@
   "date": "2026-09-29",
   "dayPart": 6,
   "itemId": "item-farm",
-  "doseText": "¼ can",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-farm-6",
+  "amount": 0.25,
+  "unit": "can",
+  "flavour": "turkey"
  },
  {
   "id": "entry-179",
@@ -1963,10 +2497,13 @@
   "date": "2026-09-29",
   "dayPart": 6,
   "itemId": "item-bellavet",
-  "doseText": "0,15 ml (1,5 bars)",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-bellavet-6",
+  "amount": 0.15,
+  "unit": "ml",
+  "flavour": ""
  },
  {
   "id": "entry-180",
@@ -1974,10 +2511,13 @@
   "date": "2026-09-30",
   "dayPart": 1,
   "itemId": "item-arvelin",
-  "doseText": "½ pill",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-arvelin-1",
+  "amount": 0.5,
+  "unit": "pill",
+  "flavour": ""
  },
  {
   "id": "entry-181",
@@ -1985,10 +2525,13 @@
   "date": "2026-09-30",
   "dayPart": 2,
   "itemId": "item-cooked",
-  "doseText": "⅓ tray",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-cooked-2",
+  "amount": 0.3333333333333333,
+  "unit": "tray",
+  "flavour": ""
  },
  {
   "id": "entry-182",
@@ -1996,10 +2539,13 @@
   "date": "2026-09-30",
   "dayPart": 2,
   "itemId": "item-bellavet",
-  "doseText": "0,15 ml (1,5 bars)",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-bellavet-2",
+  "amount": 0.15,
+  "unit": "ml",
+  "flavour": ""
  },
  {
   "id": "entry-183",
@@ -2007,10 +2553,13 @@
   "date": "2026-09-30",
   "dayPart": 2,
   "itemId": "item-biomend",
-  "doseText": "1 pill",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-biomend-2",
+  "amount": 1,
+  "unit": "pill",
+  "flavour": ""
  },
  {
   "id": "entry-184",
@@ -2018,10 +2567,13 @@
   "date": "2026-09-30",
   "dayPart": 3,
   "itemId": "item-treat",
-  "doseText": "chicken · 2",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": null,
+  "amount": 2,
+  "unit": "piece",
+  "flavour": "chicken"
  },
  {
   "id": "entry-185",
@@ -2029,10 +2581,13 @@
   "date": "2026-09-30",
   "dayPart": 4,
   "itemId": "item-farm",
-  "doseText": "¼ can",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-farm-4",
+  "amount": 0.25,
+  "unit": "can",
+  "flavour": "turkey"
  },
  {
   "id": "entry-186",
@@ -2040,10 +2595,13 @@
   "date": "2026-09-30",
   "dayPart": 4,
   "itemId": "item-bellavet",
-  "doseText": "0,15 ml (1,5 bars)",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-bellavet-4",
+  "amount": 0.15,
+  "unit": "ml",
+  "flavour": ""
  },
  {
   "id": "entry-187",
@@ -2051,10 +2609,13 @@
   "date": "2026-09-30",
   "dayPart": 5,
   "itemId": "item-arvelin",
-  "doseText": "½ pill",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-arvelin-5",
+  "amount": 0.5,
+  "unit": "pill",
+  "flavour": ""
  },
  {
   "id": "entry-188",
@@ -2062,10 +2623,13 @@
   "date": "2026-09-30",
   "dayPart": 6,
   "itemId": "item-farm",
-  "doseText": "¼ can",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-farm-6",
+  "amount": 0.25,
+  "unit": "can",
+  "flavour": "turkey"
  },
  {
   "id": "entry-189",
@@ -2073,10 +2637,13 @@
   "date": "2026-09-30",
   "dayPart": 6,
   "itemId": "item-bellavet",
-  "doseText": "0,15 ml (1,5 bars)",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-bellavet-6",
+  "amount": 0.15,
+  "unit": "ml",
+  "flavour": ""
  },
  {
   "id": "entry-190",
@@ -2084,10 +2651,13 @@
   "date": "2026-10-01",
   "dayPart": 1,
   "itemId": "item-arvelin",
-  "doseText": "½ pill",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-arvelin-1",
+  "amount": 0.5,
+  "unit": "pill",
+  "flavour": ""
  },
  {
   "id": "entry-191",
@@ -2095,10 +2665,13 @@
   "date": "2026-10-01",
   "dayPart": 2,
   "itemId": "item-cooked",
-  "doseText": "⅓ tray",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-cooked-2",
+  "amount": 0.3333333333333333,
+  "unit": "tray",
+  "flavour": ""
  },
  {
   "id": "entry-192",
@@ -2106,10 +2679,13 @@
   "date": "2026-10-01",
   "dayPart": 2,
   "itemId": "item-bellavet",
-  "doseText": "0,15 ml (1,5 bars)",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-bellavet-2",
+  "amount": 0.15,
+  "unit": "ml",
+  "flavour": ""
  },
  {
   "id": "entry-193",
@@ -2117,10 +2693,13 @@
   "date": "2026-10-01",
   "dayPart": 2,
   "itemId": "item-biomend",
-  "doseText": "1 pill",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-biomend-2",
+  "amount": 1,
+  "unit": "pill",
+  "flavour": ""
  },
  {
   "id": "entry-194",
@@ -2128,10 +2707,13 @@
   "date": "2026-10-01",
   "dayPart": 4,
   "itemId": "item-farm",
-  "doseText": "¼ can",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-farm-4",
+  "amount": 0.25,
+  "unit": "can",
+  "flavour": "turkey"
  },
  {
   "id": "entry-195",
@@ -2139,10 +2721,13 @@
   "date": "2026-10-01",
   "dayPart": 4,
   "itemId": "item-bellavet",
-  "doseText": "0,15 ml (1,5 bars)",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-bellavet-4",
+  "amount": 0.15,
+  "unit": "ml",
+  "flavour": ""
  },
  {
   "id": "entry-196",
@@ -2150,10 +2735,13 @@
   "date": "2026-10-01",
   "dayPart": 5,
   "itemId": "item-arvelin",
-  "doseText": "½ pill",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-arvelin-5",
+  "amount": 0.5,
+  "unit": "pill",
+  "flavour": ""
  },
  {
   "id": "entry-197",
@@ -2161,10 +2749,13 @@
   "date": "2026-10-01",
   "dayPart": 6,
   "itemId": "item-farm",
-  "doseText": "¼ can",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-farm-6",
+  "amount": 0.25,
+  "unit": "can",
+  "flavour": "turkey"
  },
  {
   "id": "entry-198",
@@ -2172,10 +2763,13 @@
   "date": "2026-10-01",
   "dayPart": 6,
   "itemId": "item-bellavet",
-  "doseText": "0,15 ml (1,5 bars)",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-bellavet-6",
+  "amount": 0.15,
+  "unit": "ml",
+  "flavour": ""
  },
  {
   "id": "entry-199",
@@ -2183,10 +2777,13 @@
   "date": "2026-10-02",
   "dayPart": 1,
   "itemId": "item-arvelin",
-  "doseText": "½ pill",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-arvelin-1",
+  "amount": 0.5,
+  "unit": "pill",
+  "flavour": ""
  },
  {
   "id": "entry-200",
@@ -2194,10 +2791,13 @@
   "date": "2026-10-02",
   "dayPart": 2,
   "itemId": "item-cooked",
-  "doseText": "⅓ tray",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-cooked-2",
+  "amount": 0.3333333333333333,
+  "unit": "tray",
+  "flavour": ""
  },
  {
   "id": "entry-201",
@@ -2205,10 +2805,13 @@
   "date": "2026-10-02",
   "dayPart": 2,
   "itemId": "item-bellavet",
-  "doseText": "0,15 ml (1,5 bars)",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-bellavet-2",
+  "amount": 0.15,
+  "unit": "ml",
+  "flavour": ""
  },
  {
   "id": "entry-202",
@@ -2216,10 +2819,13 @@
   "date": "2026-10-02",
   "dayPart": 2,
   "itemId": "item-biomend",
-  "doseText": "1 pill",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-biomend-2",
+  "amount": 1,
+  "unit": "pill",
+  "flavour": ""
  },
  {
   "id": "entry-203",
@@ -2227,10 +2833,13 @@
   "date": "2026-10-02",
   "dayPart": 4,
   "itemId": "item-farm",
-  "doseText": "¼ can",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-farm-4",
+  "amount": 0.25,
+  "unit": "can",
+  "flavour": "turkey"
  },
  {
   "id": "entry-204",
@@ -2238,10 +2847,13 @@
   "date": "2026-10-02",
   "dayPart": 4,
   "itemId": "item-bellavet",
-  "doseText": "0,15 ml (1,5 bars)",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-bellavet-4",
+  "amount": 0.15,
+  "unit": "ml",
+  "flavour": ""
  },
  {
   "id": "entry-205",
@@ -2249,10 +2861,13 @@
   "date": "2026-10-02",
   "dayPart": 5,
   "itemId": "item-arvelin",
-  "doseText": "½ pill",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-arvelin-5",
+  "amount": 0.5,
+  "unit": "pill",
+  "flavour": ""
  },
  {
   "id": "entry-206",
@@ -2260,10 +2875,13 @@
   "date": "2026-10-02",
   "dayPart": 6,
   "itemId": "item-farm",
-  "doseText": "¼ can",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-farm-6",
+  "amount": 0.25,
+  "unit": "can",
+  "flavour": "turkey"
  },
  {
   "id": "entry-207",
@@ -2271,10 +2889,13 @@
   "date": "2026-10-02",
   "dayPart": 6,
   "itemId": "item-bellavet",
-  "doseText": "0,15 ml (1,5 bars)",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-bellavet-6",
+  "amount": 0.15,
+  "unit": "ml",
+  "flavour": ""
  },
  {
   "id": "entry-208",
@@ -2282,10 +2903,13 @@
   "date": "2026-10-03",
   "dayPart": 1,
   "itemId": "item-arvelin",
-  "doseText": "½ pill",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-arvelin-1",
+  "amount": 0.5,
+  "unit": "pill",
+  "flavour": ""
  },
  {
   "id": "entry-209",
@@ -2293,10 +2917,13 @@
   "date": "2026-10-03",
   "dayPart": 2,
   "itemId": "item-cooked",
-  "doseText": "⅓ tray",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-cooked-2",
+  "amount": 0.3333333333333333,
+  "unit": "tray",
+  "flavour": ""
  },
  {
   "id": "entry-210",
@@ -2304,10 +2931,13 @@
   "date": "2026-10-03",
   "dayPart": 2,
   "itemId": "item-bellavet",
-  "doseText": "0,15 ml (1,5 bars)",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-bellavet-2",
+  "amount": 0.15,
+  "unit": "ml",
+  "flavour": ""
  },
  {
   "id": "entry-211",
@@ -2315,10 +2945,13 @@
   "date": "2026-10-03",
   "dayPart": 2,
   "itemId": "item-biomend",
-  "doseText": "1 pill",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-biomend-2",
+  "amount": 1,
+  "unit": "pill",
+  "flavour": ""
  },
  {
   "id": "entry-212",
@@ -2326,10 +2959,13 @@
   "date": "2026-10-03",
   "dayPart": 3,
   "itemId": "item-treat",
-  "doseText": "chicken · 2",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": null,
+  "amount": 2,
+  "unit": "piece",
+  "flavour": "chicken"
  },
  {
   "id": "entry-213",
@@ -2337,10 +2973,13 @@
   "date": "2026-10-03",
   "dayPart": 4,
   "itemId": "item-farm",
-  "doseText": "¼ can",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-farm-4",
+  "amount": 0.25,
+  "unit": "can",
+  "flavour": "turkey"
  },
  {
   "id": "entry-214",
@@ -2348,10 +2987,13 @@
   "date": "2026-10-03",
   "dayPart": 4,
   "itemId": "item-bellavet",
-  "doseText": "0,15 ml (1,5 bars)",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-bellavet-4",
+  "amount": 0.15,
+  "unit": "ml",
+  "flavour": ""
  },
  {
   "id": "entry-215",
@@ -2359,10 +3001,13 @@
   "date": "2026-10-03",
   "dayPart": 5,
   "itemId": "item-arvelin",
-  "doseText": "½ pill",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-arvelin-5",
+  "amount": 0.5,
+  "unit": "pill",
+  "flavour": ""
  },
  {
   "id": "entry-216",
@@ -2370,10 +3015,13 @@
   "date": "2026-10-03",
   "dayPart": 6,
   "itemId": "item-farm",
-  "doseText": "¼ can",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-farm-6",
+  "amount": 0.25,
+  "unit": "can",
+  "flavour": "turkey"
  },
  {
   "id": "entry-217",
@@ -2381,10 +3029,13 @@
   "date": "2026-10-03",
   "dayPart": 6,
   "itemId": "item-bellavet",
-  "doseText": "0,15 ml (1,5 bars)",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-bellavet-6",
+  "amount": 0.15,
+  "unit": "ml",
+  "flavour": ""
  },
  {
   "id": "entry-218",
@@ -2392,10 +3043,13 @@
   "date": "2026-10-04",
   "dayPart": 1,
   "itemId": "item-arvelin",
-  "doseText": "½ pill",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-arvelin-1",
+  "amount": 0.5,
+  "unit": "pill",
+  "flavour": ""
  },
  {
   "id": "entry-219",
@@ -2403,10 +3057,13 @@
   "date": "2026-10-04",
   "dayPart": 2,
   "itemId": "item-cooked",
-  "doseText": "⅓ tray",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-cooked-2",
+  "amount": 0.3333333333333333,
+  "unit": "tray",
+  "flavour": ""
  },
  {
   "id": "entry-220",
@@ -2414,10 +3071,13 @@
   "date": "2026-10-04",
   "dayPart": 2,
   "itemId": "item-bellavet",
-  "doseText": "0,15 ml (1,5 bars)",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-bellavet-2",
+  "amount": 0.15,
+  "unit": "ml",
+  "flavour": ""
  },
  {
   "id": "entry-221",
@@ -2425,10 +3085,13 @@
   "date": "2026-10-04",
   "dayPart": 2,
   "itemId": "item-biomend",
-  "doseText": "1 pill",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-biomend-2",
+  "amount": 1,
+  "unit": "pill",
+  "flavour": ""
  },
  {
   "id": "entry-222",
@@ -2436,10 +3099,13 @@
   "date": "2026-10-04",
   "dayPart": 4,
   "itemId": "item-farm",
-  "doseText": "¼ can",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-farm-4",
+  "amount": 0.25,
+  "unit": "can",
+  "flavour": "turkey"
  },
  {
   "id": "entry-223",
@@ -2447,10 +3113,13 @@
   "date": "2026-10-04",
   "dayPart": 4,
   "itemId": "item-bellavet",
-  "doseText": "0,15 ml (1,5 bars)",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-bellavet-4",
+  "amount": 0.15,
+  "unit": "ml",
+  "flavour": ""
  },
  {
   "id": "entry-224",
@@ -2458,10 +3127,13 @@
   "date": "2026-10-04",
   "dayPart": 5,
   "itemId": "item-arvelin",
-  "doseText": "½ pill",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-arvelin-5",
+  "amount": 0.5,
+  "unit": "pill",
+  "flavour": ""
  },
  {
   "id": "entry-225",
@@ -2469,10 +3141,13 @@
   "date": "2026-10-04",
   "dayPart": 6,
   "itemId": "item-farm",
-  "doseText": "¼ can",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-farm-6",
+  "amount": 0.25,
+  "unit": "can",
+  "flavour": "turkey"
  },
  {
   "id": "entry-226",
@@ -2480,10 +3155,13 @@
   "date": "2026-10-04",
   "dayPart": 6,
   "itemId": "item-bellavet",
-  "doseText": "0,15 ml (1,5 bars)",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-bellavet-6",
+  "amount": 0.15,
+  "unit": "ml",
+  "flavour": ""
  },
  {
   "id": "entry-227",
@@ -2491,10 +3169,13 @@
   "date": "2026-10-05",
   "dayPart": 1,
   "itemId": "item-arvelin",
-  "doseText": "½ pill",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-arvelin-1",
+  "amount": 0.5,
+  "unit": "pill",
+  "flavour": ""
  },
  {
   "id": "entry-228",
@@ -2502,10 +3183,13 @@
   "date": "2026-10-05",
   "dayPart": 2,
   "itemId": "item-cooked",
-  "doseText": "⅓ tray",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-cooked-2",
+  "amount": 0.3333333333333333,
+  "unit": "tray",
+  "flavour": ""
  },
  {
   "id": "entry-229",
@@ -2513,10 +3197,13 @@
   "date": "2026-10-05",
   "dayPart": 2,
   "itemId": "item-bellavet",
-  "doseText": "0,15 ml (1,5 bars)",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-bellavet-2",
+  "amount": 0.15,
+  "unit": "ml",
+  "flavour": ""
  },
  {
   "id": "entry-230",
@@ -2524,10 +3211,13 @@
   "date": "2026-10-05",
   "dayPart": 2,
   "itemId": "item-biomend",
-  "doseText": "1 pill",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-biomend-2",
+  "amount": 1,
+  "unit": "pill",
+  "flavour": ""
  },
  {
   "id": "entry-231",
@@ -2535,10 +3225,13 @@
   "date": "2026-10-05",
   "dayPart": 4,
   "itemId": "item-farm",
-  "doseText": "¼ can",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-farm-4",
+  "amount": 0.25,
+  "unit": "can",
+  "flavour": "turkey"
  },
  {
   "id": "entry-232",
@@ -2546,10 +3239,13 @@
   "date": "2026-10-05",
   "dayPart": 4,
   "itemId": "item-bellavet",
-  "doseText": "0,15 ml (1,5 bars)",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-bellavet-4",
+  "amount": 0.15,
+  "unit": "ml",
+  "flavour": ""
  },
  {
   "id": "entry-233",
@@ -2557,10 +3253,13 @@
   "date": "2026-10-05",
   "dayPart": 5,
   "itemId": "item-arvelin",
-  "doseText": "½ pill",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-arvelin-5",
+  "amount": 0.5,
+  "unit": "pill",
+  "flavour": ""
  },
  {
   "id": "entry-234",
@@ -2568,10 +3267,13 @@
   "date": "2026-10-05",
   "dayPart": 6,
   "itemId": "item-farm",
-  "doseText": "¼ can",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-farm-6",
+  "amount": 0.25,
+  "unit": "can",
+  "flavour": "turkey"
  },
  {
   "id": "entry-235",
@@ -2579,10 +3281,13 @@
   "date": "2026-10-05",
   "dayPart": 6,
   "itemId": "item-bellavet",
-  "doseText": "0,15 ml (1,5 bars)",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-bellavet-6",
+  "amount": 0.15,
+  "unit": "ml",
+  "flavour": ""
  },
  {
   "id": "entry-236",
@@ -2590,10 +3295,13 @@
   "date": "2026-10-06",
   "dayPart": 1,
   "itemId": "item-arvelin",
-  "doseText": "½ pill",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-arvelin-1",
+  "amount": 0.5,
+  "unit": "pill",
+  "flavour": ""
  },
  {
   "id": "entry-237",
@@ -2601,10 +3309,13 @@
   "date": "2026-10-06",
   "dayPart": 2,
   "itemId": "item-cooked",
-  "doseText": "⅓ tray",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-cooked-2",
+  "amount": 0.3333333333333333,
+  "unit": "tray",
+  "flavour": ""
  },
  {
   "id": "entry-238",
@@ -2612,10 +3323,13 @@
   "date": "2026-10-06",
   "dayPart": 2,
   "itemId": "item-bellavet",
-  "doseText": "0,15 ml (1,5 bars)",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-bellavet-2",
+  "amount": 0.15,
+  "unit": "ml",
+  "flavour": ""
  },
  {
   "id": "entry-239",
@@ -2623,10 +3337,13 @@
   "date": "2026-10-06",
   "dayPart": 2,
   "itemId": "item-biomend",
-  "doseText": "1 pill",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-biomend-2",
+  "amount": 1,
+  "unit": "pill",
+  "flavour": ""
  },
  {
   "id": "entry-240",
@@ -2634,10 +3351,13 @@
   "date": "2026-10-06",
   "dayPart": 3,
   "itemId": "item-treat",
-  "doseText": "chicken · 2",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": null,
+  "amount": 2,
+  "unit": "piece",
+  "flavour": "chicken"
  },
  {
   "id": "entry-241",
@@ -2645,10 +3365,13 @@
   "date": "2026-10-06",
   "dayPart": 4,
   "itemId": "item-farm",
-  "doseText": "¼ can",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-farm-4",
+  "amount": 0.25,
+  "unit": "can",
+  "flavour": "turkey"
  },
  {
   "id": "entry-242",
@@ -2656,10 +3379,13 @@
   "date": "2026-10-06",
   "dayPart": 4,
   "itemId": "item-bellavet",
-  "doseText": "0,15 ml (1,5 bars)",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-bellavet-4",
+  "amount": 0.15,
+  "unit": "ml",
+  "flavour": ""
  },
  {
   "id": "entry-243",
@@ -2667,10 +3393,13 @@
   "date": "2026-10-06",
   "dayPart": 5,
   "itemId": "item-arvelin",
-  "doseText": "½ pill",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-arvelin-5",
+  "amount": 0.5,
+  "unit": "pill",
+  "flavour": ""
  },
  {
   "id": "entry-244",
@@ -2678,10 +3407,13 @@
   "date": "2026-10-06",
   "dayPart": 6,
   "itemId": "item-farm",
-  "doseText": "¼ can",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-farm-6",
+  "amount": 0.25,
+  "unit": "can",
+  "flavour": "turkey"
  },
  {
   "id": "entry-245",
@@ -2689,10 +3421,13 @@
   "date": "2026-10-06",
   "dayPart": 6,
   "itemId": "item-bellavet",
-  "doseText": "0,15 ml (1,5 bars)",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-bellavet-6",
+  "amount": 0.15,
+  "unit": "ml",
+  "flavour": ""
  },
  {
   "id": "entry-246",
@@ -2700,10 +3435,13 @@
   "date": "2026-10-07",
   "dayPart": 1,
   "itemId": "item-arvelin",
-  "doseText": "½ pill",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-arvelin-1",
+  "amount": 0.5,
+  "unit": "pill",
+  "flavour": ""
  },
  {
   "id": "entry-247",
@@ -2711,10 +3449,13 @@
   "date": "2026-10-07",
   "dayPart": 2,
   "itemId": "item-cooked",
-  "doseText": "⅓ tray",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-cooked-2",
+  "amount": 0.3333333333333333,
+  "unit": "tray",
+  "flavour": ""
  },
  {
   "id": "entry-248",
@@ -2722,10 +3463,13 @@
   "date": "2026-10-07",
   "dayPart": 2,
   "itemId": "item-bellavet",
-  "doseText": "0,15 ml (1,5 bars)",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-bellavet-2",
+  "amount": 0.15,
+  "unit": "ml",
+  "flavour": ""
  },
  {
   "id": "entry-249",
@@ -2733,10 +3477,13 @@
   "date": "2026-10-07",
   "dayPart": 2,
   "itemId": "item-biomend",
-  "doseText": "1 pill",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-biomend-2",
+  "amount": 1,
+  "unit": "pill",
+  "flavour": ""
  },
  {
   "id": "entry-250",
@@ -2744,10 +3491,13 @@
   "date": "2026-10-07",
   "dayPart": 4,
   "itemId": "item-farm",
-  "doseText": "¼ can",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-farm-4",
+  "amount": 0.25,
+  "unit": "can",
+  "flavour": "turkey"
  },
  {
   "id": "entry-251",
@@ -2755,10 +3505,13 @@
   "date": "2026-10-07",
   "dayPart": 4,
   "itemId": "item-bellavet",
-  "doseText": "0,15 ml (1,5 bars)",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-bellavet-4",
+  "amount": 0.15,
+  "unit": "ml",
+  "flavour": ""
  },
  {
   "id": "entry-252",
@@ -2766,10 +3519,13 @@
   "date": "2026-10-07",
   "dayPart": 5,
   "itemId": "item-arvelin",
-  "doseText": "½ pill",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-arvelin-5",
+  "amount": 0.5,
+  "unit": "pill",
+  "flavour": ""
  },
  {
   "id": "entry-253",
@@ -2777,10 +3533,13 @@
   "date": "2026-10-07",
   "dayPart": 6,
   "itemId": "item-farm",
-  "doseText": "¼ can",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-farm-6",
+  "amount": 0.25,
+  "unit": "can",
+  "flavour": "turkey"
  },
  {
   "id": "entry-254",
@@ -2788,10 +3547,13 @@
   "date": "2026-10-07",
   "dayPart": 6,
   "itemId": "item-bellavet",
-  "doseText": "0,15 ml (1,5 bars)",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-bellavet-6",
+  "amount": 0.15,
+  "unit": "ml",
+  "flavour": ""
  },
  {
   "id": "entry-255",
@@ -2799,10 +3561,13 @@
   "date": "2026-10-08",
   "dayPart": 1,
   "itemId": "item-arvelin",
-  "doseText": "½ pill",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-arvelin-1",
+  "amount": 0.5,
+  "unit": "pill",
+  "flavour": ""
  },
  {
   "id": "entry-256",
@@ -2810,10 +3575,13 @@
   "date": "2026-10-08",
   "dayPart": 2,
   "itemId": "item-cooked",
-  "doseText": "⅓ tray",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-cooked-2",
+  "amount": 0.3333333333333333,
+  "unit": "tray",
+  "flavour": ""
  },
  {
   "id": "entry-257",
@@ -2821,10 +3589,13 @@
   "date": "2026-10-08",
   "dayPart": 2,
   "itemId": "item-bellavet",
-  "doseText": "0,15 ml (1,5 bars)",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-bellavet-2",
+  "amount": 0.15,
+  "unit": "ml",
+  "flavour": ""
  },
  {
   "id": "entry-258",
@@ -2832,10 +3603,13 @@
   "date": "2026-10-08",
   "dayPart": 2,
   "itemId": "item-biomend",
-  "doseText": "1 pill",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-biomend-2",
+  "amount": 1,
+  "unit": "pill",
+  "flavour": ""
  },
  {
   "id": "entry-259",
@@ -2843,10 +3617,13 @@
   "date": "2026-10-08",
   "dayPart": 4,
   "itemId": "item-farm",
-  "doseText": "¼ can",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-farm-4",
+  "amount": 0.25,
+  "unit": "can",
+  "flavour": "turkey"
  },
  {
   "id": "entry-260",
@@ -2854,10 +3631,13 @@
   "date": "2026-10-08",
   "dayPart": 4,
   "itemId": "item-bellavet",
-  "doseText": "0,15 ml (1,5 bars)",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-bellavet-4",
+  "amount": 0.15,
+  "unit": "ml",
+  "flavour": ""
  },
  {
   "id": "entry-261",
@@ -2865,10 +3645,13 @@
   "date": "2026-10-08",
   "dayPart": 5,
   "itemId": "item-arvelin",
-  "doseText": "½ pill",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-arvelin-5",
+  "amount": 0.5,
+  "unit": "pill",
+  "flavour": ""
  },
  {
   "id": "entry-262",
@@ -2876,10 +3659,13 @@
   "date": "2026-10-08",
   "dayPart": 6,
   "itemId": "item-farm",
-  "doseText": "¼ can",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-farm-6",
+  "amount": 0.25,
+  "unit": "can",
+  "flavour": "turkey"
  },
  {
   "id": "entry-263",
@@ -2887,10 +3673,13 @@
   "date": "2026-10-08",
   "dayPart": 6,
   "itemId": "item-bellavet",
-  "doseText": "0,15 ml (1,5 bars)",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-bellavet-6",
+  "amount": 0.15,
+  "unit": "ml",
+  "flavour": ""
  },
  {
   "id": "entry-264",
@@ -2898,10 +3687,13 @@
   "date": "2026-10-09",
   "dayPart": 1,
   "itemId": "item-arvelin",
-  "doseText": "½ pill",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-arvelin-1",
+  "amount": 0.5,
+  "unit": "pill",
+  "flavour": ""
  },
  {
   "id": "entry-265",
@@ -2909,10 +3701,13 @@
   "date": "2026-10-09",
   "dayPart": 2,
   "itemId": "item-cooked",
-  "doseText": "⅓ tray",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-cooked-2",
+  "amount": 0.3333333333333333,
+  "unit": "tray",
+  "flavour": ""
  },
  {
   "id": "entry-266",
@@ -2920,10 +3715,13 @@
   "date": "2026-10-09",
   "dayPart": 2,
   "itemId": "item-bellavet",
-  "doseText": "0,15 ml (1,5 bars)",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-bellavet-2",
+  "amount": 0.15,
+  "unit": "ml",
+  "flavour": ""
  },
  {
   "id": "entry-267",
@@ -2931,10 +3729,13 @@
   "date": "2026-10-09",
   "dayPart": 2,
   "itemId": "item-biomend",
-  "doseText": "1 pill",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-biomend-2",
+  "amount": 1,
+  "unit": "pill",
+  "flavour": ""
  },
  {
   "id": "entry-268",
@@ -2942,10 +3743,13 @@
   "date": "2026-10-09",
   "dayPart": 3,
   "itemId": "item-treat",
-  "doseText": "chicken · 2",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": null,
+  "amount": 2,
+  "unit": "piece",
+  "flavour": "chicken"
  },
  {
   "id": "entry-269",
@@ -2953,10 +3757,13 @@
   "date": "2026-10-09",
   "dayPart": 4,
   "itemId": "item-farm",
-  "doseText": "¼ can",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-farm-4",
+  "amount": 0.25,
+  "unit": "can",
+  "flavour": "turkey"
  },
  {
   "id": "entry-270",
@@ -2964,10 +3771,13 @@
   "date": "2026-10-09",
   "dayPart": 4,
   "itemId": "item-bellavet",
-  "doseText": "0,15 ml (1,5 bars)",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-bellavet-4",
+  "amount": 0.15,
+  "unit": "ml",
+  "flavour": ""
  },
  {
   "id": "entry-271",
@@ -2975,10 +3785,13 @@
   "date": "2026-10-09",
   "dayPart": 5,
   "itemId": "item-arvelin",
-  "doseText": "½ pill",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-arvelin-5",
+  "amount": 0.5,
+  "unit": "pill",
+  "flavour": ""
  },
  {
   "id": "entry-272",
@@ -2986,10 +3799,13 @@
   "date": "2026-10-09",
   "dayPart": 6,
   "itemId": "item-farm",
-  "doseText": "¼ can",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-farm-6",
+  "amount": 0.25,
+  "unit": "can",
+  "flavour": "turkey"
  },
  {
   "id": "entry-273",
@@ -2997,10 +3813,13 @@
   "date": "2026-10-09",
   "dayPart": 6,
   "itemId": "item-bellavet",
-  "doseText": "0,15 ml (1,5 bars)",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-bellavet-6",
+  "amount": 0.15,
+  "unit": "ml",
+  "flavour": ""
  },
  {
   "id": "entry-274",
@@ -3008,10 +3827,13 @@
   "date": "2026-10-10",
   "dayPart": 1,
   "itemId": "item-arvelin",
-  "doseText": "½ pill",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-arvelin-1",
+  "amount": 0.5,
+  "unit": "pill",
+  "flavour": ""
  },
  {
   "id": "entry-275",
@@ -3019,10 +3841,13 @@
   "date": "2026-10-10",
   "dayPart": 2,
   "itemId": "item-cooked",
-  "doseText": "⅓ tray",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-cooked-2",
+  "amount": 0.3333333333333333,
+  "unit": "tray",
+  "flavour": ""
  },
  {
   "id": "entry-276",
@@ -3030,10 +3855,13 @@
   "date": "2026-10-10",
   "dayPart": 2,
   "itemId": "item-bellavet",
-  "doseText": "0,15 ml (1,5 bars)",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-bellavet-2",
+  "amount": 0.15,
+  "unit": "ml",
+  "flavour": ""
  },
  {
   "id": "entry-277",
@@ -3041,10 +3869,13 @@
   "date": "2026-10-10",
   "dayPart": 2,
   "itemId": "item-biomend",
-  "doseText": "1 pill",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-biomend-2",
+  "amount": 1,
+  "unit": "pill",
+  "flavour": ""
  },
  {
   "id": "entry-278",
@@ -3052,10 +3883,13 @@
   "date": "2026-10-10",
   "dayPart": 4,
   "itemId": "item-farm",
-  "doseText": "¼ can",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-farm-4",
+  "amount": 0.25,
+  "unit": "can",
+  "flavour": "turkey"
  },
  {
   "id": "entry-279",
@@ -3063,10 +3897,13 @@
   "date": "2026-10-10",
   "dayPart": 4,
   "itemId": "item-bellavet",
-  "doseText": "0,15 ml (1,5 bars)",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-bellavet-4",
+  "amount": 0.15,
+  "unit": "ml",
+  "flavour": ""
  },
  {
   "id": "entry-280",
@@ -3074,10 +3911,13 @@
   "date": "2026-10-10",
   "dayPart": 5,
   "itemId": "item-arvelin",
-  "doseText": "½ pill",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-arvelin-5",
+  "amount": 0.5,
+  "unit": "pill",
+  "flavour": ""
  },
  {
   "id": "entry-281",
@@ -3085,10 +3925,13 @@
   "date": "2026-10-10",
   "dayPart": 6,
   "itemId": "item-farm",
-  "doseText": "¼ can",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-farm-6",
+  "amount": 0.25,
+  "unit": "can",
+  "flavour": "turkey"
  },
  {
   "id": "entry-282",
@@ -3096,10 +3939,13 @@
   "date": "2026-10-10",
   "dayPart": 6,
   "itemId": "item-bellavet",
-  "doseText": "0,15 ml (1,5 bars)",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-bellavet-6",
+  "amount": 0.15,
+  "unit": "ml",
+  "flavour": ""
  },
  {
   "id": "entry-283",
@@ -3107,10 +3953,13 @@
   "date": "2026-10-11",
   "dayPart": 1,
   "itemId": "item-arvelin",
-  "doseText": "½ pill",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-arvelin-1",
+  "amount": 0.5,
+  "unit": "pill",
+  "flavour": ""
  },
  {
   "id": "entry-284",
@@ -3118,10 +3967,13 @@
   "date": "2026-10-11",
   "dayPart": 2,
   "itemId": "item-cooked",
-  "doseText": "⅓ tray",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-cooked-2",
+  "amount": 0.3333333333333333,
+  "unit": "tray",
+  "flavour": ""
  },
  {
   "id": "entry-285",
@@ -3129,10 +3981,13 @@
   "date": "2026-10-11",
   "dayPart": 2,
   "itemId": "item-bellavet",
-  "doseText": "0,15 ml (1,5 bars)",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-bellavet-2",
+  "amount": 0.15,
+  "unit": "ml",
+  "flavour": ""
  },
  {
   "id": "entry-286",
@@ -3140,10 +3995,13 @@
   "date": "2026-10-11",
   "dayPart": 2,
   "itemId": "item-biomend",
-  "doseText": "1 pill",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-biomend-2",
+  "amount": 1,
+  "unit": "pill",
+  "flavour": ""
  },
  {
   "id": "entry-287",
@@ -3151,10 +4009,13 @@
   "date": "2026-10-11",
   "dayPart": 4,
   "itemId": "item-farm",
-  "doseText": "¼ can",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-farm-4",
+  "amount": 0.25,
+  "unit": "can",
+  "flavour": "turkey"
  },
  {
   "id": "entry-288",
@@ -3162,10 +4023,13 @@
   "date": "2026-10-11",
   "dayPart": 4,
   "itemId": "item-bellavet",
-  "doseText": "0,15 ml (1,5 bars)",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-bellavet-4",
+  "amount": 0.15,
+  "unit": "ml",
+  "flavour": ""
  },
  {
   "id": "entry-289",
@@ -3173,10 +4037,13 @@
   "date": "2026-10-11",
   "dayPart": 5,
   "itemId": "item-arvelin",
-  "doseText": "½ pill",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-arvelin-5",
+  "amount": 0.5,
+  "unit": "pill",
+  "flavour": ""
  },
  {
   "id": "entry-290",
@@ -3184,10 +4051,13 @@
   "date": "2026-10-11",
   "dayPart": 6,
   "itemId": "item-farm",
-  "doseText": "¼ can",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-farm-6",
+  "amount": 0.25,
+  "unit": "can",
+  "flavour": "turkey"
  },
  {
   "id": "entry-291",
@@ -3195,10 +4065,13 @@
   "date": "2026-10-11",
   "dayPart": 6,
   "itemId": "item-bellavet",
-  "doseText": "0,15 ml (1,5 bars)",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-bellavet-6",
+  "amount": 0.15,
+  "unit": "ml",
+  "flavour": ""
  },
  {
   "id": "entry-292",
@@ -3206,10 +4079,13 @@
   "date": "2026-10-12",
   "dayPart": 1,
   "itemId": "item-arvelin",
-  "doseText": "½ pill",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-arvelin-1",
+  "amount": 0.5,
+  "unit": "pill",
+  "flavour": ""
  },
  {
   "id": "entry-293",
@@ -3217,10 +4093,13 @@
   "date": "2026-10-12",
   "dayPart": 2,
   "itemId": "item-cooked",
-  "doseText": "⅓ tray",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-cooked-2",
+  "amount": 0.3333333333333333,
+  "unit": "tray",
+  "flavour": ""
  },
  {
   "id": "entry-294",
@@ -3228,10 +4107,13 @@
   "date": "2026-10-12",
   "dayPart": 2,
   "itemId": "item-bellavet",
-  "doseText": "0,15 ml (1,5 bars)",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-bellavet-2",
+  "amount": 0.15,
+  "unit": "ml",
+  "flavour": ""
  },
  {
   "id": "entry-295",
@@ -3239,10 +4121,13 @@
   "date": "2026-10-12",
   "dayPart": 2,
   "itemId": "item-biomend",
-  "doseText": "1 pill",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-biomend-2",
+  "amount": 1,
+  "unit": "pill",
+  "flavour": ""
  },
  {
   "id": "entry-296",
@@ -3250,10 +4135,13 @@
   "date": "2026-10-12",
   "dayPart": 3,
   "itemId": "item-treat",
-  "doseText": "chicken · 2",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": null,
+  "amount": 2,
+  "unit": "piece",
+  "flavour": "chicken"
  },
  {
   "id": "entry-297",
@@ -3261,10 +4149,13 @@
   "date": "2026-10-12",
   "dayPart": 4,
   "itemId": "item-ocean",
-  "doseText": "½ can",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-ocean-4",
+  "amount": 0.5,
+  "unit": "can",
+  "flavour": "salmon"
  },
  {
   "id": "entry-298",
@@ -3272,10 +4163,13 @@
   "date": "2026-10-12",
   "dayPart": 4,
   "itemId": "item-bellavet",
-  "doseText": "0,15 ml (1,5 bars)",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-bellavet-4",
+  "amount": 0.15,
+  "unit": "ml",
+  "flavour": ""
  },
  {
   "id": "entry-299",
@@ -3283,10 +4177,13 @@
   "date": "2026-10-12",
   "dayPart": 5,
   "itemId": "item-arvelin",
-  "doseText": "½ pill",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-arvelin-5",
+  "amount": 0.5,
+  "unit": "pill",
+  "flavour": ""
  },
  {
   "id": "entry-300",
@@ -3294,10 +4191,13 @@
   "date": "2026-10-12",
   "dayPart": 6,
   "itemId": "item-ocean",
-  "doseText": "½ can",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-ocean-6",
+  "amount": 0.5,
+  "unit": "can",
+  "flavour": "salmon"
  },
  {
   "id": "entry-301",
@@ -3305,10 +4205,13 @@
   "date": "2026-10-12",
   "dayPart": 6,
   "itemId": "item-bellavet",
-  "doseText": "0,15 ml (1,5 bars)",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-bellavet-6",
+  "amount": 0.15,
+  "unit": "ml",
+  "flavour": ""
  },
  {
   "id": "entry-302",
@@ -3316,10 +4219,13 @@
   "date": "2026-10-13",
   "dayPart": 1,
   "itemId": "item-arvelin",
-  "doseText": "½ pill",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-arvelin-1",
+  "amount": 0.5,
+  "unit": "pill",
+  "flavour": ""
  },
  {
   "id": "entry-303",
@@ -3327,10 +4233,13 @@
   "date": "2026-10-13",
   "dayPart": 2,
   "itemId": "item-cooked",
-  "doseText": "⅓ tray",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-cooked-2",
+  "amount": 0.3333333333333333,
+  "unit": "tray",
+  "flavour": ""
  },
  {
   "id": "entry-304",
@@ -3338,10 +4247,13 @@
   "date": "2026-10-13",
   "dayPart": 2,
   "itemId": "item-bellavet",
-  "doseText": "0,15 ml (1,5 bars)",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-bellavet-2",
+  "amount": 0.15,
+  "unit": "ml",
+  "flavour": ""
  },
  {
   "id": "entry-305",
@@ -3349,10 +4261,13 @@
   "date": "2026-10-13",
   "dayPart": 2,
   "itemId": "item-biomend",
-  "doseText": "1 pill",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-biomend-2",
+  "amount": 1,
+  "unit": "pill",
+  "flavour": ""
  },
  {
   "id": "entry-306",
@@ -3360,10 +4275,13 @@
   "date": "2026-10-13",
   "dayPart": 4,
   "itemId": "item-ocean",
-  "doseText": "½ can",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-ocean-4",
+  "amount": 0.5,
+  "unit": "can",
+  "flavour": "salmon"
  },
  {
   "id": "entry-307",
@@ -3371,10 +4289,13 @@
   "date": "2026-10-13",
   "dayPart": 4,
   "itemId": "item-bellavet",
-  "doseText": "0,15 ml (1,5 bars)",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-bellavet-4",
+  "amount": 0.15,
+  "unit": "ml",
+  "flavour": ""
  },
  {
   "id": "entry-308",
@@ -3382,10 +4303,13 @@
   "date": "2026-10-13",
   "dayPart": 5,
   "itemId": "item-arvelin",
-  "doseText": "½ pill",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-arvelin-5",
+  "amount": 0.5,
+  "unit": "pill",
+  "flavour": ""
  },
  {
   "id": "entry-309",
@@ -3393,10 +4317,13 @@
   "date": "2026-10-13",
   "dayPart": 6,
   "itemId": "item-ocean",
-  "doseText": "½ can",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-ocean-6",
+  "amount": 0.5,
+  "unit": "can",
+  "flavour": "salmon"
  },
  {
   "id": "entry-310",
@@ -3404,10 +4331,13 @@
   "date": "2026-10-13",
   "dayPart": 6,
   "itemId": "item-bellavet",
-  "doseText": "0,15 ml (1,5 bars)",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-bellavet-6",
+  "amount": 0.15,
+  "unit": "ml",
+  "flavour": ""
  },
  {
   "id": "entry-311",
@@ -3415,10 +4345,13 @@
   "date": "2026-10-14",
   "dayPart": 1,
   "itemId": "item-arvelin",
-  "doseText": "½ pill",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-arvelin-1",
+  "amount": 0.5,
+  "unit": "pill",
+  "flavour": ""
  },
  {
   "id": "entry-312",
@@ -3426,10 +4359,13 @@
   "date": "2026-10-14",
   "dayPart": 2,
   "itemId": "item-cooked",
-  "doseText": "⅓ tray",
   "state": "skipped",
-  "note": "Refused",
-  "createdBy": "member-demo"
+  "note": "",
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-cooked-2",
+  "amount": 0.3333333333333333,
+  "unit": "tray",
+  "flavour": ""
  },
  {
   "id": "entry-313",
@@ -3437,10 +4373,13 @@
   "date": "2026-10-14",
   "dayPart": 2,
   "itemId": "item-bellavet",
-  "doseText": "0,15 ml (1,5 bars)",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-bellavet-2",
+  "amount": 0.15,
+  "unit": "ml",
+  "flavour": ""
  },
  {
   "id": "entry-314",
@@ -3448,10 +4387,13 @@
   "date": "2026-10-14",
   "dayPart": 2,
   "itemId": "item-biomend",
-  "doseText": "1 pill",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-biomend-2",
+  "amount": 1,
+  "unit": "pill",
+  "flavour": ""
  },
  {
   "id": "entry-315",
@@ -3459,10 +4401,13 @@
   "date": "2026-10-14",
   "dayPart": 3,
   "itemId": "item-gastrelle",
-  "doseText": "1 sachet · day 1 of 7",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-gastrelle-3",
+  "amount": 1,
+  "unit": "sachet",
+  "flavour": ""
  },
  {
   "id": "entry-316",
@@ -3470,10 +4415,13 @@
   "date": "2026-10-14",
   "dayPart": 3,
   "itemId": "item-treat",
-  "doseText": "chicken · 2",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": null,
+  "amount": 2,
+  "unit": "piece",
+  "flavour": "chicken"
  },
  {
   "id": "entry-317",
@@ -3481,10 +4429,13 @@
   "date": "2026-10-14",
   "dayPart": 4,
   "itemId": "item-ocean",
-  "doseText": "½ can",
   "state": "partial",
-  "note": "Half eaten",
-  "createdBy": "member-demo"
+  "note": "",
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-ocean-4",
+  "amount": 0.5,
+  "unit": "can",
+  "flavour": "salmon"
  },
  {
   "id": "entry-318",
@@ -3492,10 +4443,13 @@
   "date": "2026-10-14",
   "dayPart": 4,
   "itemId": "item-bellavet",
-  "doseText": "0,15 ml (1,5 bars)",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-bellavet-4",
+  "amount": 0.15,
+  "unit": "ml",
+  "flavour": ""
  },
  {
   "id": "entry-319",
@@ -3503,10 +4457,13 @@
   "date": "2026-10-14",
   "dayPart": 5,
   "itemId": "item-arvelin",
-  "doseText": "½ pill",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-arvelin-5",
+  "amount": 0.5,
+  "unit": "pill",
+  "flavour": ""
  },
  {
   "id": "entry-320",
@@ -3514,10 +4471,13 @@
   "date": "2026-10-14",
   "dayPart": 6,
   "itemId": "item-ocean",
-  "doseText": "½ can",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-ocean-6",
+  "amount": 0.5,
+  "unit": "can",
+  "flavour": "salmon"
  },
  {
   "id": "entry-321",
@@ -3525,10 +4485,13 @@
   "date": "2026-10-14",
   "dayPart": 6,
   "itemId": "item-bellavet",
-  "doseText": "0,15 ml (1,5 bars)",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-bellavet-6",
+  "amount": 0.15,
+  "unit": "ml",
+  "flavour": ""
  },
  {
   "id": "entry-322",
@@ -3536,10 +4499,13 @@
   "date": "2026-10-15",
   "dayPart": 1,
   "itemId": "item-arvelin",
-  "doseText": "½ pill",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-arvelin-1",
+  "amount": 0.5,
+  "unit": "pill",
+  "flavour": ""
  },
  {
   "id": "entry-323",
@@ -3547,10 +4513,13 @@
   "date": "2026-10-15",
   "dayPart": 2,
   "itemId": "item-cooked",
-  "doseText": "⅓ tray",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-cooked-2",
+  "amount": 0.3333333333333333,
+  "unit": "tray",
+  "flavour": ""
  },
  {
   "id": "entry-324",
@@ -3558,10 +4527,13 @@
   "date": "2026-10-15",
   "dayPart": 2,
   "itemId": "item-biomend",
-  "doseText": "1 pill",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-biomend-2",
+  "amount": 1,
+  "unit": "pill",
+  "flavour": ""
  },
  {
   "id": "entry-325",
@@ -3569,10 +4541,13 @@
   "date": "2026-10-15",
   "dayPart": 3,
   "itemId": "item-gastrelle",
-  "doseText": "1 sachet · day 2 of 7",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-gastrelle-3",
+  "amount": 1,
+  "unit": "sachet",
+  "flavour": ""
  },
  {
   "id": "entry-326",
@@ -3580,10 +4555,13 @@
   "date": "2026-10-15",
   "dayPart": 3,
   "itemId": "item-treat",
-  "doseText": "chicken · 2",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": null,
+  "amount": 2,
+  "unit": "piece",
+  "flavour": "chicken"
  },
  {
   "id": "entry-327",
@@ -3591,10 +4569,13 @@
   "date": "2026-10-15",
   "dayPart": 4,
   "itemId": "item-ocean",
-  "doseText": "½ can",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-ocean-4",
+  "amount": 0.5,
+  "unit": "can",
+  "flavour": "salmon"
  },
  {
   "id": "entry-328",
@@ -3602,10 +4583,13 @@
   "date": "2026-10-15",
   "dayPart": 4,
   "itemId": "item-bellavet",
-  "doseText": "0,15 ml (1,5 bars)",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-bellavet-4",
+  "amount": 0.15,
+  "unit": "ml",
+  "flavour": ""
  },
  {
   "id": "entry-329",
@@ -3613,10 +4597,13 @@
   "date": "2026-10-15",
   "dayPart": 5,
   "itemId": "item-arvelin",
-  "doseText": "½ pill",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-arvelin-5",
+  "amount": 0.5,
+  "unit": "pill",
+  "flavour": ""
  },
  {
   "id": "entry-330",
@@ -3624,10 +4611,13 @@
   "date": "2026-10-15",
   "dayPart": 6,
   "itemId": "item-ocean",
-  "doseText": "½ can",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-ocean-6",
+  "amount": 0.5,
+  "unit": "can",
+  "flavour": "salmon"
  },
  {
   "id": "entry-331",
@@ -3635,9 +4625,12 @@
   "date": "2026-10-15",
   "dayPart": 6,
   "itemId": "item-bellavet",
-  "doseText": "0,15 ml (1,5 bars)",
   "state": "given",
   "note": "",
-  "createdBy": "member-demo"
+  "createdBy": "member-demo",
+  "scheduleSlotId": "slot-bellavet-6",
+  "amount": 0.15,
+  "unit": "ml",
+  "flavour": ""
  }
 ]

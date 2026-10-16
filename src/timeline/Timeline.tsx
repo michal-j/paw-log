@@ -62,6 +62,8 @@ async function load(repository: Repository): Promise<Loaded> {
 
 interface Props {
   repository: Repository;
+  /** Bumped after every write; the timeline reloads. */
+  version?: number;
   /** List scroll position to restore once the rows are laid out (coming back from a day). */
   initialScrollTop?: number;
   /** Path of a day, so each row is a real link (open in new tab, long-press preview). */
@@ -71,7 +73,7 @@ interface Props {
 }
 
 /** Read-only timeline (slice 2a): one row per day, newest first, Key bar, tick rail. Rows open the Day view (3a). */
-export function Timeline({ repository, initialScrollTop = 0, dayHref, onOpenDay }: Props) {
+export function Timeline({ repository, version = 0, initialScrollTop = 0, dayHref, onOpenDay }: Props) {
   const { lang, t } = useI18n();
   const [data, setData] = useState<Loaded | null>(null);
   const [topIndex, setTopIndex] = useState(0);
@@ -102,7 +104,7 @@ export function Timeline({ repository, initialScrollTop = 0, dayHref, onOpenDay 
     return () => {
       live = false;
     };
-  }, [repository]);
+  }, [repository, version]);
 
   // Restore the scroll position once, after the rows and the tail (which needs the list height) exist.
   const restored = useRef(false);

@@ -24,7 +24,7 @@ const item = (id: string, kind: Item['kind'], extra: Partial<Item> = {}): Item =
   id, dogId: 'd', kind, name: id, colour: 'treat', defaultDayPart: 2, activeFrom: '2026-01-01', activeTo: null, ...extra,
 });
 const entry = (date: string, dayPart: Entry['dayPart'], itemId: string, state: Entry['state'] = 'given'): Entry => ({
-  id: `${date}-${dayPart}-${itemId}`, dogId: 'd', date, dayPart, itemId, doseText: '', state, note: '', createdBy: 'm',
+  id: `${date}-${dayPart}-${itemId}`, dogId: 'd', date, dayPart, itemId, amount: 1, unit: 'pill', flavour: '', state, note: '', createdBy: 'm',
 });
 const ev = (date: string, type: HealthEvent['type']): HealthEvent => ({
   id: `${date}-${type}-${Math.random()}`, dogId: 'd', date, type, title: type, detail: '', issueId: null,

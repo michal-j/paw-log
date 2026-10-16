@@ -1,66 +1,53 @@
 import { useEffect, useMemo, useState } from 'react';
-import type { Entry, HealthEvent, Item, PlainDate, Repository } from '../data';
-import { useI18n, type Lang, type MessageKey } from '../i18n';
+import type { DayPart, Entry, HealthEvent, PlainDate } from '../data';
+import { fill, useI18n, type MessageKey } from '../i18n';
 import { DoseMark } from '../components/DoseMark';
 import { EventBadge } from '../components/EventBadge';
+import { CheckIcon, ChevronIcon, DotsIcon, NoteIcon, PlusIcon, RoutineIcon } from '../components/icons';
 import { MealIcon } from '../components/MealIcon';
 import { symptomLabel } from '../timeline/labels';
 import { parseDate, shiftDate } from '../timeline/model';
-import { BADGE_FOR, buildDay, dayBounds, inBounds, type DayBounds, type DayEntry } from './model';
+import * as act from '../log/actions';
+import { groupOf } from '../log/amount';
+import { eventKindOf } from '../log/EventSheet';
+import { LOCALE, useFormat } from '../log/format';
+import { useLog } from '../log/LogProvider';
+import { plannedEntry } from '../log/plan';
+import { symptomDetail } from '../log/symptoms';
+import { BADGE_FOR, buildDay, dayBounds, inBounds, type DayEntry, type PlannedRow } from './model';
 import './day.css';
 
-const LOCALE: Record<Lang, string> = { en: 'en-GB', pl: 'pl-PL' };
-
-/** Day-part names, copy CSV rows 48 to 54. */
-const PART_NAME: Record<number, MessageKey> = {
-  1: 'copy.48', 2: 'copy.49', 3: 'copy.50', 4: 'copy.51', 5: 'copy.52', 6: 'copy.53', 7: 'copy.54',
-};
 /** Tag after an item that was not simply given: "Refused" and "Half eaten". */
 const STATE_TAG: Partial<Record<DayEntry['state'], MessageKey>> = { skipped: 'tagR', partial: 'copy.72' };
-
-interface Loaded {
-  items: Item[];
-  entries: Entry[];
-  events: HealthEvent[];
-  bounds: DayBounds;
-}
-
-async function load(repository: Repository): Promise<Loaded> {
-  const today = repository.today();
-  const [items, entries, events] = await Promise.all([
-    repository.listItems(),
-    repository.listEntries({ to: today }),
-    repository.listEvents({ to: today }),
-  ]);
-  return { items, entries, events, bounds: dayBounds(today, entries, events) };
-}
+const ALSO_LABEL: Record<string, MessageKey> = { anal_glands: 'label.117', nails: 'label.118' };
 
 interface Props {
-  repository: Repository;
   date: PlainDate;
   onBack: () => void;
   onStep: (date: PlainDate) => void;
   /** The date is outside the records (before the first one or after today). */
   onInvalid: () => void;
+  onUsualDay: (date: PlainDate) => void;
 }
 
-/** Read-only Day view (slice 3a): everything logged on one date, by day part, plus the day's events. */
-export function DayView({ repository, date, onBack, onStep, onInvalid }: Props) {
+/**
+ * Day view: what was logged on one date and what the usual day still has open, by day part, plus the
+ * day's events. Tap a row to edit it, Given to log a planned item, Fill to log every due one.
+ */
+export function DayView({ date, onBack, onStep, onInvalid, onUsualDay }: Props) {
   const { lang, t } = useI18n();
-  const [data, setData] = useState<Loaded | null>(null);
+  const f = useFormat();
+  const { records, repository, open, run } = useLog();
 
+  // Re-render every minute so "up to now" and Later today follow the clock while the app stays open.
+  const [, setTick] = useState(0);
   useEffect(() => {
-    let live = true;
-    load(repository).then(
-      (next) => live && setData(next),
-      () => live && setData(null), // error state not designed yet
-    );
-    return () => {
-      live = false;
-    };
-  }, [repository]);
+    const id = setInterval(() => setTick((n) => n + 1), 60_000);
+    return () => clearInterval(id);
+  }, []);
 
-  const valid = data ? inBounds(date, data.bounds) : true;
+  const bounds = useMemo(() => (records ? dayBounds(records.today, records.entries, records.events) : null), [records]);
+  const valid = records && bounds ? inBounds(date, bounds) : true;
   useEffect(() => {
     if (!valid) onInvalid();
   }, [valid, onInvalid]);
@@ -73,15 +60,41 @@ export function DayView({ repository, date, onBack, onStep, onInvalid }: Props) 
     [lang, date],
   );
 
-  const day = data && valid ? buildDay({ date, ...data }) : null;
   const today = repository.today();
+  const now = repository.nowTime();
+  const day =
+    records && bounds && valid
+      ? buildDay({ date, bounds, ...records, plan: { slots: records.slots, today, now, times: records.times } })
+      : null;
   const sub = date === today ? t('sub') : date === shiftDate(today, -1) ? t('copy.114') : '';
+  const due = day ? day.parts.flatMap((p) => p.due) : [];
+  const anyPlanned = day ? day.parts.some((p) => p.rows.length > 0) : false;
+  const itemGroup = (itemId: string) => groupOf(records?.items.find((i) => i.id === itemId)?.kind ?? 'medication');
+
+  const give = (rows: PlannedRow[]) => {
+    let added = rows.length;
+    return run(
+      async () => {
+        const res = await act.addPlanned(repository, rows.map((r) => plannedEntry(r.slot, date, act.newId())));
+        added = res.added;
+        return res.undo;
+      },
+      () => fill(t('toastFilled'), { n: added }),
+    );
+  };
+
+  const editEntry = (e: Entry) => open({ kind: 'entry', group: itemGroup(e.itemId), date: e.date, part: e.dayPart, entry: e });
+  const editEvent = (e: HealthEvent) => {
+    const kind = eventKindOf(e.type);
+    if (kind) open({ kind: 'event', type: kind, date: e.date, event: e });
+  };
+  const addToPart = (part: DayPart) => open({ kind: 'add', date, part });
 
   return (
     <section className="day" aria-labelledby="day-title">
       <div className="day__top">
         <button type="button" className="day-btn day-btn--back" onClick={onBack}>
-          <Chevron dir="left" />
+          <ChevronIcon dir="left" size={18} />
           {t('timeline')}
         </button>
       </div>
@@ -98,17 +111,43 @@ export function DayView({ repository, date, onBack, onStep, onInvalid }: Props) 
       </div>
 
       <div className="day__body">
+        {due.length > 0 && (
+          <div className="day-card day-fill">
+            <span className="day-fill__icon" aria-hidden="true">
+              <RoutineIcon />
+            </span>
+            <div className="day-fill__text">
+              <p className="day-fill__head">
+                {date === today ? `${fill(t('fillTodayH'), { n: due.length })} (${now})` : fill(t('fillPastH'), { n: due.length })}
+              </p>
+              <p className="day-fill__hint">{t('fillHint')}</p>
+              <button type="button" className="btn btn--primary btn--md day-fill__btn" onClick={() => give(due)}>
+                {fill(t('fillBtn'), { n: due.length })}
+              </button>
+            </div>
+          </div>
+        )}
+
         {day && day.events.count > 0 && (
           <>
             <h3 className="day__caption">{t('happened')}</h3>
             {day.events.visits.map((e) => (
-              <article key={e.id} className="day-card">
-                <h4 className="day-card__head">
+              <button key={e.id} type="button" className="day-card day-card--tap" onClick={() => editEvent(e)}>
+                <span className="day-card__head">
                   <EventBadge kind="vet" text="" />
-                  {`${t('visitWord')} · ${e.title}`}
-                </h4>
-                {e.detail && <p className="day-card__text">{e.detail}</p>}
-              </article>
+                  {e.title ? `${t('visitWord')} · ${e.title}` : t('copy.101')}
+                </span>
+                {e.detail && <span className="day-card__text">{e.detail}</span>}
+                {e.alsoDone && e.alsoDone.length > 0 && (
+                  <span className="day-card__chips">
+                    {e.alsoDone.map((a) => (
+                      <span key={a} className="day-card__chip">
+                        {t(ALSO_LABEL[a] ?? 'other')}
+                      </span>
+                    ))}
+                  </span>
+                )}
+              </button>
             ))}
             {day.events.symptoms.length > 0 && (
               <article className="day-card">
@@ -116,33 +155,58 @@ export function DayView({ repository, date, onBack, onStep, onInvalid }: Props) 
                   <EventBadge kind="sym" text="!" />
                   {t('kSym')}
                 </h4>
-                <dl className="day-card__rows">
+                <ul className="day-card__rows">
                   {day.events.symptoms.map((e) => (
-                    <div key={e.id} className="day-card__row">
-                      <dt>{symptomLabel(e.title, t)}</dt>
-                      <dd>{e.detail}</dd>
-                    </div>
+                    <li key={e.id}>
+                      <button type="button" className="day-card__row" onClick={() => editEvent(e)}>
+                        <span className="day-card__row-label">{symptomLabel(e.title, t)}</span>
+                        <span className="day-card__row-value">{symptomDetail(e, t)}</span>
+                      </button>
+                    </li>
                   ))}
-                </dl>
+                </ul>
               </article>
             )}
             {day.events.others.map((e) => {
               const kind = BADGE_FOR[e.type];
-              return (
+              const tap = !!eventKindOf(e.type);
+              const content = (
+                <>
+                  <span className="day-card__head">
+                    {kind ? (
+                      <EventBadge kind={kind} text={kind === 'front' ? 'F' : kind === 'worm' ? 'D' : ''} />
+                    ) : (
+                      <span className="day-card__glyph" aria-hidden="true">
+                        {e.type === 'note' ? <NoteIcon /> : <DotsIcon />}
+                      </span>
+                    )}
+                    {f.eventTitle(e)}
+                  </span>
+                  {e.detail && <span className="day-card__text">{e.detail}</span>}
+                </>
+              );
+              return tap ? (
+                <button key={e.id} type="button" className="day-card day-card--tap" onClick={() => editEvent(e)}>
+                  {content}
+                </button>
+              ) : (
                 <article key={e.id} className="day-card">
-                  <h4 className="day-card__head">
-                    {kind && <EventBadge kind={kind} text={kind === 'front' ? 'F' : kind === 'worm' ? 'D' : ''} />}
-                    {e.title}
-                  </h4>
-                  {e.detail && <p className="day-card__text">{e.detail}</p>}
+                  {content}
                 </article>
               );
             })}
           </>
         )}
 
-        <h3 className="day__caption">{t('dayPartsTitle')}</h3>
-        {day?.empty && (
+        <div className="day__section">
+          <h3 className="day__caption">{t('dayPartsTitle')}</h3>
+          <button type="button" className="day__link" onClick={() => onUsualDay(date)}>
+            <RoutineIcon size={15} />
+            {t('usualLink')}
+            <ChevronIcon />
+          </button>
+        </div>
+        {day?.empty && !anyPlanned && (
           <div className="day-card day-empty">
             <span className="day-empty__icon" aria-hidden="true">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
@@ -150,7 +214,6 @@ export function DayView({ repository, date, onBack, onStep, onInvalid }: Props) 
                 <circle cx="12" cy="12" r="9" />
               </svg>
             </span>
-            {/* TODO(copy): `noData` mentions add buttons that the read-only slice does not have yet. */}
             <p className="day-empty__text">{t('noData')}</p>
           </div>
         )}
@@ -158,33 +221,84 @@ export function DayView({ repository, date, onBack, onStep, onInvalid }: Props) 
           <ul className="day-card day-parts">
             {day.parts.map((p) => (
               <li key={p.part} className={`day-part${p.meal ? ' day-part--meal' : ''}`}>
-                <span className="day-part__icon" aria-hidden="true">
-                  {p.meal ? <MealIcon part={p.part} size={26} /> : <span className={`day-part__dot${p.entries.length ? ' day-part__dot--any' : ''}`} />}
-                </span>
-                <div className="day-part__main">
-                  <h4 className="day-part__name">{t(PART_NAME[p.part] ?? 'copy.48')}</h4>
-                  {p.entries.length ? (
-                    <ul className="day-part__items">
-                      {p.entries.map((e) => {
-                        const tag = STATE_TAG[e.state];
+                <div className="day-part__head">
+                  <span className="day-part__icon" aria-hidden="true">
+                    {p.meal ? <MealIcon part={p.part} size={26} /> : <span className={`day-part__dot${p.rows.length ? ' day-part__dot--any' : ''}`} />}
+                  </span>
+                  <h4 className="day-part__name">{f.part(p.part)}</h4>
+                  <button type="button" className="part-add" aria-label={`${t('addAria')}${f.part(p.part)}`} onClick={() => addToPart(p.part)}>
+                    <span>
+                      <PlusIcon />
+                    </span>
+                  </button>
+                </div>
+                {p.rows.length ? (
+                  <ul className="day-part__items">
+                    {p.rows.map((r) => {
+                      const name = f.name(r.name, r.flavour);
+                      const amount = f.amount(r.amount, r.unit, r.conversion, r.kind === 'logged' ? r.doseText : '');
+                      const course = r.course ? fill(t('dayNofM'), r.course) : '';
+                      if (r.kind === 'planned') {
+                        const subText = [r.due ? t('planned') : t('laterToday'), course].filter(Boolean).join(' · ');
                         return (
-                          <li key={e.id} className={`day-item day-item--${e.state}`}>
-                            <span className="day-item__mark">
-                              <DoseMark colour={e.colour} size={e.size} state={e.state} />
-                            </span>
-                            <span className="day-item__text">
-                              <span className="day-item__name">{e.name}</span>
-                              {e.doseText && <span className="day-item__dose"> · {e.doseText}</span>}
-                            </span>
-                            {tag && <span className={`day-tag day-tag--${e.state}`}>{t(tag)}</span>}
+                          <li key={r.id} className="day-item day-item--planned">
+                            <button
+                              type="button"
+                              className="day-item__open"
+                              onClick={() => open({ kind: 'entry', group: itemGroup(r.itemId), date, part: p.part, slot: r.slot })}
+                            >
+                              <span className="day-item__mark">
+                                <DoseMark colour={r.colour} size={r.size} state="planned" />
+                              </span>
+                              <span className="day-item__text">
+                                <span className="day-item__name">{name}</span>
+                                {amount && <span className="day-item__dose"> · {amount}</span>}
+                                <span className="day-item__sub">{subText}</span>
+                              </span>
+                            </button>
+                            {r.due && (
+                              <button type="button" className="btn btn--ghost day-give" aria-label={fill(t('markGiven'), { name })} onClick={() => give([r])}>
+                                <span className="btn__icon">
+                                  <CheckIcon />
+                                </span>
+                                {t('name.96')}
+                              </button>
+                            )}
                           </li>
                         );
-                      })}
-                    </ul>
-                  ) : (
-                    <p className="day-part__none">{t('nothingSched')}</p>
-                  )}
-                </div>
+                      }
+                      const tag = STATE_TAG[r.state];
+                      const subText = [course, r.note].filter(Boolean).join(' · ');
+                      return (
+                        <li key={r.id} className={`day-item day-item--${r.state}`}>
+                          <button type="button" className="day-item__open" onClick={() => editEntry(r.entry)}>
+                            <span className="day-item__mark">
+                              <DoseMark colour={r.colour} size={r.size} state={r.state} />
+                            </span>
+                            <span className="day-item__text">
+                              <span className="day-item__name">{name}</span>
+                              {amount && <span className="day-item__dose"> · {amount}</span>}
+                              {subText && <span className="day-item__sub">{subText}</span>}
+                            </span>
+                            {tag && <span className={`day-tag day-tag--${r.state}`}>{t(tag)}</span>}
+                          </button>
+                        </li>
+                      );
+                    })}
+                    {p.due.length > 1 && (
+                      <li className="day-item day-item--all">
+                        <button type="button" className="btn btn--ghost day-give" onClick={() => give(p.due)}>
+                          <span className="btn__icon">
+                            <CheckIcon />
+                          </span>
+                          {t('allGiven')}
+                        </button>
+                      </li>
+                    )}
+                  </ul>
+                ) : (
+                  <p className="day-part__none">{t('nothingSched')}</p>
+                )}
               </li>
             ))}
           </ul>
@@ -214,15 +328,7 @@ function StepButton({
       aria-disabled={target ? undefined : true}
       onClick={() => target && onStep(target)}
     >
-      <Chevron dir={dir === 'prev' ? 'left' : 'right'} />
+      <ChevronIcon dir={dir === 'prev' ? 'left' : 'right'} size={18} />
     </button>
-  );
-}
-
-function Chevron({ dir }: { dir: 'left' | 'right' }) {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d={dir === 'left' ? 'M15 5l-7 7 7 7' : 'M9 5l7 7-7 7'} />
-    </svg>
   );
 }

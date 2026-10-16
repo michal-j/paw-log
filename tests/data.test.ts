@@ -3,7 +3,7 @@ import { DemoRepository, DEMO_STORAGE_KEY } from '../src/data/demoRepository';
 import { DuplicateSlotEntryError, createRepository, isDemoMode } from '../src/data';
 import { SupabaseRepository } from '../src/data/supabaseRepository';
 import type { SupabaseClient } from '@supabase/supabase-js';
-import type { Entry } from '../src/data';
+import type { Entry, Item } from '../src/data';
 
 const memory = () => {
   const m = new Map<string, string>();
@@ -47,13 +47,12 @@ describe('DemoRepository', () => {
     expect((await again.listEvents()).some((e) => e.id === 'event-001')).toBe(false);
   });
 
-  it('derives one schedule slot per item and filters by active range', async () => {
+  it('serves the fictional usual day and filters it by active range', async () => {
     const repo = new DemoRepository(storage);
-    const items = await repo.listItems();
     const all = await repo.listScheduleSlots();
-    expect(all).toHaveLength(items.length);
+    expect(all).toHaveLength(13);
     const farm = all.find((s) => s.itemId === 'item-farm');
-    expect(farm?.dayPart).toBe(4);
+    expect(farm).toMatchObject({ dayPart: 4, flavour: 'turkey', amount: 0.25, unit: 'can' });
     const later = await repo.listScheduleSlots({ from: '2026-10-12', to: '2026-10-15' });
     expect(later.some((s) => s.itemId === 'item-farm')).toBe(false); // ended 11 October
     expect(later.some((s) => s.itemId === 'item-ocean')).toBe(true);
@@ -61,10 +60,47 @@ describe('DemoRepository', () => {
 
   it('refuses a second entry for the same slot and date, like the database', async () => {
     const repo = new DemoRepository(storage);
-    const base: Entry = { id: 'x1', dogId: 'dog-demo', date: '2026-10-15', dayPart: 4, itemId: 'item-ocean', scheduleSlotId: 'slot-item-ocean', doseText: '', state: 'given', note: '', createdBy: '' };
+    const base: Entry = { id: 'x1', dogId: 'dog-demo', date: '2026-10-16', dayPart: 4, itemId: 'item-ocean', scheduleSlotId: 'slot-ocean-4', amount: 0.5, unit: 'can', flavour: 'salmon', state: 'given', note: '', createdBy: '' };
     await repo.saveEntry(base);
     await repo.saveEntry({ ...base, note: 'edit of the same entry is fine' });
     await expect(repo.saveEntry({ ...base, id: 'x2' })).rejects.toBeInstanceOf(DuplicateSlotEntryError);
+  });
+
+  it('adds planned entries but skips slots already filled that day (fill never overwrites)', async () => {
+    const repo = new DemoRepository(storage);
+    const mk = (id: string, date: string): Entry => ({ id, dogId: 'dog-demo', date, dayPart: 2, itemId: 'item-bellavet', scheduleSlotId: 'slot-bellavet-2', amount: 0.15, unit: 'ml', flavour: '', state: 'given', note: '', createdBy: '' });
+    const added = await repo.addPlannedEntries([mk('p1', '2026-10-15'), mk('p2', '2026-10-15'), mk('p3', '2026-10-14')]);
+    expect(added).toEqual(['p1']); // 14 Oct already has its breakfast Bellavet; p2 repeats p1's slot
+    await repo.deleteEntries(added);
+    expect((await repo.listEntries()).some((e) => e.id === 'p1')).toBe(false);
+  });
+
+  it('removing a usual-day slot keeps the entries that filled it, unplanned', async () => {
+    const repo = new DemoRepository(storage);
+    await repo.deleteScheduleSlot('slot-cooked-2');
+    expect((await repo.listScheduleSlots()).some((s) => s.id === 'slot-cooked-2')).toBe(false);
+    const cooked = (await repo.listEntries()).filter((e) => e.itemId === 'item-cooked');
+    expect(cooked.length).toBeGreaterThan(40);
+    expect(cooked.every((e) => e.scheduleSlotId === null)).toBe(true);
+  });
+
+  it('stores day-part times, items and slots, and keeps them across instances', async () => {
+    const repo = new DemoRepository(storage);
+    expect((await repo.getDayPartTimes())[2]).toBe('07:30');
+    await repo.saveDayPartTime(2, '08:15');
+    const [first] = await repo.listItems();
+    await repo.saveItem({ ...(first as Item), name: 'Renamed' });
+    const again = new DemoRepository(storage);
+    expect((await again.getDayPartTimes())[2]).toBe('08:15');
+    expect((await again.listItems())[0]?.name).toBe('Renamed');
+    again.reset();
+    expect((await again.getDayPartTimes())[2]).toBe('07:30');
+  });
+
+  it('reports the device clock as HH:MM next to the frozen date', () => {
+    const repo = new DemoRepository(storage, () => new Date(2030, 0, 1, 9, 5));
+    expect(repo.nowTime()).toBe('09:05');
+    expect(repo.today()).toBe('2026-10-15');
   });
 
   it('reset returns to the sample data', async () => {

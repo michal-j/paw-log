@@ -44,31 +44,42 @@ begin
   end if;
 
   -- Initial items. One row per food, medication, treat, supplement or procedure.
-  -- kind:     food | medication | treat | supplement | procedure
+  -- kind:     food | medication | treat | supplement | procedure (treats are listed under Food)
   -- colour:   a colour token from docs/design-system/tokens.json:
   --           food-cooked, food-farm, food-ocean, med-arvelin, med-bellavet, med-gastrelle,
   --           med-biomend, med-calmora, treat, mark-neutral
   -- day part: 1 before breakfast, 2 breakfast, 3 between breakfast and dinner, 4 dinner,
   --           5 between dinner and supper, 6 supper, 7 after supper
+  -- unit:     pill | capsule | sachet | ml | drop (medication); can | tray | g | piece (food)
+  -- flavours: for food, the flavours to pick from, e.g. '{<FLAVOUR>,<FLAVOUR>}'; '{}' for none
   -- position: lane order in the timeline, smallest first.
+  -- A medication measured in ml with a syringe marking can show both: set conversion_unit 'bars'
+  -- and conversion_size to the ml in one bar (0.1 shows 0,15 ml as "0,15 ml (1,5 bars)").
   -- Delete the rows you do not need; add more with the same shape.
-  insert into public.item (dog_id, kind, name, colour, default_day_part, active_from, active_to, hidden_by_default, position)
+  insert into public.item (dog_id, kind, name, colour, default_day_part, active_from, active_to, hidden_by_default,
+                           position, default_unit, flavours, conversion_unit, conversion_size)
   values
-    (new_dog, 'food',       '<FOOD NAME>',       'food-cooked', 2, start_date, null, false, 10),
-    (new_dog, 'food',       '<FOOD NAME>',       'food-farm',   4, start_date, null, false, 20),
-    (new_dog, 'medication', '<MEDICATION NAME>', 'med-arvelin', 2, start_date, null, false, 30),
-    (new_dog, 'treat',      '<TREAT NAME>',      'treat',       6, start_date, null, true,  90);
+    (new_dog, 'food',       '<FOOD NAME>',       'food-cooked', 2, start_date, null, false, 10, 'tray',  '{}',                      null, null),
+    (new_dog, 'food',       '<FOOD NAME>',       'food-farm',   4, start_date, null, false, 20, 'can',   '{<FLAVOUR>,<FLAVOUR>}',   null, null),
+    (new_dog, 'medication', '<MEDICATION NAME>', 'med-arvelin', 2, start_date, null, false, 30, 'pill',  '{}',                      null, null),
+    (new_dog, 'treat',      '<TREAT NAME>',      'treat',       6, start_date, null, true,  90, 'piece', '{}',                      null, null);
 
-  if exists (select 1 from public.item where dog_id = new_dog and name like '<%') then
+  if exists (select 1 from public.item where dog_id = new_dog and (name like '<%' or array_to_string(flavours, ',') like '%<%')) then
     raise exception 'Fill in or delete the placeholder item rows before running this script.';
   end if;
 
-  -- The plan: one schedule slot per item in its default day part, dose left empty.
-  -- An item given in several day parts, or with a usual dose, gets extra rows or an update here:
-  --   insert into public.schedule_slot (dog_id, item_id, day_part, dose_text, active_from)
-  --   select dog_id, id, 6, '<DOSE>', active_from from public.item where dog_id = new_dog and name = '<NAME>';
-  insert into public.schedule_slot (dog_id, item_id, day_part, dose_text, active_from, active_to)
-  select dog_id, id, default_day_part, '', active_from, active_to from public.item where dog_id = new_dog;
+  -- The usual day: one schedule slot per item in its default day part, 1 of its unit, no flavour.
+  -- Adjust it afterwards in the app (Menu > Usual day), or here before running, for example
+  -- an item given in another part too, with its usual amount and flavour:
+  --   insert into public.schedule_slot (dog_id, item_id, day_part, flavour, amount, unit, active_from)
+  --   select dog_id, id, 6, '<FLAVOUR>', 0.25, 'can', active_from from public.item where dog_id = new_dog and name = '<NAME>';
+  insert into public.schedule_slot (dog_id, item_id, day_part, flavour, amount, unit, active_from, active_to, position)
+  select dog_id, id, default_day_part, '', 1, default_unit, active_from, active_to, position
+  from public.item where dog_id = new_dog;
+
+  -- Usual times of the day parts. Without rows the app uses 07:00, 07:30, 12:00, 15:00, 18:00,
+  -- 20:00 and 22:00; they can be changed in the app (Menu > Day parts). To set them here:
+  --   insert into public.day_part (dog_id, part, usual_time) values (new_dog, 2, '<HH:MM>');
 
   raise notice 'Created household %, dog %, % members, % items, % schedule slots.',
     new_household, new_dog, added, (select count(*) from public.item where dog_id = new_dog),

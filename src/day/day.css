@@ -31,6 +31,7 @@
 .day-btn:active { opacity: 0.55; }
 .day-btn--back {
   gap: var(--space-1);
+  white-space: nowrap;
   padding: 0 var(--space-4) 0 10px;
   font: var(--type-button-weight) var(--type-button-size) / var(--type-button-line) var(--type-button-family);
 }
@@ -95,9 +96,41 @@
 .day-card__head .event-badge { flex: none; }
 .day-card__text { margin: 6px 0 0; color: var(--color-ink-2); font: var(--type-body-weight) var(--type-body-size) / var(--type-body-line) var(--type-body-family); }
 .day-card__rows { margin: 0; }
-.day-card__row { display: flex; justify-content: space-between; gap: var(--space-3); margin-top: var(--space-2); }
-.day-card__row dt { font: var(--type-body-strong-weight) var(--type-body-strong-size) / var(--type-body-strong-line) var(--type-body-strong-family); }
-.day-card__row dd { margin: 0; min-width: 0; text-align: right; color: var(--color-ink-2); overflow-wrap: anywhere; }
+.day-card__rows { margin: var(--space-1) 0 0; padding: 0; list-style: none; }
+.day-card__rows li + li { border-top: 1px solid var(--color-line); }
+.day-card__row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  min-height: 44px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--color-ink);
+  font: var(--type-body-weight) var(--type-body-size) / var(--type-body-line) var(--type-body-family);
+  text-align: left;
+  cursor: pointer;
+}
+.day-card__row:active { opacity: 0.6; }
+.day-card__row-label { font: var(--type-body-strong-weight) var(--type-body-strong-size) / var(--type-body-strong-line) var(--type-body-strong-family); }
+.day-card__row-value { min-width: 0; text-align: right; color: var(--color-ink-2); overflow-wrap: anywhere; }
+/* A card that opens its event: a full-width button with the Card look. */
+.day-card--tap { display: block; width: 100%; color: var(--color-ink); font: inherit; text-align: left; cursor: pointer; }
+.day-card--tap:active { opacity: 0.6; }
+.day-card--tap .day-card__text { display: block; }
+.day-card__glyph { flex: none; width: 18px; height: 18px; display: inline-flex; align-items: center; justify-content: center; color: var(--color-ink-2); }
+.day-card__chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 9px; }
+.day-card__chip {
+  padding: 3px 9px;
+  border: 1px solid var(--color-mint-line);
+  border-radius: var(--radius-sm);
+  background: var(--color-mint-bg);
+  color: var(--color-mint-deep);
+  font: 600 12px / 16px var(--type-body-family);
+}
 
 /* ---------- Empty day ---------- */
 .day-empty { display: flex; gap: var(--space-3); align-items: flex-start; padding: 14px; background: var(--color-surface-tint); }
@@ -115,38 +148,112 @@
 }
 .day-empty__text { margin: 0; color: var(--color-ink-2); }
 
+/* ---------- Fill banner (the "no data" card pattern) ---------- */
+.day-fill { display: flex; gap: var(--space-3); align-items: flex-start; margin-top: var(--space-3); padding: 14px; border-color: var(--color-mint-line); background: var(--color-mint-bg); box-shadow: none; }
+.day-fill__icon {
+  flex: none;
+  width: 30px;
+  height: 30px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--color-mint-line);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  color: var(--color-mint-deep);
+}
+.day-fill__text { flex: 1; min-width: 0; }
+.day-fill__head { margin: 0; font: 600 14px / 20px var(--type-body-family); }
+.day-fill__hint { margin: 2px 0 0; color: var(--color-ink-2); font: var(--type-body-weight) 13px / 18px var(--type-body-family); }
+.day-fill__btn { width: 100%; margin-top: 10px; white-space: normal; }
+
+/* ---------- Section caption with the Usual day link ---------- */
+.day__section { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); }
+.day__section .day__caption { flex: 1; min-width: 0; }
+.day__link {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  min-height: 44px;
+  margin: 6px calc(-1 * var(--space-1)) -2px 0;
+  padding: 0 var(--space-1);
+  border: 0;
+  background: transparent;
+  color: var(--color-mint-deep);
+  font: 600 12px / 16px var(--type-body-family);
+  cursor: pointer;
+}
+
 /* ---------- Day parts ---------- */
 .day-parts { padding: 0; overflow: hidden; list-style: none; }
 .day-part {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  padding: var(--space-2) var(--space-3);
+  padding: var(--space-1) var(--space-1) var(--space-2) var(--space-3);
   border-bottom: 1px solid var(--color-line);
   background: var(--color-surface);
 }
 .day-part:last-child { border-bottom: 0; }
 .day-part--meal { background: linear-gradient(var(--color-meal-column), var(--color-meal-column)), var(--color-surface); }
-.day-part__icon { flex: none; width: 26px; height: 26px; margin-top: 9px; display: flex; align-items: center; justify-content: center; color: var(--color-ink-2); }
+/* Icon, name and + share one 44px row, so the name is centred on the icon. */
+.day-part__head { display: flex; align-items: center; gap: 10px; min-height: 44px; }
+.day-part__icon { flex: none; width: 26px; height: 26px; display: flex; align-items: center; justify-content: center; color: var(--color-ink-2); }
 .day-part__dot { width: 6px; height: 6px; border-radius: var(--radius-full); background: var(--color-line-strong); }
 .day-part__dot--any { background: var(--color-ink-3); }
-.day-part__main { flex: 1; min-width: 0; padding-top: var(--space-1); }
 .day-part__name {
+  flex: 1;
+  min-width: 0;
   margin: 0;
   color: var(--color-ink-3);
-  font: var(--type-caption-weight) var(--type-caption-size) / 18px var(--type-caption-family);
+  font: var(--type-caption-weight) var(--type-caption-size) / 16px var(--type-caption-family);
   letter-spacing: var(--type-caption-tracking);
   text-transform: uppercase;
 }
-.day-part__items { margin: 0; padding: 0; list-style: none; }
-.day-part__none { margin: 0; min-height: 22px; color: var(--color-ink-3); font: var(--type-small-weight) var(--type-small-size) / 22px var(--type-small-family); }
+.day-part__time { font-weight: 500; letter-spacing: 0; text-transform: none; }
+.day-part__items { margin: 0; padding: 0 0 0 36px; list-style: none; }
+.day-part__none { margin: 0 0 0 36px; min-height: 22px; color: var(--color-ink-3); font: var(--type-small-weight) var(--type-small-size) / 22px var(--type-small-family); }
 
-.day-item { display: flex; align-items: center; flex-wrap: wrap; column-gap: 9px; row-gap: 2px; min-height: 28px; }
+.part-add { flex: none; width: 44px; height: 44px; margin: 0; padding: 0; display: flex; align-items: center; justify-content: center; border: 0; border-radius: var(--radius-md); background: transparent; cursor: pointer; }
+.part-add span {
+  width: 26px;
+  height: 26px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--color-mint-line);
+  border-radius: var(--radius-md);
+  background: var(--color-mint-bg);
+  color: var(--color-mint-deep);
+}
+.part-add:active { opacity: 0.55; }
+
+.day-item { display: flex; align-items: center; gap: 6px; min-height: 44px; padding-right: var(--space-1); }
+.day-item__open {
+  flex: 1;
+  min-width: 0;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--color-ink);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.day-item__open:active { opacity: 0.6; }
 .day-item__mark { flex: none; width: 18px; height: 18px; display: flex; align-items: center; justify-content: center; }
-.day-item__text { flex: 0 1 auto; min-width: 0; overflow-wrap: anywhere; }
+.day-item__text { flex: 1; min-width: 0; overflow-wrap: anywhere; }
 .day-item__name { font: var(--type-body-strong-weight) var(--type-body-strong-size) / 18px var(--type-body-strong-family); }
 .day-item__dose { color: var(--color-ink-3); }
-.day-item--skipped .day-item__text { text-decoration: line-through; }
+.day-item__sub { display: block; color: var(--color-ink-3); font: var(--type-body-weight) 12px / 15px var(--type-body-family); }
+.day-item--skipped .day-item__name, .day-item--skipped .day-item__dose { text-decoration: line-through; }
+.day-item--planned .day-item__name { color: var(--color-ink-2); }
+.day-item--all { justify-content: flex-start; }
+.day-give { flex: none; height: 28px; padding: 0 10px 0 var(--space-2); font-size: 13px; }
 .day-tag {
   flex: none;
   padding: 1px 7px;
@@ -157,3 +264,17 @@
 }
 .day-tag--skipped { background: var(--color-badge-sym-top); border-color: var(--color-badge-sym-line); color: var(--color-badge-sym-ink); }
 .day-tag--partial { background: var(--color-badge-worm-top); border-color: var(--color-badge-worm-line); color: var(--color-badge-worm-ink); }
+
+/* ---------- Usual day screen ---------- */
+.usual__head { flex: none; padding: var(--space-3) 18px 10px; }
+.usual__asof {
+  margin: 0;
+  color: var(--color-mint-deep);
+  font: var(--type-caption-weight) var(--type-caption-size) / var(--type-caption-line) var(--type-caption-family);
+  letter-spacing: var(--type-caption-tracking);
+  text-transform: uppercase;
+}
+.usual__title { margin: 2px 0 0; font: 600 28px / 32px var(--type-title-family); letter-spacing: var(--type-title-tracking); }
+.usual__hint { margin: 6px 0 0; color: var(--color-ink-3); font: var(--type-body-weight) 13px / 18px var(--type-body-family); }
+.usual__parts { margin-top: var(--space-3); }
+

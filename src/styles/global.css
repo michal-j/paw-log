@@ -7,6 +7,7 @@ body {
   font: var(--type-body-weight) var(--type-body-size) / var(--type-body-line) var(--type-body-family);
 }
 .app {
+  position: relative;
   max-width: 560px;
   height: 100dvh;
   margin: 0 auto;

@@ -14,6 +14,11 @@ export function translate(lang: Lang, key: string): string {
   return all[lang][key] ?? all.en[key] ?? key;
 }
 
+/** Fill `{name}` placeholders: fill('Usual: {x}', { x: '½ can' }). Unknown placeholders stay as written. */
+export function fill(template: string, vars: Record<string, string | number>): string {
+  return template.replace(/\{(\w+)\}/g, (m, k: string) => (k in vars ? String(vars[k]) : m));
+}
+
 export function detectLang(saved: string | null, navigatorLang: string | undefined): Lang {
   if (saved === 'en' || saved === 'pl') return saved;
   return navigatorLang?.toLowerCase().startsWith('pl') ? 'pl' : 'en';
