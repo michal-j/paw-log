@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import type { DayPartTimes, Entry, ScheduleSlot } from '../src/data';
 import { DEFAULT_DAY_PART_TIMES } from '../src/data/repository';
-import { changeFrom, courseDay, dueOpenSlots, matchDay, partDue, plannedEntry, removeFrom, usualDay } from '../src/log/plan';
+import { backfillDays, changeFrom, courseDay, dueOpenSlots, matchDay, partDue, plannedEntry, removeFrom, slotsAfter, usualDay } from '../src/log/plan';
+import { logStartOf } from '../src/timeline/model';
+import type { RemovedSlot } from '../src/data';
 import { buildDay } from '../src/day/model';
 import { symptomDetail, symptomKey } from '../src/log/symptoms';
 import { translate, type MessageKey } from '../src/i18n';
@@ -150,3 +152,69 @@ describe('symptoms', () => {
     expect(symptomDetail({ ...base, title: 'Fear', detail: 'thunder', intensity: 'large' }, en)).toBe('a lot · thunder');
   });
 });
+
+describe('removed for the day (JCB-43, 13)', () => {
+  const slots = [slot('a', 1, 'arvelin'), slot('c', 2, 'cooked')];
+  const marker: RemovedSlot = { id: 'm', dogId: 'd', date: '2026-10-10', dayPart: 2, itemId: 'cooked', scheduleSlotId: 'c' };
+
+  it('a removed slot counts as filled: not open, not due, but reported as removed', () => {
+    const m = matchDay('2026-10-10', slots, [], [marker]);
+    expect(m.filled.has('c')).toBe(true);
+    expect(m.removed.get('c')?.id).toBe('m');
+    const clock = { today: '2026-10-15', now: '10:00', times };
+    expect(dueOpenSlots('2026-10-10', slots, [], clock, [marker]).map((s) => s.id)).toEqual(['a']);
+    expect(dueOpenSlots('2026-10-11', slots, [], clock, [marker]).map((s) => s.id)).toEqual(['a', 'c']);
+  });
+
+  it('the Day view shows it as a removed row, not a planned one', () => {
+    const day = buildDay({
+      date: '2026-10-10',
+      bounds: { first: '2026-10-01', last: '2026-10-15' },
+      items: [],
+      entries: [],
+      events: [],
+      plan: { slots, removed: [marker], today: '2026-10-15', now: '10:00', times },
+    });
+    const breakfast = day.parts.find((p) => p.part === 2);
+    expect(breakfast?.rows.map((r) => r.kind)).toEqual(['removed']);
+    expect(breakfast?.due).toEqual([]);
+  });
+});
+
+describe('logging past days for a usual-day change (JCB-43, 10)', () => {
+  it('lists the open past days from the start to yesterday, leaving logged and removed days out', () => {
+    const s = slot('n', 6, 'arvelin', '2026-10-10');
+    const entries = [entry('x', '2026-10-11', 6, 'arvelin', 'n'), entry('y', '2026-10-12', 6, 'arvelin')]; // by id, by item and part
+    const removed: RemovedSlot[] = [{ id: 'r', dogId: 'd', date: '2026-10-13', dayPart: 6, itemId: 'arvelin', scheduleSlotId: 'n' }];
+    expect(backfillDays(s, [s], entries, removed, '2026-10-15')).toEqual({ days: ['2026-10-10', '2026-10-14'], total: 5 });
+  });
+
+  it('stops at the end of a course, and has nothing for a start of today', () => {
+    expect(backfillDays(slot('n', 6, 'a', '2026-10-10', '2026-10-11'), [], [], [], '2026-10-15').days).toEqual(['2026-10-10', '2026-10-11']);
+    expect(backfillDays(slot('n', 6, 'a', '2026-10-15'), [], [], [], '2026-10-15')).toEqual({ days: [], total: 0 });
+  });
+
+  it('slotsAfter applies a change to the list', () => {
+    const a = slot('a', 1, 'x');
+    const b = slot('b', 2, 'y');
+    expect(slotsAfter([a, b], { save: [{ ...a, amount: 2 }, slot('c', 3, 'z')], remove: ['b'] }).map((s) => [s.id, s.amount])).toEqual([
+      ['a', 2],
+      ['c', 1],
+    ]);
+  });
+});
+
+describe('log start (JCB-43, 12)', () => {
+  const base = { today: '2026-10-15', setting: null, entries: [], events: [], slotStarts: [] };
+  it('defaults to the earliest record or usual-day start, else a year back', () => {
+    expect(logStartOf(base)).toBe('2025-10-15');
+    expect(logStartOf({ ...base, slotStarts: ['2026-10-01', '2026-09-20'] })).toBe('2026-09-20');
+    expect(logStartOf({ ...base, slotStarts: ['2026-10-01'], entries: [{ date: '2026-09-25' }] })).toBe('2026-09-25');
+  });
+  it('the setting wins, but never hides a record and never passes today', () => {
+    expect(logStartOf({ ...base, setting: '2026-01-01', slotStarts: ['2026-10-01'] })).toBe('2026-01-01');
+    expect(logStartOf({ ...base, setting: '2026-10-05', entries: [{ date: '2026-10-01' }] })).toBe('2026-10-01');
+    expect(logStartOf({ ...base, slotStarts: ['2026-11-01'] })).toBe('2026-10-15');
+  });
+});
+

@@ -5,6 +5,7 @@ import { useI18n } from './i18n';
 import { Brand } from './components/Brand';
 import { MenuIcon, PlusIcon, TimelineIcon } from './components/icons';
 import { AddSheet } from './log/AddSheet';
+import { BackfillSheet } from './log/BackfillSheet';
 import { EntrySheet } from './log/EntrySheet';
 import { EventSheet } from './log/EventSheet';
 import { LogProvider, useLog } from './log/LogProvider';
@@ -13,6 +14,7 @@ import { SlotSheet } from './log/SlotSheet';
 import { dayPath, parseRoute, routePath, timelinePath, usualPath, type Route } from './routes';
 import { Timeline } from './timeline/Timeline';
 import { UsualDay } from './usual/UsualDay';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import './components/controls.css';
 
 /** What PawLog keeps in `history.state`. */
@@ -45,16 +47,18 @@ function readLocation(): Location {
  */
 export function App({ repository, onSignOut }: { repository: Repository; onSignOut?: () => void }) {
   return (
-    <LogProvider repository={repository}>
-      <Shell repository={repository} onSignOut={onSignOut} />
-    </LogProvider>
+    <ErrorBoundary>
+      <LogProvider repository={repository}>
+        <Shell repository={repository} onSignOut={onSignOut} />
+      </LogProvider>
+    </ErrorBoundary>
   );
 }
 
 function Shell({ repository, onSignOut }: { repository: Repository; onSignOut?: () => void }) {
   const { t } = useI18n();
   const log = useLog();
-  const { version, open, close, reload } = log;
+  const { open, close, reload } = log;
   const isDemo = repository instanceof DemoRepository;
   const [loc, setLoc] = useState<Location>(readLocation);
   const { route } = loc;
@@ -160,7 +164,7 @@ function Shell({ repository, onSignOut }: { repository: Repository; onSignOut?: 
       ) : route.view === 'usual' ? (
         <UsualDay date={route.date ?? today} onBack={leaveUsual} />
       ) : (
-        <Timeline repository={repository} version={version} initialScrollTop={loc.scrollTop} dayHref={dayHref} onOpenDay={openDay} />
+        <Timeline initialScrollTop={loc.scrollTop} dayHref={dayHref} onOpenDay={openDay} />
       )}
       <nav className="nav" aria-label={t('menu')}>
         <button
@@ -200,13 +204,15 @@ function SheetHost({
   if (!sheet) return null;
   switch (sheet.kind) {
     case 'add':
-      return <AddSheet key={`add-${sheet.date}-${sheet.part ?? 0}`} date={sheet.date} part={sheet.part} />;
+      return <AddSheet key={`add-${sheet.date}-${sheet.part ?? 0}`} date={sheet.date} part={sheet.part} usual={sheet.usual} />;
     case 'entry':
       return <EntrySheet key={sheet.entry?.id ?? sheet.slot?.id ?? 'new'} {...sheet} onShowDay={onShowDay} />;
     case 'event':
       return <EventSheet key={sheet.event?.id ?? sheet.type} kind={sheet.type} date={sheet.date} event={sheet.event} ctxOpen={sheet.ctxOpen} onShowDay={onShowDay} />;
     case 'slot':
-      return <SlotSheet key={sheet.slot?.id ?? `new-${sheet.part}`} date={sheet.date} part={sheet.part} slot={sheet.slot} />;
+      return <SlotSheet key={sheet.slot?.id ?? `new-${sheet.part}`} date={sheet.date} part={sheet.part} slot={sheet.slot} group={sheet.group} />;
+    case 'backfill':
+      return <BackfillSheet key={`backfill-${sheet.slot.id}`} slot={sheet.slot} />;
     case 'menu':
       return <MenuSheet onUsualDay={onUsualDay} onSignOut={onSignOut} onResetDemo={onResetDemo} />;
   }

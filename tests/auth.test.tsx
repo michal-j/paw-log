@@ -46,7 +46,18 @@ describe('Supabase client', () => {
     createSupabaseClient({ url: 'https://abc.supabase.co', anonKey: 'k' });
     expect(createClient).toHaveBeenCalledWith('https://abc.supabase.co', 'k', {
       auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: false, storageKey: AUTH_STORAGE_KEY },
+      global: { fetch: expect.any(Function) },
     });
+  });
+
+  it('reads past the HTTP cache, so a reload after a write sees it (JCB-43)', async () => {
+    const { createSupabaseClient } = await import('../src/auth/supabaseClient');
+    createSupabaseClient({ url: 'https://abc.supabase.co', anonKey: 'k' });
+    const options = vi.mocked(createClient).mock.calls.at(-1)?.[2] as { global: { fetch: typeof fetch } };
+    const spy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response('[]'));
+    await options.global.fetch('https://abc.supabase.co/rest/v1/entry', { method: 'GET' });
+    expect(spy).toHaveBeenCalledWith('https://abc.supabase.co/rest/v1/entry', { method: 'GET', cache: 'no-store' });
+    spy.mockRestore();
   });
 });
 

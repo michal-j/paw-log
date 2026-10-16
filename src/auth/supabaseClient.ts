@@ -17,5 +17,7 @@ export function createSupabaseClient(config: SupabaseConfig): SupabaseClient {
       detectSessionInUrl: false, // sign-in is by password, never by a link back to the app
       storageKey: AUTH_STORAGE_KEY,
     },
+    // Never answer a read from the HTTP cache: after a write the app reloads and must see it.
+    global: { fetch: (input, init) => fetch(input, { ...init, cache: 'no-store' }) },
   });
 }

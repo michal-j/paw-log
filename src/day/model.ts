@@ -1,6 +1,6 @@
 // Pure derivation of the Day view from repository data: day parts, entries, events, prev/next bounds.
 // No React, no I/O: unit-tested in tests/day.test.ts.
-import type { DayPart, DayPartTimes, Entry, EntryState, EventType, HealthEvent, Item, PlainDate, ScheduleSlot, Unit } from '../data';
+import type { DayPart, DayPartTimes, Entry, EntryState, EventType, HealthEvent, Item, PlainDate, RemovedSlot, ScheduleSlot, Unit } from '../data';
 import { courseDay, matchDay, partDue, slotsOn } from '../log/plan';
 import { DAY_PARTS, MEAL_PARTS, markSize, parseDate, recordsStart, shiftDate, toIso, type BadgeKind, type MarkSize } from '../timeline/model';
 
@@ -14,15 +14,17 @@ export function isPlainDate(s: string): s is PlainDate {
 // ---------- Bounds and stepping ----------
 
 export interface DayBounds {
-  /** The first date anything was recorded. */
+  /** The log start: the first date anything was recorded, or the "Log starts on" day when earlier. */
   first: PlainDate;
   /** Today in the household timezone: the Day view never goes past it. */
   last: PlainDate;
 }
 
-export function dayBounds(today: PlainDate, entries: Entry[], events: HealthEvent[]): DayBounds {
+/** From the first record (or `start`, the log start, when earlier) to today. */
+export function dayBounds(today: PlainDate, entries: Entry[], events: HealthEvent[], start?: PlainDate): DayBounds {
   const past = (x: { date: PlainDate }) => x.date <= today;
-  return { first: recordsStart(today, entries.filter(past), events.filter(past)), last: today };
+  const first = recordsStart(today, entries.filter(past), events.filter(past));
+  return { first: start && start < first ? start : first, last: today };
 }
 
 export const inBounds = (date: PlainDate, b: DayBounds) => date >= b.first && date <= b.last;
@@ -72,7 +74,12 @@ export interface PlannedRow {
   due: boolean;
 }
 
-export type DayRow = ({ kind: 'logged' } & DayEntry) | ({ kind: 'planned' } & PlannedRow);
+/** A usual-day item removed for this day (its entry was deleted): shown quietly, never filled again. */
+export interface RemovedRow extends Omit<PlannedRow, 'due'> {
+  marker: RemovedSlot;
+}
+
+export type DayRow = ({ kind: 'logged' } & DayEntry) | ({ kind: 'planned' } & PlannedRow) | ({ kind: 'removed' } & RemovedRow);
 
 export interface DayPartGroup {
   part: DayPart;
@@ -88,6 +95,8 @@ export interface DayPartGroup {
 /** What decides "planned" and "due": the usual day and the clock. Without it, a day shows only what was logged. */
 export interface PlanInput {
   slots: ScheduleSlot[];
+  /** Usual-day items removed for a day. */
+  removed?: RemovedSlot[];
   today: PlainDate;
   now: string;
   times: DayPartTimes;
@@ -111,7 +120,7 @@ export function groupDayParts(date: PlainDate, items: Item[], entries: Entry[], 
     };
   };
   const slots = plan?.slots ?? [];
-  const { slotOf, filled } = matchDay(date, slots, entries);
+  const { slotOf, filled, removed } = matchDay(date, slots, entries, plan?.removed ?? []);
   const toDayEntry = (e: Entry): DayEntry => {
     const slot = slotOf.get(e.id) ?? null;
     return {
@@ -129,7 +138,7 @@ export function groupDayParts(date: PlainDate, items: Item[], entries: Entry[], 
       slot,
     };
   };
-  const toPlanned = (s: ScheduleSlot): PlannedRow => ({
+  const toSlotRow = (s: ScheduleSlot): Omit<PlannedRow, 'due'> => ({
     id: s.id,
     itemId: s.itemId,
     ...look(s.itemId),
@@ -138,6 +147,9 @@ export function groupDayParts(date: PlainDate, items: Item[], entries: Entry[], 
     flavour: s.flavour,
     course: courseDay(s, date),
     slot: s,
+  });
+  const toPlanned = (s: ScheduleSlot): PlannedRow => ({
+    ...toSlotRow(s),
     due: plan ? partDue(date, s.dayPart, plan.today, plan.now, plan.times) : false,
   });
   const compare = (a: { size: MarkSize; itemId: string; id: string }, b: { size: MarkSize; itemId: string; id: string }) =>
@@ -146,13 +158,19 @@ export function groupDayParts(date: PlainDate, items: Item[], entries: Entry[], 
     a.id.localeCompare(b.id);
   const day = entries.filter((e) => e.date === date);
   // Planned rows only up to today: the Day view never shows the future.
-  const open = plan && date <= plan.today ? slotsOn(slots, date).filter((s) => !filled.has(s.id)) : [];
+  const shown = plan && date <= plan.today ? slotsOn(slots, date) : [];
+  const open = shown.filter((s) => !filled.has(s.id));
+  const gone = shown.filter((s) => removed.has(s.id));
   return DAY_PARTS.map((part) => {
     const logged = day.filter((e) => e.dayPart === part).map(toDayEntry).sort(compare);
     const planned = open.filter((s) => s.dayPart === part).map(toPlanned);
+    const removedRows = gone
+      .filter((s) => s.dayPart === part)
+      .map((s): RemovedRow => ({ ...toSlotRow(s), marker: removed.get(s.id) as RemovedSlot }));
     const rows: DayRow[] = [
       ...logged.map((e) => ({ kind: 'logged' as const, ...e })),
       ...planned.map((p) => ({ kind: 'planned' as const, ...p })),
+      ...removedRows.map((r) => ({ kind: 'removed' as const, ...r })),
     ].sort(compare);
     return { part, meal: MEAL_PARTS.has(part), entries: logged, rows, due: planned.filter((p) => p.due) };
   });

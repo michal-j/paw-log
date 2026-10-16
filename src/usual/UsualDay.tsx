@@ -60,7 +60,7 @@ export function UsualDay({ date, onBack }: { date: PlainDate; onBack: () => void
                   type="button"
                   className="part-add"
                   aria-label={`${t('addAria')}${f.part(part)}`}
-                  onClick={() => open({ kind: 'slot', date, part })}
+                  onClick={() => open({ kind: 'add', date, part, usual: true })}
                 >
                   <span>
                     <PlusIcon />

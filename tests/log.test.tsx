@@ -109,8 +109,9 @@ describe('add and edit', () => {
     click(/^Add$/);
     fireEvent.click(within(dialog()).getByText('Food'));
     expect(within(dialog()).getByText('For Thu 15 Oct · Dinner')).toBeTruthy();
-    click('Save');
-    expect(await within(dialog()).findByText('Pick a food.')).toBeTruthy();
+    // A new form starts from the last food logged (JCB-43, 9).
+    const foods = within(dialog()).getByRole('radiogroup', { name: 'Food' });
+    expect(within(foods).getAllByRole('radio').filter((r) => r.getAttribute('aria-checked') === 'true')).toHaveLength(1);
     fireEvent.click(within(dialog()).getByRole('radio', { name: 'Farm Fresh' }));
     fireEvent.click(within(dialog()).getByRole('radio', { name: 'chicken' }));
     fireEvent.click(within(dialog()).getByRole('radio', { name: '½' }));
@@ -232,12 +233,18 @@ describe('usual day and menu', () => {
     expect(await screen.findByText('Up to now: 1 not logged (07:45)')).toBeTruthy();
     click('Menu');
     const breakfast = within(dialog()).getByLabelText('Breakfast') as HTMLInputElement;
-    fireEvent.change(breakfast, { target: { value: '08:00' } }); // saved on change, no blur needed
+    // Saved on commit (blur, Enter, picker closed), not per keystroke (JCB-43, 1 and 5).
+    fireEvent.change(breakfast, { target: { value: '00:00' } });
+    fireEvent.change(breakfast, { target: { value: '08:00' } });
+    expect(breakfast.value).toBe('08:00');
+    expect((await repo.getDayPartTimes())[2]).toBe('07:30');
+    fireEvent.blur(breakfast);
     expect(await screen.findByText('Saved')).toBeTruthy();
     expect((await repo.getDayPartTimes())[2]).toBe('08:00');
     click('Undo');
     await waitFor(() => expect(breakfast.value).toBe('07:30')); // the field follows the Undo
     fireEvent.change(breakfast, { target: { value: '08:00' } });
+    fireEvent.keyDown(breakfast, { key: 'Enter' });
     expect(await screen.findByText('Saved')).toBeTruthy();
     click('Close');
     await waitFor(() => expect(screen.queryByText(/Up to now/)).toBeNull());

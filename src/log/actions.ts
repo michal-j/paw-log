@@ -1,5 +1,6 @@
 // Writes through the repository, each returning how to undo it. The UI shows the Undo toast.
-import type { Entry, HealthEvent, Repository, ScheduleSlot } from '../data';
+import type { Entry, HealthEvent, RemovedSlot, Repository, ScheduleSlot } from '../data';
+import { DuplicateSlotEntryError } from '../data/errors';
 import type { SlotChange } from './plan';
 
 export type Undo = () => Promise<void>;
@@ -13,12 +14,31 @@ export const undoAll =
     for (const u of [...undos].reverse()) await u();
   };
 
-export async function saveEntry(repo: Repository, next: Entry, prev: Entry | null): Promise<Undo> {
+/**
+ * Save an entry: an edit updates its row in place (same id). Logging a slot that was removed for the
+ * day (`replaces`) takes the marker's id, and Undo puts the marker back.
+ */
+export async function saveEntry(repo: Repository, next: Entry, prev: Entry | null, replaces?: RemovedSlot | null): Promise<Undo> {
   await repo.saveEntry(next);
-  return prev ? () => repo.saveEntry(prev) : () => repo.deleteEntry(next.id);
+  if (prev) return () => repo.saveEntry(prev);
+  if (replaces) return () => repo.removeFromDay(next, replaces.scheduleSlotId);
+  return () => repo.deleteEntry(next.id);
 }
 
-export async function deleteEntry(repo: Repository, entry: Entry): Promise<Undo> {
+/**
+ * Delete an entry. One that filled a usual-day slot (`slot`) leaves that slot removed for the day,
+ * so it is not offered as "not logged" again or filled by Fill. Undo brings the entry back.
+ */
+export async function deleteEntry(repo: Repository, entry: Entry, slot: ScheduleSlot | null = null): Promise<Undo> {
+  if (slot) {
+    try {
+      await repo.removeFromDay(entry, slot.id);
+      return () => repo.saveEntry(entry);
+    } catch (err) {
+      // Someone else's entry fills that slot already: then this one is simply an extra, delete it.
+      if (!(err instanceof DuplicateSlotEntryError)) throw err;
+    }
+  }
   await repo.deleteEntry(entry.id);
   return () => repo.saveEntry(entry);
 }

@@ -4,7 +4,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(64);
+select plan(72);
 
 -- Fixtures (as the postgres role, which bypasses RLS, like the bootstrap SQL).
 -- Household A: users a1, a2, dog A. Household B: user b1, dog B. User c belongs to no household.
@@ -34,6 +34,8 @@ insert into public.entry (id, dog_id, date, day_part, item_id, dose_text, state)
   ('40000000-0000-4000-8000-00000000000b', '20000000-0000-4000-8000-00000000000b', '2026-10-01', 4, '30000000-0000-4000-8000-00000000000b', '1 tray', 'given');
 insert into public.day_part (dog_id, part, usual_time) values
   ('20000000-0000-4000-8000-00000000000b', 2, '08:00');
+insert into public.dog_settings (dog_id, log_start) values
+  ('20000000-0000-4000-8000-00000000000b', '2026-01-01');
 insert into public.event (id, dog_id, date, type, title) values
   ('50000000-0000-4000-8000-00000000000a', '20000000-0000-4000-8000-00000000000a', '2026-10-02', 'vet', 'Check-up A'),
   ('50000000-0000-4000-8000-00000000000b', '20000000-0000-4000-8000-00000000000b', '2026-10-02', 'vet', 'Check-up B');
@@ -49,6 +51,7 @@ select throws_ok('select * from public.entry', '42501', null, 'anon cannot read 
 select throws_ok('select * from public.schedule_slot', '42501', null, 'anon cannot read schedule_slot');
 select throws_ok('select * from public.event', '42501', null, 'anon cannot read event');
 select throws_ok('select * from public.day_part', '42501', null, 'anon cannot read day_part');
+select throws_ok('select * from public.dog_settings', '42501', null, 'anon cannot read dog_settings');
 select throws_ok(
   $$insert into public.entry (dog_id, date, day_part, item_id, state)
     values ('20000000-0000-4000-8000-00000000000a', '2026-10-03', 1, '30000000-0000-4000-8000-00000000000a', 'given')$$,
@@ -198,6 +201,31 @@ select is((select schedule_slot_id from public.entry where id = '40000000-0000-4
 select is((select dog_id from public.entry where id = '40000000-0000-4000-8000-0000000000a5'),
   '20000000-0000-4000-8000-00000000000a'::uuid, 'and keep their dog');
 
+-- 3d. JCB-43: a usual-day item removed for a day, and the log start setting.
+select lives_ok(
+  $$insert into public.entry (id, dog_id, date, day_part, item_id, schedule_slot_id, state)
+    values ('40000000-0000-4000-8000-0000000000a6', '20000000-0000-4000-8000-00000000000a', '2026-10-08', 4,
+            '30000000-0000-4000-8000-00000000000a', '60000000-0000-4000-8000-00000000000a', 'removed')$$,
+  'an entry can be a removal marker for its slot');
+select throws_ok(
+  $$insert into public.entry (dog_id, date, day_part, item_id, schedule_slot_id, state)
+    values ('20000000-0000-4000-8000-00000000000a', '2026-10-08', 4,
+            '30000000-0000-4000-8000-00000000000a', '60000000-0000-4000-8000-00000000000a', 'given')$$,
+  '23505', null, 'a removed slot is not filled again that day');
+select throws_ok(
+  $$insert into public.entry (dog_id, date, day_part, item_id, state)
+    values ('20000000-0000-4000-8000-00000000000a', '2026-10-08', 4, '30000000-0000-4000-8000-00000000000a', 'lost')$$,
+  '23514', null, 'state is given, skipped, partial or removed');
+select lives_ok(
+  $$insert into public.dog_settings (dog_id, log_start) values ('20000000-0000-4000-8000-00000000000a', '2026-09-01')
+    on conflict (dog_id) do update set log_start = excluded.log_start$$,
+  'a1 can set the log start of dog A');
+select throws_ok(
+  $$insert into public.dog_settings (dog_id, log_start) values ('20000000-0000-4000-8000-00000000000b', '2026-09-01')$$,
+  '42501', null, 'a1 cannot set the log start of dog B');
+update public.dog_settings set log_start = '2020-01-01' where dog_id = '20000000-0000-4000-8000-00000000000b';
+select is((select count(*)::int from public.dog_settings), 1, 'a1 sees only the settings of dog A');
+
 -- 4. Nobody can grant themselves access: households, members and dogs are read-only.
 select throws_ok(
   $$insert into public.member (household_id, user_id)
@@ -215,7 +243,7 @@ reset role;
 -- 5. The other member of household A sees and edits a1's records.
 set local role authenticated;
 select set_config('request.jwt.claims', '{"sub":"00000000-0000-4000-8000-0000000000a2","role":"authenticated"}', true);
-select is((select count(*)::int from public.entry), 7, 'a2 sees all entries of household A');
+select is((select count(*)::int from public.entry), 8, 'a2 sees all entries of household A');
 update public.entry set note = 'edited by a2' where id = '40000000-0000-4000-8000-0000000000a2';
 select is((select note from public.entry where id = '40000000-0000-4000-8000-0000000000a2'), 'edited by a2', 'a2 can edit an entry a1 added');
 select is((select created_by from public.entry where id = '40000000-0000-4000-8000-0000000000a2'),
@@ -223,7 +251,7 @@ select is((select created_by from public.entry where id = '40000000-0000-4000-80
 select is((select updated_by from public.entry where id = '40000000-0000-4000-8000-0000000000a2'),
   '00000000-0000-4000-8000-0000000000a2'::uuid, 'updated_by is the last editor');
 select lives_ok($$delete from public.entry where id = '40000000-0000-4000-8000-0000000000a2'$$, 'a2 can delete an entry of household A');
-select is((select count(*)::int from public.entry), 6, 'the deleted entry is gone');
+select is((select count(*)::int from public.entry), 7, 'the deleted entry is gone');
 reset role;
 
 -- 6. A signed-in user with no household sees nothing.
@@ -243,6 +271,7 @@ select is((select title from public.event where id = '50000000-0000-4000-8000-00
 select is((select count(*)::int from public.item), 1, 'b1 does not see the item a1 added');
 select is((select count(*)::int from public.schedule_slot), 1, 'b1 sees only the schedule slot of dog B');
 select is((select usual_time from public.day_part), '08:00'::time, 'b1 sees only dog B''s day-part time, which a1 could not change');
+select is((select log_start from public.dog_settings), '2026-01-01'::date, 'b1 sees only dog B''s log start, which a1 could not change');
 reset role;
 
 select * from finish();

@@ -8,6 +8,7 @@ import type {
   DayPart,
   DayPartTimes,
   Dog,
+  DogSettings,
   Entry,
   EntryState,
   EventType,
@@ -16,6 +17,7 @@ import type {
   Item,
   ItemKind,
   PlainDate,
+  RemovedSlot,
   ScheduleSlot,
   Unit,
 } from './types';
@@ -71,7 +73,7 @@ interface EntryRow {
   unit: Unit | null;
   flavour: string;
   dose_text: string;
-  state: EntryState;
+  state: EntryState | 'removed';
   note: string;
   created_by: string | null;
   updated_by: string | null;
@@ -96,6 +98,8 @@ const SLOT_COLUMNS = 'id, dog_id, item_id, day_part, flavour, amount, unit, acti
 const ENTRY_COLUMNS =
   'id, dog_id, date, day_part, item_id, schedule_slot_id, amount, unit, flavour, dose_text, state, note, created_by, updated_by';
 const EVENT_COLUMNS = 'id, dog_id, date, type, title, detail, intensity, props, also_done, issue_id';
+/** entry.state of a usual-day item removed for a day (migration 20261017120000). */
+const REMOVED = 'removed';
 /** Postgres unique_violation: on entry, the one-entry-per-slot-per-day index. */
 const UNIQUE_VIOLATION = '23505';
 
@@ -183,6 +187,15 @@ export const fromScheduleSlot = (s: ScheduleSlot) => ({
   is_course: !!s.course && s.activeTo !== null,
 });
 
+export const toRemovedSlot = (r: EntryRow): RemovedSlot => ({
+  id: r.id,
+  dogId: r.dog_id,
+  date: r.date,
+  dayPart: r.day_part as DayPart,
+  itemId: r.item_id,
+  scheduleSlotId: r.schedule_slot_id ?? '',
+});
+
 export const toEntry = (r: EntryRow): Entry => ({
   id: r.id,
   dogId: r.dog_id,
@@ -194,7 +207,7 @@ export const toEntry = (r: EntryRow): Entry => ({
   unit: r.unit ?? null,
   flavour: r.flavour ?? '',
   doseText: r.dose_text ?? '',
-  state: r.state,
+  state: r.state as EntryState,
   note: r.note,
   createdBy: r.created_by ?? '',
   updatedBy: r.updated_by ?? '',
@@ -340,14 +353,48 @@ export class SupabaseRepository implements Repository {
   }
 
   async listEntries(range?: DateRange): Promise<Entry[]> {
+    return (await this.entryRows('listEntries', range, false)).map(toEntry);
+  }
+
+  async listRemovedSlots(range?: DateRange): Promise<RemovedSlot[]> {
+    return (await this.entryRows('listRemovedSlots', range, true)).filter((r) => r.schedule_slot_id).map(toRemovedSlot);
+  }
+
+  /** Updates the row in place (same id): the slot stays taken for the day, so Fill skips it. */
+  async removeFromDay(entry: Entry, slotId: string): Promise<void> {
+    requireUuid('removeFromDay', entry.id);
+    const row = { ...fromEntry(entry), schedule_slot_id: slotId, state: REMOVED };
+    const result = await this.client.from('entry').upsert(row, { onConflict: 'id' });
+    if (result.error?.code === UNIQUE_VIOLATION) throw new DuplicateSlotEntryError(entry.date, slotId);
+    unwrap('removeFromDay', result);
+  }
+
+  async getSettings(): Promise<DogSettings> {
     const dog = await this.getDog();
-    const rows = await this.pages<EntryRow>('listEntries', (from, to) => {
+    const rows = unwrap<{ log_start: string | null }[]>(
+      'getSettings',
+      await this.client.from('dog_settings').select('log_start').eq('dog_id', dog.id),
+    );
+    return { logStart: rows[0]?.log_start ?? null };
+  }
+
+  async saveSettings(settings: DogSettings): Promise<void> {
+    const dog = await this.getDog();
+    unwrap(
+      'saveSettings',
+      await this.client.from('dog_settings').upsert({ dog_id: dog.id, log_start: settings.logStart }, { onConflict: 'dog_id' }),
+    );
+  }
+
+  private async entryRows(operation: string, range: DateRange | undefined, removed: boolean): Promise<EntryRow[]> {
+    const dog = await this.getDog();
+    return this.pages<EntryRow>(operation, (from, to) => {
       let q = this.client.from('entry').select(ENTRY_COLUMNS).eq('dog_id', dog.id);
+      q = removed ? q.eq('state', REMOVED) : q.neq('state', REMOVED);
       if (range?.from) q = q.gte('date', range.from);
       if (range?.to) q = q.lte('date', range.to);
       return q.order('date').order('day_part').order('id').range(from, to);
     });
-    return rows.map(toEntry);
   }
 
   async listEvents(range?: DateRange): Promise<HealthEvent[]> {

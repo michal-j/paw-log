@@ -207,3 +207,6 @@
 .tl-parts .tl-col { flex-direction: column; gap: 3px; padding-top: 2px; align-self: stretch; }
 .tl-parts__icon { height: 24px; display: flex; align-items: center; justify-content: center; }
 .tl-parts__tick { height: 3px; border-radius: var(--radius-xs); background: var(--color-ink); }
+
+/* Spacers standing in for rows outside the window of a long log (fixed row heights, see model.ts). */
+.tl-pad { padding: 0; }

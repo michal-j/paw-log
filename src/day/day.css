@@ -163,11 +163,14 @@
   color: var(--color-mint-deep);
 }
 .day-fill__text { flex: 1; min-width: 0; }
-/* Keeps the banner's place (with its margins) after a fill, so the list does not move. */
-.day-fill-space { margin: var(--space-3) 0 var(--space-2); }
 .day-fill__head { margin: 0; font: 600 14px / 20px var(--type-body-family); }
 .day-fill__hint { margin: 2px 0 0; color: var(--color-ink-2); font: var(--type-body-weight) 13px / 18px var(--type-body-family); }
 .day-fill__btn { width: 100%; margin-top: 10px; white-space: normal; }
+
+/* Fill on a day that already has entries: a quiet action under the day parts, away from the rows. */
+.day-fill-quiet { margin: var(--space-4) 0 var(--space-2); text-align: center; }
+.day-fill-quiet__text { margin: 0 0 var(--space-2); color: var(--color-ink-3); font: var(--type-small-weight) var(--type-small-size) / var(--type-small-line) var(--type-small-family); }
+.day-fill-quiet__btn { white-space: normal; }
 
 /* ---------- Section caption with the Usual day link ---------- */
 .day__section { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); }
@@ -254,6 +257,9 @@
 .day-item__sub { display: block; color: var(--color-ink-3); font: var(--type-body-weight) 12px / 15px var(--type-body-family); }
 .day-item--skipped .day-item__name, .day-item--skipped .day-item__dose { text-decoration: line-through; }
 .day-item--planned .day-item__name { color: var(--color-ink-2); }
+/* Removed for this day: quiet, no Given; tapping it logs the item after all. */
+.day-item--removed .day-item__name { color: var(--color-ink-3); font-weight: var(--type-body-weight); }
+.day-item--removed .day-item__mark { opacity: 0.6; }
 .day-item--all { justify-content: flex-start; }
 .day-give { flex: none; height: 28px; padding: 0 10px 0 var(--space-2); font-size: 13px; }
 .day-tag {

@@ -149,6 +149,8 @@ export interface DayRow {
   badges: Badge[];
   events: HealthEvent[];
   anySkipped: boolean;
+  /** Anything logged (entries or events) on the day; empty past days are on the Timeline too. */
+  logged: boolean;
 }
 
 export interface MonthBand {
@@ -188,16 +190,43 @@ export function recordsStart(today: PlainDate, entries: Entry[], events: HealthE
   return start;
 }
 
+/** How far back the log reaches when nothing says otherwise (no setting, no records, no usual day). */
+export const DEFAULT_LOG_DAYS = 365;
+
+/**
+ * The first day the Timeline and Day view offer ("Log starts on"). The setting when there is one;
+ * otherwise the earliest of the first record and the usual day's first start; with neither, a year
+ * back. Never later than the first record (nothing logged is hidden) or than today.
+ */
+export function logStartOf(input: {
+  today: PlainDate;
+  setting: PlainDate | null;
+  entries: Pick<Entry, 'date'>[];
+  events: Pick<HealthEvent, 'date'>[];
+  slotStarts: PlainDate[];
+}): PlainDate {
+  const { today } = input;
+  const records = [...input.entries, ...input.events].map((x) => x.date).filter((d) => d <= today);
+  const earliest = (list: PlainDate[]) => list.reduce<PlainDate | null>((a, d) => (a === null || d < a ? d : a), null);
+  const firstRecord = earliest(records);
+  const derived = input.setting ?? earliest([...records, ...input.slotStarts]) ?? shiftDate(today, -DEFAULT_LOG_DAYS);
+  const start = firstRecord && firstRecord < derived ? firstRecord : derived;
+  return start > today ? today : start;
+}
+
 export function buildTimeline(input: {
   today: PlainDate;
   items: Item[];
   entries: Entry[];
   events: HealthEvent[];
+  /** First day shown ("Log starts on"); defaults to the first record. Empty days in between are shown too. */
+  start?: PlainDate;
 }): Timeline {
   const { today, items } = input;
   const entries = input.entries.filter((e) => e.date <= today);
   const events = input.events.filter((e) => e.date <= today);
-  const start = recordsStart(today, entries, events);
+  const first = recordsStart(today, entries, events);
+  const start = input.start && input.start < first ? input.start : first;
   const columns = buildColumns(items, entries);
   const itemById = new Map(items.map((i) => [i.id, i]));
 
@@ -244,6 +273,7 @@ export function buildTimeline(input: {
       badges: badgesFor(dayEvents),
       events: dayEvents,
       anySkipped: dayEntries.some((e) => e.state === 'skipped'),
+      logged: dayEntries.length > 0 || dayEvents.length > 0,
     });
     y += DAY_ROW_H;
   }

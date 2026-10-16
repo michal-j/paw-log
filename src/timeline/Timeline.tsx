@@ -1,5 +1,6 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type MouseEvent, type PointerEvent, type ReactNode } from 'react';
-import type { HealthEvent, Item, PlainDate, Repository } from '../data';
+import type { HealthEvent, Item, PlainDate } from '../data';
+import { useLog } from '../log/LogProvider';
 import { useI18n, type Lang, type MessageKey } from '../i18n';
 import { symptomLabel } from './labels';
 import { DoseMark, colourVar } from '../components/DoseMark';
@@ -50,20 +51,11 @@ interface Loaded {
   items: Map<string, Item>;
 }
 
-async function load(repository: Repository): Promise<Loaded> {
-  const today = repository.today();
-  const [items, entries, events] = await Promise.all([
-    repository.listItems(),
-    repository.listEntries({ to: today }),
-    repository.listEvents({ to: today }),
-  ]);
-  return { timeline: buildTimeline({ today, items, entries, events }), items: new Map(items.map((i) => [i.id, i])) };
-}
+/** Long logs render only the rows near the viewport (plus this many px above and below). */
+const WINDOW_FROM_ROWS = 120;
+const OVERSCAN_PX = 900;
 
 interface Props {
-  repository: Repository;
-  /** Bumped after every write; the timeline reloads. */
-  version?: number;
   /** List scroll position to restore once the rows are laid out (coming back from a day). */
   initialScrollTop?: number;
   /** Path of a day, so each row is a real link (open in new tab, long-press preview). */
@@ -72,10 +64,29 @@ interface Props {
   onOpenDay?: (date: PlainDate, scrollTop: number) => void;
 }
 
-/** Read-only timeline (slice 2a): one row per day, newest first, Key bar, tick rail. Rows open the Day view (3a). */
-export function Timeline({ repository, version = 0, initialScrollTop = 0, dayHref, onOpenDay }: Props) {
+/**
+ * Timeline: one row per day from the log start to today, newest first (empty days too, so any past
+ * day can be opened and filled), Key bar, tick rail. Rows open the Day view. It renders from the
+ * records LogProvider already holds, so coming back to it shows at once, without a new load.
+ */
+export function Timeline({ initialScrollTop = 0, dayHref, onOpenDay }: Props) {
   const { lang, t } = useI18n();
-  const [data, setData] = useState<Loaded | null>(null);
+  const { records, loadFailed, reload } = useLog();
+  const data = useMemo<Loaded | null>(
+    () =>
+      records && {
+        timeline: buildTimeline({
+          today: records.today,
+          items: records.items,
+          entries: records.entries,
+          events: records.events,
+          start: records.logStart,
+        }),
+        items: new Map(records.items.map((i) => [i.id, i])),
+      },
+    [records],
+  );
+  const [scrollTop, setScrollTop] = useState(0);
   const [topIndex, setTopIndex] = useState(0);
   const [keyOpen, setKeyOpen] = useState(false);
   const [scrubY, setScrubY] = useState<number | null>(null);
@@ -95,17 +106,6 @@ export function Timeline({ repository, version = 0, initialScrollTop = 0, dayHre
     return () => ro.disconnect();
   }, [data]);
 
-  useEffect(() => {
-    let live = true;
-    load(repository).then(
-      (next) => live && setData(next),
-      () => live && setData(null), // error state not designed yet; the timeline stays empty
-    );
-    return () => {
-      live = false;
-    };
-  }, [repository, version]);
-
   // Restore the scroll position once, after the rows and the tail (which needs the list height) exist.
   const restored = useRef(false);
   useLayoutEffect(() => {
@@ -115,6 +115,7 @@ export function Timeline({ repository, version = 0, initialScrollTop = 0, dayHre
     if (initialScrollTop > 0) {
       el.scrollTop = initialScrollTop;
       setTopIndex(rowIndexAt(data.timeline.rows, el.scrollTop));
+      setScrollTop(el.scrollTop);
     }
   }, [data, viewport, initialScrollTop]);
 
@@ -134,9 +135,30 @@ export function Timeline({ repository, version = 0, initialScrollTop = 0, dayHre
     };
   }, [lang]);
 
-  if (!data) return <div className="timeline" />;
+  if (!data) {
+    return (
+      <div className="timeline">
+        {loadFailed && (
+          <div className="app-status" role="alert">
+            <p className="app-status__text">{t('loadFailed')}</p>
+            <button type="button" className="btn btn--ghost btn--md" onClick={reload}>
+              {t('retry')}
+            </button>
+          </div>
+        )}
+      </div>
+    );
+  }
   const { timeline, items } = data;
   const { rows, columns, ticks, span } = timeline;
+  // Windowing for long logs: rows have fixed heights and tops, so the hidden ones become two spacers.
+  const windowed = rows.length > WINDOW_FROM_ROWS;
+  const lo = windowed ? rowIndexAt(rows, Math.max(0, scrollTop - OVERSCAN_PX)) : 0;
+  const hi = windowed ? rowIndexAt(rows, scrollTop + (viewport || OVERSCAN_PX) + OVERSCAN_PX) + 1 : rows.length;
+  const shownRows = rows.slice(lo, hi);
+  const lastShown = shownRows.at(-1);
+  const padTop = shownRows[0]?.top ?? 0;
+  const padBottom = lastShown ? timeline.contentHeight - lastShown.top - lastShown.height : 0;
   const topRow: Row | undefined = rows[topIndex];
   const keyDay = topDayAt(rows, topRow?.top ?? 0);
   const activeTick = activeTickOffset(ticks, topRow?.top ?? 0);
@@ -146,6 +168,8 @@ export function Timeline({ repository, version = 0, initialScrollTop = 0, dayHre
     if (!el) return;
     const i = rowIndexAt(rows, el.scrollTop);
     if (i !== topIndex) setTopIndex(i);
+    // Re-window once the list has moved a good part of the overscan.
+    if (windowed && Math.abs(el.scrollTop - scrollTop) > OVERSCAN_PX / 3) setScrollTop(el.scrollTop);
   };
 
   const scrubTo = (e: PointerEvent<HTMLDivElement>) => {
@@ -163,7 +187,7 @@ export function Timeline({ repository, version = 0, initialScrollTop = 0, dayHre
 
   const summary = (row: DayRow) => {
     const flags = flagsFor(row.events, row.anySkipped, t);
-    return `${fmt.long(row.date)}: ${flags.length ? flags.join(', ') : t('copy.95')}`;
+    return `${fmt.long(row.date)}: ${flags.length ? flags.join(', ') : row.logged ? t('copy.95') : t('nothingLogged')}`;
   };
 
   const openDay = (date: PlainDate) => (e: MouseEvent<HTMLAnchorElement>) => {
@@ -246,7 +270,8 @@ export function Timeline({ repository, version = 0, initialScrollTop = 0, dayHre
       <div className="tl-body">
         <div id={LIST_ID} ref={listRef} className="tl-list" onScroll={onScroll} tabIndex={0}>
           <ul className="tl-rows">
-            {rows.map((row) =>
+            {padTop > 0 && <li className="tl-pad" style={{ height: padTop }} aria-hidden="true" />}
+            {shownRows.map((row) =>
               row.kind === 'band' ? (
                 <li key={row.month} className="tl-band" style={{ height: row.height }}>
                   <h2 className="tl-band__title">{fmt.month(row.month)}</h2>
@@ -286,6 +311,7 @@ export function Timeline({ repository, version = 0, initialScrollTop = 0, dayHre
                 </li>
               ),
             )}
+            {padBottom > 0 && <li className="tl-pad" style={{ height: padBottom }} aria-hidden="true" />}
           </ul>
           <div className="tl-tail" style={{ height: tailHeight(viewport) }} />
         </div>

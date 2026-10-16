@@ -1,6 +1,6 @@
 // The usual day (schedule slots) against what was logged: which slots are filled, which are due,
 // what Fill adds, and how a change "from a date" splits a slot. Pure; tests in tests/plan.test.ts.
-import type { DayPart, DayPartTimes, Entry, PlainDate, ScheduleSlot, Unit } from '../data';
+import type { DayPart, DayPartTimes, Entry, PlainDate, RemovedSlot, ScheduleSlot, Unit } from '../data';
 import { DAY_PARTS, shiftDate } from '../timeline/model';
 import { sameAmount } from './amount';
 
@@ -13,20 +13,24 @@ export const slotsOn = (slots: ScheduleSlot[], date: PlainDate, part?: DayPart) 
 export interface DayMatch {
   /** Entry id to the usual-day slot it fills. */
   slotOf: Map<string, ScheduleSlot>;
-  /** Ids of slots filled on the date. */
+  /** Ids of slots filled on the date (by an entry, or removed for the day). */
   filled: Set<string>;
+  /** Slots removed for the date, by slot id, with their marker. */
+  removed: Map<string, RemovedSlot>;
 }
 
 /**
- * Pair the date's entries with its active slots. An entry fills the slot it names; an entry that
- * names no active slot (logged before the usual day existed, or before the slot was changed from a
- * date) fills a still-open slot of the same item in the same part.
+ * Pair the date's entries with its active slots. An entry fills the slot it names; a slot removed
+ * for the day counts as filled; an entry that names no active slot (logged before the usual day
+ * existed, or before the slot was changed from a date) fills a still-open slot of the same item in
+ * the same part.
  */
-export function matchDay(date: PlainDate, slots: ScheduleSlot[], entries: Entry[]): DayMatch {
+export function matchDay(date: PlainDate, slots: ScheduleSlot[], entries: Entry[], removed: RemovedSlot[] = []): DayMatch {
   const active = slotsOn(slots, date);
   const byId = new Map(active.map((s) => [s.id, s]));
   const slotOf = new Map<string, ScheduleSlot>();
   const filled = new Set<string>();
+  const removedOn = new Map<string, RemovedSlot>();
   const day = entries.filter((e) => e.date === date);
   for (const e of day) {
     const s = e.scheduleSlotId ? byId.get(e.scheduleSlotId) : undefined;
@@ -34,6 +38,11 @@ export function matchDay(date: PlainDate, slots: ScheduleSlot[], entries: Entry[
       slotOf.set(e.id, s);
       filled.add(s.id);
     }
+  }
+  for (const r of removed) {
+    if (r.date !== date || !byId.has(r.scheduleSlotId) || filled.has(r.scheduleSlotId)) continue;
+    removedOn.set(r.scheduleSlotId, r);
+    filled.add(r.scheduleSlotId);
   }
   for (const e of day) {
     if (slotOf.has(e.id)) continue;
@@ -43,7 +52,7 @@ export function matchDay(date: PlainDate, slots: ScheduleSlot[], entries: Entry[
       filled.add(s.id);
     }
   }
-  return { slotOf, filled };
+  return { slotOf, filled, removed: removedOn };
 }
 
 /** A part is due once its usual time has passed: every part of a past day, today's only up to now. */
@@ -56,9 +65,10 @@ export function dueOpenSlots(
   slots: ScheduleSlot[],
   entries: Entry[],
   clock: { today: PlainDate; now: string; times: DayPartTimes },
+  removed: RemovedSlot[] = [],
 ): ScheduleSlot[] {
   if (date > clock.today) return [];
-  const { filled } = matchDay(date, slots, entries);
+  const { filled } = matchDay(date, slots, entries, removed);
   return slotsOn(slots, date).filter((s) => !filled.has(s.id) && partDue(date, s.dayPart, clock.today, clock.now, clock.times));
 }
 
@@ -182,4 +192,43 @@ export function usualDay(slots: ScheduleSlot[], date: PlainDate, order: (a: Sche
     }
     return { part, rows };
   });
+}
+
+// ---------- Logging past days for a usual-day change ----------
+
+/** The slot list once `change` is written: saved slots replace or join, removed ones go. */
+export function slotsAfter(slots: ScheduleSlot[], change: Pick<SlotChange, 'save' | 'remove'>): ScheduleSlot[] {
+  const saved = new Map(change.save.map((s) => [s.id, s]));
+  const kept = slots.filter((s) => !saved.has(s.id) && !change.remove.includes(s.id));
+  return [...kept, ...change.save];
+}
+
+/**
+ * A usual-day item added or changed from a past date: the past days (its start to yesterday, within
+ * its period) on which it is still open, so they can be logged as given at once. Days on which it
+ * was logged, or removed for the day, are left out. `total` counts every past day of the period.
+ */
+export function backfillDays(
+  slot: ScheduleSlot,
+  slots: ScheduleSlot[],
+  entries: Entry[],
+  removed: RemovedSlot[],
+  today: PlainDate,
+): { days: PlainDate[]; total: number } {
+  const yesterday = shiftDate(today, -1);
+  const end = slot.activeTo !== null && slot.activeTo < yesterday ? slot.activeTo : yesterday;
+  const byDate = new Map<PlainDate, Entry[]>();
+  for (const e of entries) {
+    if (e.date < slot.activeFrom || e.date > end) continue;
+    const list = byDate.get(e.date);
+    if (list) list.push(e);
+    else byDate.set(e.date, [e]);
+  }
+  const days: PlainDate[] = [];
+  let total = 0;
+  for (let d = slot.activeFrom; d <= end; d = shiftDate(d, 1)) {
+    total++;
+    if (!matchDay(d, slots, byDate.get(d) ?? [], removed).filled.has(slot.id)) days.push(d);
+  }
+  return { days, total };
 }
