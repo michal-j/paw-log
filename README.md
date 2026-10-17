@@ -35,4 +35,6 @@ Copy `.env.example` to `.env` for local settings. `VITE_DEMO_MODE=true` forces d
 
 Code map: `src/data/` (repository interface and implementations), `src/auth/` (sign-in, session, Supabase client wiring; loaded only outside demo mode), `src/i18n/`, `src/timeline/` (Timeline screen: pure model, geometry constants, component, CSS), `src/day/` (Day view: pure model, component, CSS), `src/log/` (logging: amounts, usual-day logic, symptoms, writes with undo, the sheets and their shared state), `src/usual/` (Usual day screen), `src/routes.ts` (path router), `src/components/` (design-system components: `DoseMark`, `EventBadge`, `MealIcon`, `Sheet`/`Field`/`Chip`, icons, shared `marks.css` and `controls.css`; plus `Brand`, `LangSwitch`), `supabase/` (migrations, RLS tests, bootstrap template, local CLI config).
 
+App icon: `public/apple-touch-icon.png`, `icon-192.png`, `icon-512.png`, `icon-512-maskable.png`, `icon.svg` (sources and generator in `design/proposals/app-icon/`). When they change, bump `ICON_VERSION` in `vite.config.ts` and the `?v=` in `index.html`. On iPhone the home-screen icon is cached: remove the app from the home screen and add it again to see the new icon.
+
 Manual test cases: [docs/TEST-CASES.md](docs/TEST-CASES.md). Architecture notes: [docs/ENGINEERING.md](docs/ENGINEERING.md).

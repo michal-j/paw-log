@@ -6,6 +6,11 @@ import tokens from './docs/design-system/tokens.json' with { type: 'json' };
 
 const colour = (name: string) => tokens.color.tokens.find((t) => t.name === name)?.value;
 
+// Bump when the icon files change: a new URL makes iOS and Android fetch the icons again
+// instead of reusing a cached copy (the precache below ignores `v` when matching). Keep the
+// `?v=` on the apple-touch-icon and icon links in index.html in step.
+const ICON_VERSION = '2';
+
 export default defineConfig({
   plugins: [
     react(),
@@ -35,14 +40,20 @@ export default defineConfig({
         background_color: colour('ground'),
         theme_color: colour('mint'),
         icons: [
-          { src: 'icon-192.png', sizes: '192x192', type: 'image/png' },
-          { src: 'icon-512.png', sizes: '512x512', type: 'image/png' },
-          { src: 'icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+          { src: `icon-192.png?v=${ICON_VERSION}`, sizes: '192x192', type: 'image/png', purpose: 'any' },
+          { src: `icon-512.png?v=${ICON_VERSION}`, sizes: '512x512', type: 'image/png', purpose: 'any' },
+          {
+            src: `icon-512-maskable.png?v=${ICON_VERSION}`,
+            sizes: '512x512',
+            type: 'image/png',
+            purpose: 'maskable',
+          },
         ],
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,svg,png,woff2}'],
         navigateFallback: '/index.html', // app shell also serves /demo
+        ignoreURLParametersMatching: [/^utm_/, /^fbclid$/, /^v$/], // icon URLs carry ?v=ICON_VERSION
       },
     }),
   ],

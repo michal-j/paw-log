@@ -4,8 +4,12 @@ Format: [Keep a Changelog](https://keepachangelog.com). "Unreleased" means not y
 
 ## Unreleased
 
+### Changed
+- Deleting an entry in the Day view looks the same for every entry (JCB-60): it disappears from the day and the Timeline with the "Entry deleted" toast and Undo. A usual-day item still keeps its `removed` marker underneath, so Fill and Given do not offer it again, but it is no longer drawn as a "Removed for this day" row; one quiet line at the bottom of the day ("Removed from the usual day: 1 · Restore") puts it back as not logged, with Undo. Draft copy in `docs/copy/copy-proposal-consistent-delete.csv`.
+
 ### Fixed
 - Food and medication items still grey with no way to change the colour (JCB-59): JCB-43 only coloured items when they were created, so older items (`mark-neutral`) stayed grey, and the colour could only be changed inside a Usual day item. Every item without an item colour now shows an unused one (lane order, own kind first: food-* for food, med-* for medication; never the greyish med-calmora), stable while you edit other items, and the new data migration `20261018120000_item_colours.sql` stores the same colours (per dog, idempotent). Editing an entry and picking Other no longer creates a grey item.
+- iPhone PWA: no more empty space above the navbar at the end of the Day view and the Usual day. Their scrolling body added the home-indicator safe area although the navbar under it already does; only the navbar keeps it now.
 - iPhone PWA: no more empty space under the day-parts bar on the Timeline (JCB-61). The bar added the home-indicator safe area although the navbar under it already does; only the navbar keeps it now.
 - Real-data blockers from the first use on the iPhone PWA and desktop (JCB-43), reproduced on the real data path (SupabaseRepository and supabase-js against a PostgREST-like fake on Postgres), not only `/demo`:
   - Editing an entry (or logging a planned row) as another item or part kept the row but dropped its usual-day slot, so the slot came back as "not logged" and looked like a new entry: the entry now keeps the slot it filled or was opened from (same date), unless its new item has its own open slot.
@@ -17,6 +21,7 @@ Format: [Keep a Changelog](https://keepachangelog.com). "Unreleased" means not y
   - Date and time inputs on iOS Safari: same 50px height and left-aligned value as the other fields.
   - After Fill, no blank space is reserved any more; the day parts keep their place on screen when they can.
   - QA round: changing only a usual-day item's "Starts on" now saves (and offers the past days); the Fill banner or quiet action is chosen when a day opens and kept while it is open (a removed item counts as worked on), so Given or a delete never makes it jump; Undo closes the past-days question; one-day wording; empty Timeline days read "nothing logged" to screen readers; the dev harness keeps its screen on reload.
+- Timeline: no more screen-high empty space below the first day (JCB-62). The list ends 16px after the log-start day; the Key, the rail and the scrub label move from the top row to that first day over the last screen of scrolling, so dragging the rail to the bottom still lands on the first day. The rail moves the Key and its bubble across every day evenly, also when the log fits on one screen and the list cannot scroll.
 
 ### Added
 - Edit item (JCB-59): name, colour, default unit and flavours, with Undo; from "Edit item" next to the picked item in the entry form and on a Usual day item. The Usual day item sheet's own colour swatches moved into it. Draft copy `docs/copy/copy-proposal-item-colours.csv`; tests `tests/migrations.test.ts` plus item and real-path cases.
@@ -47,6 +52,7 @@ Format: [Keep a Changelog](https://keepachangelog.com). "Unreleased" means not y
 - Draft EN/PL copy for sign-in in `docs/copy/copy-proposal-auth.csv` (pending CEO review), merged into the generated catalogues.
 
 ### Changed
+- Home-screen icon: the CEO-approved option A (mint gradient, white paw) replaces the flat mint placeholder (JCB-63): `public/apple-touch-icon.png` (180, opaque), `icon-192.png`, `icon-512.png`, `icon.svg`, and a separate `icon-512-maskable.png` for the manifest's `maskable` entry (192 and 512 are `any`). Icon URLs carry `?v=2` so phones fetch the new files; the service worker precache ignores `v` when matching. Sources and generator in `design/proposals/app-icon/`.
 - Fill: the prominent banner shows only on a day with nothing logged; otherwise a quiet "Fill with your usual day: N" sits under the day parts.
 - The Timeline reads the shared records instead of loading on its own.
 - Demo data (fictional) moved to structured amounts: items carry a default unit and flavours ("Farm Fresh" with flavour turkey instead of "Farm Fresh, turkey"), Bellavet a 1 bar = 0,1 ml conversion; `data/demo/schedule.json` is the usual day; entries link to their slot; symptom details became properties. Demo storage key is now `pawlog.demo.v2` (older demo edits are dropped).
