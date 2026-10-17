@@ -4,7 +4,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(114);
+select plan(139);
 
 -- Fixtures (as the postgres role, which bypasses RLS, like the bootstrap SQL).
 -- Household A: users a1, a2, dog A. Household B: user b1, dog B. User c belongs to no household.
@@ -395,6 +395,87 @@ select is((select usual_time from public.day_part), '08:00'::time, 'b1 sees only
 select is((select log_start from public.dog_settings), '2026-01-01'::date, 'b1 sees only dog B''s log start, which a1 could not change');
 select is((select name from public.condition), 'Condition B', 'b1 sees only dog B''s condition, which a1 could not change or delete');
 select is((select count(*)::int from public.event_condition), 1, 'b1 sees only dog B''s link, which a1 could not delete');
+reset role;
+
+-- 8. Photos (JCB-7): attachment rows and the private photos bucket.
+insert into public.attachment (id, dog_id, event_id, storage_path, width, height) values
+  ('80000000-0000-4000-8000-00000000000a', '20000000-0000-4000-8000-00000000000a', '50000000-0000-4000-8000-00000000000a', '20000000-0000-4000-8000-00000000000a/80000000-0000-4000-8000-00000000000a.jpg', 1600, 1200),
+  ('80000000-0000-4000-8000-00000000000b', '20000000-0000-4000-8000-00000000000b', '50000000-0000-4000-8000-00000000000b', '20000000-0000-4000-8000-00000000000b/80000000-0000-4000-8000-00000000000b.jpg', 1600, 1200);
+insert into storage.objects (bucket_id, name) values
+  ('photos', '20000000-0000-4000-8000-00000000000a/80000000-0000-4000-8000-00000000000a.jpg'), ('photos', '20000000-0000-4000-8000-00000000000a/80000000-0000-4000-8000-00000000000a.thumb.jpg'),
+  ('photos', '20000000-0000-4000-8000-00000000000b/80000000-0000-4000-8000-00000000000b.jpg'), ('photos', '20000000-0000-4000-8000-00000000000b/80000000-0000-4000-8000-00000000000b.thumb.jpg');
+select is((select public from storage.buckets where id = 'photos'), false, 'the photos bucket is private');
+select is((select allowed_mime_types from storage.buckets where id = 'photos'), array['image/jpeg'], 'the photos bucket takes JPEG only');
+select ok((select file_size_limit from storage.buckets where id = 'photos') <= 5242880, 'the photos bucket limits the file size');
+select throws_ok(
+  $$insert into public.attachment (dog_id, event_id, storage_path, width, height)
+    values ('20000000-0000-4000-8000-00000000000a', '50000000-0000-4000-8000-00000000000a', '20000000-0000-4000-8000-00000000000a/somewhere-else.jpg', 10, 10)$$,
+  '23514', null, 'an attachment path must be <dog>/<id>.jpg');
+select throws_ok(
+  $$insert into public.attachment (id, dog_id, event_id, storage_path, width, height)
+    values ('80000000-0000-4000-8000-0000000000a2', '20000000-0000-4000-8000-00000000000a', '50000000-0000-4000-8000-00000000000b', '20000000-0000-4000-8000-00000000000a/80000000-0000-4000-8000-0000000000a2.jpg', 10, 10)$$,
+  '23503', null, 'an attachment cannot point at an event of another dog');
+
+set local role anon;
+select set_config('request.jwt.claims', '{"role":"anon"}', true);
+select throws_ok('select * from public.attachment', '42501', null, 'anon cannot read attachment');
+select is((select count(*)::int from storage.objects), 0, 'anon sees no photo files');
+select throws_ok(
+  $$insert into storage.objects (bucket_id, name) values ('photos', '20000000-0000-4000-8000-00000000000a/80000000-0000-4000-8000-0000000000a2.jpg')$$,
+  '42501', null, 'anon cannot upload a photo');
+reset role;
+
+set local role authenticated;
+select set_config('request.jwt.claims', '{"sub":"00000000-0000-4000-8000-0000000000a1","role":"authenticated"}', true);
+select is((select count(*)::int from public.attachment), 1, 'a1 sees only the attachment of dog A');
+select is((select count(*)::int from storage.objects where bucket_id = 'photos'), 2, 'a1 sees only the files of dog A');
+select lives_ok(
+  $$insert into storage.objects (bucket_id, name) values ('photos', '20000000-0000-4000-8000-00000000000a/80000000-0000-4000-8000-0000000000a2.jpg'), ('photos', '20000000-0000-4000-8000-00000000000a/80000000-0000-4000-8000-0000000000a2.thumb.jpg')$$,
+  'a1 can upload a photo of dog A');
+select lives_ok(
+  $$insert into storage.objects (bucket_id, name) values ('photos', '20000000-0000-4000-8000-00000000000a/80000000-0000-4000-8000-0000000000a2.jpg')
+    on conflict (bucket_id, name) do update set updated_at = now()$$,
+  'a1 can upload the same photo again (a retry replaces it)');
+select lives_ok(
+  $$insert into public.attachment (id, dog_id, event_id, storage_path, width, height, taken_at, caption)
+    values ('80000000-0000-4000-8000-0000000000a2', '20000000-0000-4000-8000-00000000000a', '50000000-0000-4000-8000-00000000000a', '20000000-0000-4000-8000-00000000000a/80000000-0000-4000-8000-0000000000a2.jpg', 1200, 1600, '2026-10-02 09:41:00', 'Left side')$$,
+  'a1 can add an attachment to an event of dog A');
+select is((select created_by from public.attachment where id = '80000000-0000-4000-8000-0000000000a2'),
+  '00000000-0000-4000-8000-0000000000a1'::uuid, 'the attachment is stamped with its author');
+select throws_ok(
+  $$insert into storage.objects (bucket_id, name) values ('photos', '20000000-0000-4000-8000-00000000000b/80000000-0000-4000-8000-0000000000a2.jpg')$$,
+  '42501', null, 'a1 cannot upload into dog B''s folder');
+select throws_ok(
+  $$insert into storage.objects (bucket_id, name) values ('photos', '20000000-0000-4000-8000-00000000000a/../20000000-0000-4000-8000-00000000000b/x.jpg')$$,
+  '42501', null, 'a1 cannot upload under a name that is not <dog>/<id>.jpg');
+select throws_ok(
+  $$insert into storage.objects (bucket_id, name) values ('other', '20000000-0000-4000-8000-00000000000a/80000000-0000-4000-8000-0000000000a2.jpg')$$,
+  '42501', null, 'the policies cover the photos bucket only');
+select throws_ok(
+  $$insert into public.attachment (dog_id, event_id, storage_path, width, height)
+    values ('20000000-0000-4000-8000-00000000000b', '50000000-0000-4000-8000-00000000000b', '20000000-0000-4000-8000-00000000000b/80000000-0000-4000-8000-00000000000b.jpg', 10, 10)$$,
+  '42501', null, 'a1 cannot add an attachment to dog B');
+update public.attachment set caption = 'tampered' where id = '80000000-0000-4000-8000-00000000000b';
+delete from public.attachment where id = '80000000-0000-4000-8000-00000000000b';
+delete from storage.objects where name like '20000000-0000-4000-8000-00000000000b/%';
+select throws_ok(
+  $$update public.attachment set dog_id = '20000000-0000-4000-8000-00000000000b' where id = '80000000-0000-4000-8000-00000000000a'$$,
+  '42501', null, 'a1 cannot move an attachment to dog B');
+delete from storage.objects where name = '20000000-0000-4000-8000-00000000000a/80000000-0000-4000-8000-0000000000a2.jpg';
+select is((select count(*)::int from storage.objects where name = '20000000-0000-4000-8000-00000000000a/80000000-0000-4000-8000-0000000000a2.jpg'), 1,
+  'a file cannot be deleted while its attachment row exists');
+select lives_ok($$delete from public.attachment where id = '80000000-0000-4000-8000-0000000000a2'$$, 'a1 can delete an attachment');
+delete from storage.objects where name in ('20000000-0000-4000-8000-00000000000a/80000000-0000-4000-8000-0000000000a2.jpg', '20000000-0000-4000-8000-00000000000a/80000000-0000-4000-8000-0000000000a2.thumb.jpg');
+select is((select count(*)::int from storage.objects where name like '20000000-0000-4000-8000-00000000000a/80000000-0000-4000-8000-0000000000a2%'), 0,
+  'once the row is gone its files can be deleted');
+delete from public.event where id = '50000000-0000-4000-8000-00000000000a';
+select is((select count(*)::int from public.attachment where id = '80000000-0000-4000-8000-00000000000a'), 0, 'deleting an event deletes its attachment rows');
+reset role;
+
+set local role authenticated;
+select set_config('request.jwt.claims', '{"sub":"00000000-0000-4000-8000-0000000000b1","role":"authenticated"}', true);
+select is((select caption from public.attachment), '', 'b1 sees only dog B''s attachment, which a1 could not change or delete');
+select is((select count(*)::int from storage.objects where bucket_id = 'photos'), 2, 'b1 sees only dog B''s files, which a1 could not delete');
 reset role;
 
 select * from finish();

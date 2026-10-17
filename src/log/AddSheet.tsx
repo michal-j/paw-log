@@ -1,7 +1,8 @@
 import { useState, type ReactNode } from 'react';
 import type { DayPart, PlainDate } from '../data';
 import { EventBadge } from '../components/EventBadge';
-import { BowlIcon, DotsIcon, NoteIcon, PillIcon } from '../components/icons';
+import { BowlIcon, CameraIcon, DotsIcon, NoteIcon, PillIcon } from '../components/icons';
+import '../photos/photos.css';
 import { Sheet } from '../components/Sheet';
 import { fill, useI18n, type MessageKey } from '../i18n';
 import { DAY_PARTS } from '../timeline/model';
@@ -19,7 +20,8 @@ export function partNow(times: Records['times'], now: string): DayPart {
  * + Add: the one way in. From the navbar it offers Food, Medication, Symptom, Vet visit, Note and
  * Other; from a day part's + it offers Food and Medication with that part set. On the Usual day
  * (`usual`), Food or Medication opens the usual-day form listing only that kind. From a condition page
- * (`condition`) it offers Symptom, Vet visit and Note, and the new event is linked to that condition.
+ * (`condition`) it offers Photo, Symptom, Vet visit and Note, and the new event is linked to that condition.
+ * Photo (JCB-7) opens the photo form.
  */
 export function AddSheet({
   date: initialDate,
@@ -46,10 +48,11 @@ export function AddSheet({
       : open({ kind: 'entry', group, date, part: atPart ?? partNow(records.times, repository.nowTime()), ctxOpen });
   const linked = condition ? records.conditions.find((c) => c.id === condition) : undefined;
   const event = (type: EventKind) => open({ kind: 'event', type, date, ctxOpen, linkTo: linked?.id });
+  const photo = () => open({ kind: 'photo', date, ctxOpen, linkTo: linked?.id });
 
   const option = (key: string, icon: ReactNode, label: MessageKey, onClick: () => void) => (
     <button key={key} type="button" className="btn btn--ghost add-opt" onClick={onClick}>
-      <span className="add-opt__icon">{icon}</span>
+      <span className={`add-opt__icon${key === 'photo' ? ' add-opt__icon--photo' : ''}`}>{icon}</span>
       <span className="add-opt__text">{t(label)}</span>
     </button>
   );
@@ -72,6 +75,7 @@ export function AddSheet({
         {!linked && option('med', <PillIcon />, 'title.106', () => entry('med'))}
         {linked && (
           <>
+            {option('photo', <CameraIcon size={15} />, 'copy.103', photo)}
             {option('symptom', <EventBadge kind="sym" text="!" />, 'symptom.140', () => event('symptom'))}
             {option('vet', <EventBadge kind="vet" text="" />, 'copy.101', () => event('vet'))}
             {option('note', <NoteIcon />, 'note.154', () => event('note'))}
@@ -82,6 +86,7 @@ export function AddSheet({
             {option('symptom', <EventBadge kind="sym" text="!" />, 'symptom.140', () => event('symptom'))}
             {option('vet', <EventBadge kind="vet" text="" />, 'copy.101', () => event('vet'))}
             {option('note', <NoteIcon />, 'note.154', () => event('note'))}
+            {option('photo', <CameraIcon size={15} />, 'copy.103', photo)}
             {option('other', <DotsIcon />, 'otherEvent', () => event('other'))}
           </>
         )}

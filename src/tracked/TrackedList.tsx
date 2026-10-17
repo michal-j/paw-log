@@ -5,11 +5,14 @@ import { useFormat } from '../log/format';
 import { useLog } from '../log/LogProvider';
 import { pluralForm } from '../i18n/plural';
 import { eventCount, openConditions, resolvedConditions } from './model';
+import { conditionPhotos } from '../photos/model';
+import { PhotoThumb } from '../photos/PhotoParts';
 import '../day/day.css';
 import '../components/list.css';
 import './tracked.css';
 
 const EVENTS: Record<'one' | 'few' | 'many', MessageKey> = { one: 'condEvents_one', few: 'condEvents_few', many: 'condEvents_many' };
+const PHOTOS: Record<'one' | 'few' | 'many', MessageKey> = { one: 'photoCount_one', few: 'photoCount_few', many: 'photoCount_many' };
 
 /** Tracked tab: open conditions (newest start first), then resolved ones. A card opens the condition. */
 export function TrackedList({ onOpen }: { onOpen: (id: string) => void }) {
@@ -25,15 +28,19 @@ export function TrackedList({ onOpen }: { onOpen: (id: string) => void }) {
   const meta = (c: Condition) => {
     const when = c.resolvedOn ? `${f.dayMonth(c.startedOn)} – ${f.dayMonth(c.resolvedOn)}` : fill(t('condSince'), { d: f.dayMonth(c.startedOn) });
     const n = records ? eventCount(c.id, records.events) : 0;
-    return [when, n ? fill(t(EVENTS[pluralForm(lang, n)]), { n }) : ''].filter(Boolean).join(' · ');
+    const p = records ? conditionPhotos(c.id, records.events, records.photos).length : 0;
+    return [when, p ? fill(t(PHOTOS[pluralForm(lang, p)]), { n: p }) : '', n ? fill(t(EVENTS[pluralForm(lang, n)]), { n }) : '']
+      .filter(Boolean)
+      .join(' · ');
   };
-  const card = (c: Condition) => (
+  const latest = (c: Condition) => (records ? conditionPhotos(c.id, records.events, records.photos).at(-1)?.photo : undefined);
+  const card = (c: Condition, last = latest(c)) => (
     <button key={c.id} type="button" className={`day-card day-card--tap cond-card${c.resolvedOn ? ' cond-card--resolved' : ''}`} onClick={() => onOpen(c.id)}>
       <span className="cond-card__text">
         <span className="day-card__head">{c.name}</span>
         <span className="cond-card__meta">{meta(c)}</span>
       </span>
-      {/* JCB-7: the latest photo (52px PhotoThumb) goes here. */}
+      {last && <PhotoThumb photo={last} size="sm" />}
       <span className="cond-card__chev" aria-hidden="true">
         <ChevronIcon size={16} />
       </span>
@@ -78,13 +85,13 @@ export function TrackedList({ onOpen }: { onOpen: (id: string) => void }) {
         {opened.length > 0 && (
           <>
             <h3 className="day__caption">{t('condOpenSection')}</h3>
-            {opened.map(card)}
+            {opened.map((c) => card(c))}
           </>
         )}
         {resolved.length > 0 && (
           <>
             <h3 className="day__caption">{t('condResolvedSection')}</h3>
-            {resolved.map(card)}
+            {resolved.map((c) => card(c))}
           </>
         )}
       </div>

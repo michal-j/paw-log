@@ -18,6 +18,8 @@ import { useBusy } from '../log/useBusy';
 import { ConditionTags } from '../tracked/ConditionTag';
 import { conditionsOf } from '../tracked/model';
 import { EventCard } from './EventCard';
+import { dayPhotos, photosOf } from '../photos/model';
+import { PhotoThumb } from '../photos/PhotoParts';
 import { buildDay, dayBounds, inBounds, type DayEntry, type PlannedRow } from './model';
 import './day.css';
 
@@ -42,7 +44,7 @@ interface Props {
 export function DayView({ date, onBack, onStep, onInvalid, onUsualDay, onOpenCondition }: Props) {
   const { lang, t } = useI18n();
   const f = useFormat();
-  const { records, repository, open, run, version } = useLog();
+  const { records, repository, open, run, version, setOverlay } = useLog();
 
   // Re-render every minute so "up to now" and Later today follow the clock while the app stays open.
   const [, setTick] = useState(0);
@@ -125,9 +127,22 @@ export function DayView({ date, onBack, onStep, onInvalid, onUsualDay, onOpenCon
   const fillHead = date === today ? `${fill(t('fillTodayH'), { n: due.length })} (${now})` : fill(t('fillPastH'), { n: due.length });
 
   const editEntry = (e: Entry) => open({ kind: 'entry', group: itemGroup(e.itemId), date: e.date, part: e.dayPart, entry: e });
-  const editEvent = (e: HealthEvent) => {
+  const photosFor = (e: HealthEvent) => (records ? photosOf(e.id, records.photos) : []);
+  /** A photo event opens its photo's form; other events their own. Null: nothing to edit. */
+  const editOf = (e: HealthEvent): (() => void) | null => {
+    if (e.type === 'photo') {
+      const first = photosFor(e)[0];
+      return first ? () => open({ kind: 'photo', date: e.date, photo: first }) : null;
+    }
     const kind = eventKindOf(e.type);
-    if (kind) open({ kind: 'event', type: kind, date: e.date, event: e });
+    return kind ? () => open({ kind: 'event', type: kind, date: e.date, event: e }) : null;
+  };
+  const editEvent = (e: HealthEvent) => editOf(e)?.();
+  // The viewer pages through this day's photos.
+  const viewPhoto = (id: string) => {
+    if (!records) return;
+    const ids = dayPhotos(date, records.events, records.photos).map((x) => x.photo.id);
+    setOverlay({ kind: 'viewer', ids, index: Math.max(0, ids.indexOf(id)) });
   };
   const addToPart = (part: DayPart) => open({ kind: 'add', date, part });
   const tagsOf = (e: HealthEvent) => (records ? conditionsOf(e, records.conditions) : []);
@@ -172,7 +187,15 @@ export function DayView({ date, onBack, onStep, onInvalid, onUsualDay, onOpenCon
           <>
             <h3 className="day__caption">{t('happened')}</h3>
             {day.events.visits.map((e) => (
-              <EventCard key={e.id} event={e} tags={tagsOf(e)} onEdit={() => editEvent(e)} onOpenCondition={onOpenCondition} />
+              <EventCard
+                key={e.id}
+                event={e}
+                tags={tagsOf(e)}
+                photos={photosFor(e)}
+                onEdit={() => editEvent(e)}
+                onOpenCondition={onOpenCondition}
+                onViewPhoto={viewPhoto}
+              />
             ))}
             {day.events.symptoms.length > 0 && (
               <article className="day-card">
@@ -188,6 +211,18 @@ export function DayView({ date, onBack, onStep, onInvalid, onUsualDay, onOpenCon
                         <span className="day-card__row-value">{symptomDetail(e, t)}</span>
                       </button>
                       <ConditionTags conditions={tagsOf(e)} onOpen={onOpenCondition} row />
+                      {photosFor(e).length > 0 && (
+                        <div className="photo-row photo-row--sym">
+                          {photosFor(e).map((p) => (
+                            <PhotoThumb
+                              key={p.id}
+                              photo={p}
+                              label={fill(t('photoAlt'), { d: f.shortDate(e.date) })}
+                              onOpen={() => viewPhoto(p.id)}
+                            />
+                          ))}
+                        </div>
+                      )}
                     </li>
                   ))}
                 </ul>
@@ -198,8 +233,10 @@ export function DayView({ date, onBack, onStep, onInvalid, onUsualDay, onOpenCon
                 key={e.id}
                 event={e}
                 tags={tagsOf(e)}
-                onEdit={eventKindOf(e.type) ? () => editEvent(e) : null}
+                photos={photosFor(e)}
+                onEdit={editOf(e)}
                 onOpenCondition={onOpenCondition}
+                onViewPhoto={viewPhoto}
               />
             ))}
           </>

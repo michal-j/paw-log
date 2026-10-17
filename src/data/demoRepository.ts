@@ -5,12 +5,21 @@ import entriesJson from '../../data/demo/entries.json';
 import eventsJson from '../../data/demo/events.json';
 import conditionsJson from '../../data/demo/conditions.json';
 import pinnedJson from '../../data/demo/pinned.json';
+import photosJson from '../../data/demo/photos.json';
+import lumpA1 from '../../data/demo/photos/lump-a-1.svg?url';
+import lumpA2 from '../../data/demo/photos/lump-a-2.svg?url';
 import { DuplicateSlotEntryError } from './errors';
 import { DEFAULT_DAY_PART_TIMES, type Repository } from './repository';
-import type { Condition, DateRange, DayPart, DayPartTimes, Dog, DogSettings, Entry, EntryState, HealthEvent, Item, PinnedNote, RemovedSlot, ScheduleSlot } from './types';
+import type { Condition, DateRange, DayPart, DayPartTimes, Dog, DogSettings, Entry, EntryState, HealthEvent, Item, Photo, PhotoFiles, PhotoSize, PinnedNote, RemovedSlot, ScheduleSlot } from './types';
 
 /** v2: JCB-39 changed the shape (amounts, usual day). Changes saved under v1 are dropped. */
 export const DEMO_STORAGE_KEY = 'pawlog.demo.v2';
+/** Files of photos added in the demo (data: URLs), apart from the records so a full quota only loses photos. */
+export const DEMO_PHOTO_FILES_KEY = 'pawlog.demo.photo-files.v1';
+
+/** The sample photos are bundled pictures (fictional drawings), served with the app: no network. */
+const SAMPLE_FILES: Record<string, string> = { 'photo-001': lumpA1, 'photo-002': lumpA2 };
+type StoredFiles = Record<string, Record<PhotoSize, string>>;
 
 /** Entries as stored: a usual-day item removed for a day is a row with state `removed` (as in the database). */
 type StoredEntry = Omit<Entry, 'state'> & { state: EntryState | 'removed' };
@@ -34,6 +43,8 @@ interface Persisted {
   /** Absent in changes saved before JCB-6: the sample conditions are added then. */
   conditions?: Condition[];
   links?: Link[];
+  /** Absent in changes saved before JCB-7: the sample photos are added then. */
+  photos?: Photo[];
 }
 
 const isEntry = (e: StoredEntry): e is Entry => e.state !== 'removed';
@@ -57,6 +68,7 @@ function seed(): Persisted {
     settings: { logStart: null },
     conditions: copy(conditionsJson.conditions as Condition[]),
     links: copy(conditionsJson.links),
+    photos: copy(photosJson as Photo[]),
   };
 }
 
@@ -71,12 +83,15 @@ const hhmm = (d: Date) => `${String(d.getHours()).padStart(2, '0')}:${String(d.g
 /** Fictional frozen data; edits persist only in the visitor's localStorage. The date is frozen, the clock is the device's. */
 export class DemoRepository implements Repository {
   private data: Persisted;
+  /** Files of photos added here, by photo id (kept in localStorage while it has room, else in memory). */
+  private files: StoredFiles;
 
   constructor(
     private readonly storage: Pick<Storage, 'getItem' | 'setItem' | 'removeItem'> | null = safeStorage(),
     private readonly now: () => Date = () => new Date(),
   ) {
     this.data = this.load() ?? seed();
+    this.files = this.loadFiles();
   }
 
   today() {
@@ -184,7 +199,39 @@ export class DemoRepository implements Repository {
   async deleteEvent(id: string) {
     this.data.events = this.data.events.filter((e) => e.id !== id);
     this.data.links = this.links().filter((l) => l.eventId !== id);
+    // As in the database: the event's photo rows go with it (on delete cascade); files stay until purged.
+    this.data.photos = this.photos().filter((p) => p.eventId !== id);
     this.persist();
+  }
+  async listPhotos(): Promise<Photo[]> {
+    return copy(this.photos());
+  }
+  async uploadPhotoFiles(photo: Photo, files: PhotoFiles) {
+    this.files[photo.id] = { full: await dataUrl(files.full), thumb: await dataUrl(files.thumb) };
+    this.persistFiles();
+  }
+  async savePhoto(photo: Photo) {
+    // Same rules as the foreign key and the path check: the event exists, and the files were stored first.
+    if (!this.data.events.some((e) => e.id === photo.eventId)) throw new Error(`savePhoto: no event ${photo.eventId}`);
+    this.data.photos = upsert(this.photos(), copy(photo));
+    this.persist();
+  }
+  async deletePhoto(id: string) {
+    this.data.photos = this.photos().filter((p) => p.id !== id);
+    this.persist();
+  }
+  async purgePhotoFiles(photos: Pick<Photo, 'id' | 'dogId'>[]) {
+    const kept = new Set(this.photos().map((p) => p.id));
+    for (const p of photos) if (!kept.has(p.id)) delete this.files[p.id];
+    this.persistFiles();
+  }
+  async photoUrls(photos: Pick<Photo, 'id' | 'dogId'>[], size: PhotoSize) {
+    const out: Record<string, string> = {};
+    for (const p of photos) {
+      const url = this.files[p.id]?.[size] ?? SAMPLE_FILES[p.id];
+      if (url) out[p.id] = url;
+    }
+    return out;
   }
   async listConditions(): Promise<Condition[]> {
     return copy(this.conditions()).sort((a, b) => b.startedOn.localeCompare(a.startedOn) || a.position - b.position || a.id.localeCompare(b.id));
@@ -235,15 +282,25 @@ export class DemoRepository implements Repository {
   private pinned(): PinnedNote[] {
     return (this.data.pinned ??= copy(pinnedJson as PinnedNote[]));
   }
+  /** Changes saved before JCB-7 have no photos: they get the sample ones whose events are still there. */
+  private photos(): Photo[] {
+    if (!this.data.photos) {
+      const events = new Set(this.data.events.map((e) => e.id));
+      this.data.photos = copy(photosJson as Photo[]).filter((p) => events.has(p.eventId));
+    }
+    return this.data.photos;
+  }
 
   /** Drop the visitor's changes and return to the frozen sample data. */
   reset() {
     try {
       this.storage?.removeItem(DEMO_STORAGE_KEY);
+      this.storage?.removeItem(DEMO_PHOTO_FILES_KEY);
     } catch {
       /* storage unavailable */
     }
     this.data = seed();
+    this.files = {};
   }
 
   /** Changes saved before JCB-6 have no conditions: they get the sample ones, linked to the events still there. */
@@ -280,6 +337,25 @@ export class DemoRepository implements Repository {
     }
   }
 
+  private loadFiles(): StoredFiles {
+    try {
+      const raw = this.storage?.getItem(DEMO_PHOTO_FILES_KEY);
+      const parsed: unknown = raw ? JSON.parse(raw) : null;
+      return parsed && typeof parsed === 'object' ? (parsed as StoredFiles) : {};
+    } catch {
+      return {};
+    }
+  }
+
+  /** Photos are large: when localStorage is full they stay in memory for this visit only. */
+  private persistFiles() {
+    try {
+      this.storage?.setItem(DEMO_PHOTO_FILES_KEY, JSON.stringify(this.files));
+    } catch {
+      /* quota or private mode: keep them in memory */
+    }
+  }
+
   private persist() {
     try {
       this.storage?.setItem(DEMO_STORAGE_KEY, JSON.stringify(this.data));
@@ -291,6 +367,14 @@ export class DemoRepository implements Repository {
 
 function upsert<T extends { id: string }>(list: T[], next: T): T[] {
   return list.some((x) => x.id === next.id) ? list.map((x) => (x.id === next.id ? next : x)) : [...list, next];
+}
+
+/** A Blob as a data: URL (the demo keeps added photos as text). */
+async function dataUrl(blob: Blob): Promise<string> {
+  const bytes = new Uint8Array(await blob.arrayBuffer());
+  let binary = '';
+  for (let i = 0; i < bytes.length; i += 0x8000) binary += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+  return `data:${blob.type || 'image/jpeg'};base64,${btoa(binary)}`;
 }
 
 function safeStorage(): Storage | null {

@@ -1,0 +1,22 @@
+[
+ {
+  "id": "photo-001",
+  "dogId": "dog-demo",
+  "eventId": "event-007",
+  "width": 800,
+  "height": 600,
+  "takenAt": "2026-10-03T09:12:00",
+  "caption": "",
+  "position": 0
+ },
+ {
+  "id": "photo-002",
+  "dogId": "dog-demo",
+  "eventId": "event-011",
+  "width": 800,
+  "height": 600,
+  "takenAt": "2026-10-10T09:05:00",
+  "caption": "",
+  "position": 0
+ }
+]

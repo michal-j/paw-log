@@ -41,6 +41,7 @@ export function useFormat() {
       /** The heading of an event card or row. */
       eventTitle: (e: Pick<HealthEvent, 'type' | 'title'>) => {
         if (e.type === 'other') return e.title || t('otherEvent');
+        if (e.type === 'photo') return e.title || t('copy.103');
         const key = EVENT_LABEL[e.type];
         return key ? t(key) : e.title;
       },
