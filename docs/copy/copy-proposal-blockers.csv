@@ -10,7 +10,7 @@ B9,flavourPh,New flavour,Nowy smak,11,9,"DRAFT pending CEO review; placeholder o
 B10,logStart,Log starts on,Dziennik od,13,11,"DRAFT pending CEO review; Menu field label",JCB-43 (12)
 B11,logStartHint,"Every day from this date is on the Timeline, so past days can be opened and filled.","Każdy dzień od tej daty jest na osi czasu, więc minione dni można otworzyć i uzupełnić.",83,86,"DRAFT pending CEO review; note under the field, wraps",JCB-43 (12)
 B12,backfillTitle,Log past days?,Uzupełnić minione dni?,14,22,"DRAFT pending CEO review; sheet title",JCB-43 (10)
-B13,backfillAsk,"Log {item} as given on {n} past days ({from} – yesterday)? Days already logged for it stay as they are.","Zapisać {item} jako podane od {from} do wczoraj (dni: {n})? Dni, w których już to zapisano, zostaną bez zmian.",99,107,"DRAFT pending CEO review; sheet text, wraps; PL avoids the plural with ""dni: {n}""",JCB-43 (10): wording from the issue
+B13,backfillAsk,"Log {item} as given on {n} past days ({from} – {to})? Days already logged for it stay as they are.","Zapisać {item} jako podane od {from} do {to} (dni: {n})? Dni, w których już to zapisano, zostaną bez zmian.",99,107,"DRAFT pending CEO review; sheet text, wraps; PL avoids the plural with ""dni: {n}""",JCB-43 (10): wording from the issue
 B14,backfillAskOne,Log {item} as given yesterday ({from})? A day already logged for it stays as it is.,"Zapisać {item} jako podane wczoraj ({from})? Jeśli już to zapisano, zostanie bez zmian.",80,81,"DRAFT pending CEO review; the same for one day",JCB-43 (10)
 B15,backfillYes,"Yes, log them","Tak, zapisz",13,11,DRAFT pending CEO review; primary button,JCB-43 (10)
 B16,backfillNo,"No, leave them","Nie, zostaw",14,11,DRAFT pending CEO review; ghost button,JCB-43 (10)
