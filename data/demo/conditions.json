@@ -1,0 +1,86 @@
+{
+ "conditions": [
+  {
+   "id": "condition-001",
+   "dogId": "dog-demo",
+   "name": "Lump A",
+   "startedOn": "2026-10-03",
+   "description": "Small soft lump on the left side of the chest. A photo every week, with the ruler.",
+   "resolvedOn": null,
+   "position": 0
+  },
+  {
+   "id": "condition-002",
+   "dogId": "dog-demo",
+   "name": "Stomach trouble",
+   "startedOn": "2026-10-12",
+   "description": "Rumbling and soft poo, then vomiting on 14 Oct. Gastrelle course 14 to 20 Oct.",
+   "resolvedOn": null,
+   "position": 0
+  },
+  {
+   "id": "condition-003",
+   "dogId": "dog-demo",
+   "name": "Blood pressure",
+   "startedOn": "2026-10-14",
+   "description": "High at Riverside Vet (150 to 160). Recheck planned.",
+   "resolvedOn": null,
+   "position": 0
+  },
+  {
+   "id": "condition-004",
+   "dogId": "dog-demo",
+   "name": "Reflux",
+   "startedOn": "2026-09-20",
+   "description": "Reflux and panting at night.",
+   "resolvedOn": "2026-09-30",
+   "position": 0
+  }
+ ],
+ "links": [
+  {
+   "eventId": "event-007",
+   "conditionId": "condition-001"
+  },
+  {
+   "eventId": "event-011",
+   "conditionId": "condition-001"
+  },
+  {
+   "eventId": "event-012",
+   "conditionId": "condition-002"
+  },
+  {
+   "eventId": "event-013",
+   "conditionId": "condition-002"
+  },
+  {
+   "eventId": "event-014",
+   "conditionId": "condition-002"
+  },
+  {
+   "eventId": "event-015",
+   "conditionId": "condition-002"
+  },
+  {
+   "eventId": "event-016",
+   "conditionId": "condition-002"
+  },
+  {
+   "eventId": "event-014",
+   "conditionId": "condition-003"
+  },
+  {
+   "eventId": "event-017",
+   "conditionId": "condition-003"
+  },
+  {
+   "eventId": "event-003",
+   "conditionId": "condition-004"
+  },
+  {
+   "eventId": "event-004",
+   "conditionId": "condition-004"
+  }
+ ]
+}

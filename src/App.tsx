@@ -3,7 +3,7 @@ import { DemoRepository, type PlainDate, type Repository } from './data';
 import { DayView } from './day/DayView';
 import { useI18n } from './i18n';
 import { Brand } from './components/Brand';
-import { MenuIcon, PlusIcon, TimelineIcon } from './components/icons';
+import { MenuIcon, PlusIcon, TimelineIcon, TrackedIcon } from './components/icons';
 import { AddSheet } from './log/AddSheet';
 import { BackfillSheet } from './log/BackfillSheet';
 import { EntrySheet } from './log/EntrySheet';
@@ -11,7 +11,10 @@ import { EventSheet } from './log/EventSheet';
 import { LogProvider, useLog } from './log/LogProvider';
 import { MenuSheet } from './log/MenuSheet';
 import { SlotSheet } from './log/SlotSheet';
-import { dayPath, parseRoute, routePath, timelinePath, usualPath, type Route } from './routes';
+import { conditionPath, dayPath, parseRoute, routePath, timelinePath, trackedPath, usualPath, type Route } from './routes';
+import { ConditionPage } from './tracked/ConditionPage';
+import { ConditionSheet, ResolveSheet } from './tracked/ConditionSheet';
+import { TrackedList } from './tracked/TrackedList';
 import { Timeline } from './timeline/Timeline';
 import { UsualDay } from './usual/UsualDay';
 import { ErrorBoundary } from './components/ErrorBoundary';
@@ -135,6 +138,33 @@ function Shell({ repository, onSignOut }: { repository: Repository; onSignOut?: 
     setLoc({ route: date ? { base, view: 'day', date } : { base, view: 'timeline' }, scrollTop: 0 });
   }, [route, base]);
 
+  const openTracked = useCallback(() => {
+    if (route.view === 'tracked') return;
+    window.history.replaceState(null, '', trackedPath(base));
+    setLoc({ route: { base, view: 'tracked' }, scrollTop: 0 });
+  }, [route, base]);
+
+  /** A condition from the Tracked list, a tag in the Day view or another condition's page. */
+  const openCondition = useCallback(
+    (id: string) => {
+      close();
+      if (route.view === 'condition' && route.id === id) return;
+      window.history.pushState({ fromApp: true } satisfies HistoryState, '', conditionPath(base, id));
+      setLoc((l) => ({ ...l, route: { base, view: 'condition', id } }));
+    },
+    [route, base, close],
+  );
+
+  /** Back from a condition page (or it no longer exists): where it was opened from, else the Tracked list. */
+  const leaveCondition = useCallback(() => {
+    if (historyState().fromApp) {
+      window.history.back();
+      return;
+    }
+    window.history.replaceState(null, '', trackedPath(base));
+    setLoc({ route: { base, view: 'tracked' }, scrollTop: 0 });
+  }, [base]);
+
   const resetDemo = useCallback(() => {
     if (repository instanceof DemoRepository) repository.reset();
     close();
@@ -160,9 +190,20 @@ function Shell({ repository, onSignOut }: { repository: Repository; onSignOut?: 
         </div>
       </header>
       {route.view === 'day' ? (
-        <DayView date={route.date} onBack={toTimeline} onStep={stepDay} onInvalid={leaveInvalidDay} onUsualDay={openUsual} />
+        <DayView
+          date={route.date}
+          onBack={toTimeline}
+          onStep={stepDay}
+          onInvalid={leaveInvalidDay}
+          onUsualDay={openUsual}
+          onOpenCondition={openCondition}
+        />
       ) : route.view === 'usual' ? (
         <UsualDay date={route.date ?? today} onBack={leaveUsual} />
+      ) : route.view === 'tracked' ? (
+        <TrackedList onOpen={openCondition} />
+      ) : route.view === 'condition' ? (
+        <ConditionPage key={route.id} id={route.id} onBack={leaveCondition} onMissing={leaveCondition} onOpenCondition={openCondition} />
       ) : (
         <Timeline initialScrollTop={loc.scrollTop} dayHref={dayHref} onOpenDay={openDay} />
       )}
@@ -182,8 +223,17 @@ function Shell({ repository, onSignOut }: { repository: Repository; onSignOut?: 
             {t('label.172')}
           </button>
         </div>
+        <button
+          type="button"
+          className="nav__item nav__item--tracked"
+          aria-current={route.view === 'tracked' || route.view === 'condition' ? 'page' : undefined}
+          onClick={openTracked}
+        >
+          <TrackedIcon active={route.view === 'tracked' || route.view === 'condition'} />
+          {t('copy.173')}
+        </button>
       </nav>
-      <SheetHost onShowDay={showDay} onUsualDay={() => openUsual(route.view === 'day' ? route.date : undefined)} onSignOut={onSignOut} onResetDemo={isDemo ? resetDemo : undefined} />
+      <SheetHost onShowDay={showDay} onOpenCondition={openCondition} onUsualDay={() => openUsual(route.view === 'day' ? route.date : undefined)} onSignOut={onSignOut} onResetDemo={isDemo ? resetDemo : undefined} />
       <ToastHost />
     </main>
   );
@@ -191,11 +241,13 @@ function Shell({ repository, onSignOut }: { repository: Repository; onSignOut?: 
 
 function SheetHost({
   onShowDay,
+  onOpenCondition,
   onUsualDay,
   onSignOut,
   onResetDemo,
 }: {
   onShowDay: (date: PlainDate) => void;
+  onOpenCondition: (id: string) => void;
   onUsualDay: () => void;
   onSignOut?: () => void;
   onResetDemo?: () => void;
@@ -204,11 +256,27 @@ function SheetHost({
   if (!sheet) return null;
   switch (sheet.kind) {
     case 'add':
-      return <AddSheet key={`add-${sheet.date}-${sheet.part ?? 0}`} date={sheet.date} part={sheet.part} usual={sheet.usual} />;
+      return (
+        <AddSheet key={`add-${sheet.date}-${sheet.part ?? 0}`} date={sheet.date} part={sheet.part} usual={sheet.usual} condition={sheet.condition} />
+      );
     case 'entry':
       return <EntrySheet key={sheet.entry?.id ?? sheet.slot?.id ?? 'new'} {...sheet} onShowDay={onShowDay} />;
     case 'event':
-      return <EventSheet key={sheet.event?.id ?? sheet.type} kind={sheet.type} date={sheet.date} event={sheet.event} ctxOpen={sheet.ctxOpen} onShowDay={onShowDay} />;
+      return (
+        <EventSheet
+          key={sheet.event?.id ?? sheet.type}
+          kind={sheet.type}
+          date={sheet.date}
+          event={sheet.event}
+          ctxOpen={sheet.ctxOpen}
+          linkTo={sheet.linkTo}
+          onShowDay={onShowDay}
+        />
+      );
+    case 'condition':
+      return <ConditionSheet key={sheet.condition?.id ?? 'new'} condition={sheet.condition} onCreated={onOpenCondition} />;
+    case 'resolve':
+      return <ResolveSheet key={sheet.condition.id} condition={sheet.condition} />;
     case 'slot':
       return <SlotSheet key={sheet.slot?.id ?? `new-${sheet.part}`} date={sheet.date} part={sheet.part} slot={sheet.slot} group={sheet.group} />;
     case 'backfill':

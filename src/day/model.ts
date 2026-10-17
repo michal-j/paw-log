@@ -183,7 +183,7 @@ export function groupDayParts(date: PlainDate, items: Item[], entries: Entry[], 
 // ---------- Events ----------
 
 /** Order of the "What happened" cards, as in the prototype: visits, symptoms, Frontline, deworming, photo, the rest. */
-const EVENT_ORDER: readonly EventType[] = ['vet', 'symptom', 'frontline', 'deworming', 'photo', 'anal_glands', 'nails', 'note', 'other'];
+export const EVENT_ORDER: readonly EventType[] = ['vet', 'symptom', 'frontline', 'deworming', 'photo', 'anal_glands', 'nails', 'note', 'other'];
 
 /** The badge for an event type; types without a designed badge get none. */
 export const BADGE_FOR: Partial<Record<EventType, BadgeKind>> = {

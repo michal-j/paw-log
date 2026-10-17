@@ -77,3 +77,18 @@ export const TimelineIcon = ({ active }: { active: boolean }) => (
     <circle cx="4.8" cy="17.5" r="1.1" />
   </svg>
 );
+/** Tracked (navbar): a target. */
+export const TrackedIcon = ({ active, size = 22 }: { active: boolean; size?: number }) => (
+  <svg {...stroke(size, active ? 2.1 : 1.8)}>
+    <circle cx="12" cy="12" r="8.5" />
+    <circle cx="12" cy="12" r="3.5" />
+    <path d="M12 1.5v3M12 19.5v3M1.5 12h3M19.5 12h3" />
+  </svg>
+);
+/** The small target glyph of a ConditionTag. */
+export const TargetIcon = ({ size = 11 }: { size?: number }) => (
+  <svg {...stroke(size, 2.6)}>
+    <circle cx="12" cy="12" r="8.5" />
+    <circle cx="12" cy="12" r="2.5" fill="currentColor" />
+  </svg>
+);

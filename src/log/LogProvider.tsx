@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import type { DayPart, DayPartTimes, DogSettings, Entry, HealthEvent, Item, PlainDate, RemovedSlot, Repository, ScheduleSlot } from '../data';
+import type { Condition, DayPart, DayPartTimes, DogSettings, Entry, HealthEvent, Item, PlainDate, RemovedSlot, Repository, ScheduleSlot } from '../data';
 import { useI18n } from '../i18n';
 import { logStartOf } from '../timeline/model';
 import type { KindGroup } from './amount';
@@ -15,6 +15,8 @@ export interface Records {
   /** Usual-day items removed for a day. */
   removed: RemovedSlot[];
   events: HealthEvent[];
+  /** Tracked conditions, open and resolved. */
+  conditions: Condition[];
   times: DayPartTimes;
   settings: DogSettings;
   /** The first day offered ("Log starts on", set or derived): the Timeline and Day view reach back to it. */
@@ -28,7 +30,8 @@ export type EventKind = 'symptom' | 'vet' | 'note' | 'other';
 
 export type SheetState =
   /** `usual`: adding to the Usual day (a part's +): Food or Medication, then the usual-day form. */
-  | { kind: 'add'; date: PlainDate; part?: DayPart; usual?: boolean }
+  /** `condition`: + Add on a condition page: symptom, vet visit or note, already linked to it. */
+  | { kind: 'add'; date: PlainDate; part?: DayPart; usual?: boolean; condition?: string }
   | {
       kind: 'entry';
       group: KindGroup;
@@ -40,7 +43,12 @@ export type SheetState =
       replaces?: RemovedSlot;
       ctxOpen?: boolean;
     }
-  | { kind: 'event'; type: EventKind; date: PlainDate; event?: HealthEvent; ctxOpen?: boolean }
+  /** `linkTo`: a new event started from a condition page: linked to it, and the page stays after saving. */
+  | { kind: 'event'; type: EventKind; date: PlainDate; event?: HealthEvent; ctxOpen?: boolean; linkTo?: string }
+  /** Create (no `condition`) or edit a tracked condition. */
+  | { kind: 'condition'; condition?: Condition }
+  /** Mark a condition as resolved: asks for the date. */
+  | { kind: 'resolve'; condition: Condition }
   | { kind: 'slot'; date: PlainDate; part: DayPart; slot?: ScheduleSlot; group?: KindGroup }
   /** After a usual-day change from a past date: log it on the past days where it is open? */
   | { kind: 'backfill'; slot: ScheduleSlot }
@@ -86,13 +94,14 @@ const RETRY_MS = 4000;
  */
 async function loadRecords(repository: Repository, version: number, shown: Map<string, string>): Promise<Records> {
   const today = repository.today();
-  const [dog, items, slots, entries, removed, events, times, settings] = await Promise.all([
+  const [dog, items, slots, entries, removed, events, conditions, times, settings] = await Promise.all([
     repository.getDog(),
     repository.listItems(),
     repository.listScheduleSlots(),
     repository.listEntries({ to: today }),
     repository.listRemovedSlots({ to: today }),
     repository.listEvents({ to: today }),
+    repository.listConditions(),
     repository.getDayPartTimes(),
     repository.getSettings(),
   ]);
@@ -102,7 +111,7 @@ async function loadRecords(repository: Repository, version: number, shown: Map<s
   const shownItems = withItemColours(items, shown);
   shown.clear();
   items.forEach((raw, i) => !isItemColour(raw.colour) && shown.set(raw.id, shownItems[i]!.colour));
-  return { dogId: dog.id, items: shownItems, slots, entries, removed, events, times, settings, logStart, today, version };
+  return { dogId: dog.id, items: shownItems, slots, entries, removed, events, conditions, times, settings, logStart, today, version };
 }
 
 export function LogProvider({ repository, children }: { repository: Repository; children: ReactNode }) {

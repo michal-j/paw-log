@@ -3,8 +3,8 @@
 // (tests/harness). Saving, editing in place, deleting, filling, removing for a day and every Undo
 // must behave the same, so a flow that works in /demo works on real data.
 import { afterEach, describe, expect, it } from 'vitest';
-import { DemoRepository, DuplicateSlotEntryError, type Entry, type Item, type Repository, type ScheduleSlot } from '../src/data';
-import { deleteEntry, restoreRemoved } from '../src/log/actions';
+import { DemoRepository, DuplicateSlotEntryError, type Condition, type Entry, type HealthEvent, type Item, type Repository, type ScheduleSlot } from '../src/data';
+import { deleteCondition, deleteEntry, restoreRemoved, saveCondition, saveEvent } from '../src/log/actions';
 import { createFakeSupabase } from './harness/fakeSupabase';
 
 const NOW = () => new Date(2026, 9, 15, 16, 30); // the demo's frozen date, 15 Oct 2026
@@ -252,5 +252,99 @@ describe.each(subjects)('%s', (_name, make) => {
     const items = await repo.listItems();
     expect(items).toHaveLength(before);
     expect(items.find((i) => i.id === item.id)).toMatchObject({ colour: 'treat', flavours: ['duck'] });
+  });
+
+  // ---------- Tracked conditions (JCB-6) ----------
+  async function conditionSetup() {
+    const { repo, dog } = await setup();
+    const condition = (over: Partial<Condition> = {}): Condition => ({
+      id: uuid(), dogId: dog.id, name: 'Contract lump', startedOn: '2026-10-03', description: 'left side', resolvedOn: null, position: 0, ...over,
+    });
+    const event = (over: Partial<HealthEvent> = {}): HealthEvent => ({
+      id: uuid(), dogId: dog.id, date: '2026-10-10', type: 'symptom', title: 'Poo', detail: '', props: {}, intensity: null, alsoDone: [], conditionIds: [], ...over,
+    });
+    const linksOf = async (id: string) => [...((await repo.listEvents()).find((e) => e.id === id)?.conditionIds ?? [])].sort();
+    const mine = async (id: string) => (await repo.listConditions()).find((c) => c.id === id) ?? null;
+    return { repo, condition, event, linksOf, mine };
+  }
+
+  it('a condition saves, edits in place, resolves and reopens', async () => {
+    const { repo, condition, mine } = await conditionSetup();
+    const c = condition();
+    await repo.saveCondition(c);
+    expect(await mine(c.id)).toEqual(c);
+    await repo.saveCondition({ ...c, name: 'Lump A', resolvedOn: '2026-10-12' });
+    expect(await mine(c.id)).toEqual({ ...c, name: 'Lump A', resolvedOn: '2026-10-12' });
+    expect((await repo.listConditions()).filter((x) => x.id === c.id)).toHaveLength(1);
+    await repo.saveCondition({ ...c, resolvedOn: null });
+    expect((await mine(c.id))?.resolvedOn).toBeNull();
+  });
+
+  it('a condition cannot be resolved before it started', async () => {
+    const { repo, condition } = await conditionSetup();
+    await expect(repo.saveCondition(condition({ resolvedOn: '2026-10-01' }))).rejects.toThrow();
+  });
+
+  it('an event links to several conditions; saving it again sets exactly its links', async () => {
+    const { repo, condition, event, linksOf } = await conditionSetup();
+    const a = condition();
+    const b = condition({ name: 'Second' });
+    await repo.saveCondition(a);
+    await repo.saveCondition(b);
+    const e = event({ conditionIds: [a.id, b.id] });
+    await repo.saveEvent(e);
+    expect(await linksOf(e.id)).toEqual([a.id, b.id].sort());
+    await repo.saveEvent({ ...e, conditionIds: [b.id] });
+    expect(await linksOf(e.id)).toEqual([b.id]);
+    await repo.saveEvent({ ...e, conditionIds: [] });
+    expect(await linksOf(e.id)).toEqual([]);
+  });
+
+  it('deleting a condition keeps its events; Undo brings it back with its links', async () => {
+    const { repo, condition, event, linksOf, mine } = await conditionSetup();
+    const c = condition();
+    await repo.saveCondition(c);
+    const e = event({ conditionIds: [c.id] });
+    await repo.saveEvent(e);
+    const undo = await deleteCondition(repo, c, [e.id]);
+    expect(await mine(c.id)).toBeNull();
+    expect(await linksOf(e.id)).toEqual([]);
+    expect((await repo.listEvents()).some((x) => x.id === e.id)).toBe(true);
+    await undo();
+    expect(await mine(c.id)).toEqual(c);
+    expect(await linksOf(e.id)).toEqual([c.id]);
+  });
+
+  it('deleting an event removes its links only', async () => {
+    const { repo, condition, event, mine } = await conditionSetup();
+    const c = condition();
+    await repo.saveCondition(c);
+    const e = event({ conditionIds: [c.id] });
+    await repo.saveEvent(e);
+    await repo.deleteEvent(e.id);
+    expect(await mine(c.id)).toEqual(c);
+    await repo.saveEvent(e);
+    expect((await repo.listEvents()).find((x) => x.id === e.id)?.conditionIds).toEqual([c.id]);
+  });
+
+  it('an event saved with a condition named in its form, and Undo removes both', async () => {
+    const { repo, condition, event, mine } = await conditionSetup();
+    const c = condition({ name: 'New in form', startedOn: '2026-10-10' });
+    const e = event({ conditionIds: [c.id] });
+    const undo = await saveEvent(repo, e, null, [c]);
+    expect(await mine(c.id)).toEqual(c);
+    await undo();
+    expect((await repo.listEvents()).some((x) => x.id === e.id)).toBe(false);
+    expect(await mine(c.id)).toBeNull();
+  });
+
+  it('resolve then Undo reopens', async () => {
+    const { repo, condition, mine } = await conditionSetup();
+    const c = condition();
+    await repo.saveCondition(c);
+    const undo = await saveCondition(repo, { ...c, resolvedOn: '2026-10-14' }, c);
+    expect((await mine(c.id))?.resolvedOn).toBe('2026-10-14');
+    await undo();
+    expect((await mine(c.id))?.resolvedOn).toBeNull();
   });
 });

@@ -3,7 +3,7 @@ import type { DayPart, Entry, HealthEvent, PlainDate } from '../data';
 import { fill, useI18n, type MessageKey } from '../i18n';
 import { DoseMark } from '../components/DoseMark';
 import { EventBadge } from '../components/EventBadge';
-import { CheckIcon, ChevronIcon, DotsIcon, NoteIcon, PlusIcon, RoutineIcon } from '../components/icons';
+import { CheckIcon, ChevronIcon, PlusIcon, RoutineIcon } from '../components/icons';
 import { MealIcon } from '../components/MealIcon';
 import { symptomLabel } from '../timeline/labels';
 import { parseDate, shiftDate } from '../timeline/model';
@@ -15,12 +15,14 @@ import { useLog } from '../log/LogProvider';
 import { plannedEntry } from '../log/plan';
 import { symptomDetail } from '../log/symptoms';
 import { useBusy } from '../log/useBusy';
-import { BADGE_FOR, buildDay, dayBounds, inBounds, type DayEntry, type PlannedRow } from './model';
+import { ConditionTags } from '../tracked/ConditionTag';
+import { conditionsOf } from '../tracked/model';
+import { EventCard } from './EventCard';
+import { buildDay, dayBounds, inBounds, type DayEntry, type PlannedRow } from './model';
 import './day.css';
 
 /** Tag after an item that was not simply given: "Refused" and "Half eaten". */
 const STATE_TAG: Partial<Record<DayEntry['state'], MessageKey>> = { skipped: 'tagR', partial: 'name.98' };
-const ALSO_LABEL: Record<string, MessageKey> = { anal_glands: 'label.117', nails: 'label.118' };
 
 interface Props {
   date: PlainDate;
@@ -29,13 +31,15 @@ interface Props {
   /** The date is outside the records (before the first one or after today). */
   onInvalid: () => void;
   onUsualDay: (date: PlainDate) => void;
+  /** A condition tag on an event was tapped. */
+  onOpenCondition: (id: string) => void;
 }
 
 /**
  * Day view: what was logged on one date and what the usual day still has open, by day part, plus the
  * day's events. Tap a row to edit it, Given to log a planned item, Fill to log every due one.
  */
-export function DayView({ date, onBack, onStep, onInvalid, onUsualDay }: Props) {
+export function DayView({ date, onBack, onStep, onInvalid, onUsualDay, onOpenCondition }: Props) {
   const { lang, t } = useI18n();
   const f = useFormat();
   const { records, repository, open, run, version } = useLog();
@@ -126,6 +130,7 @@ export function DayView({ date, onBack, onStep, onInvalid, onUsualDay }: Props) 
     if (kind) open({ kind: 'event', type: kind, date: e.date, event: e });
   };
   const addToPart = (part: DayPart) => open({ kind: 'add', date, part });
+  const tagsOf = (e: HealthEvent) => (records ? conditionsOf(e, records.conditions) : []);
 
   return (
     <section className="day" aria-labelledby="day-title">
@@ -167,22 +172,7 @@ export function DayView({ date, onBack, onStep, onInvalid, onUsualDay }: Props) 
           <>
             <h3 className="day__caption">{t('happened')}</h3>
             {day.events.visits.map((e) => (
-              <button key={e.id} type="button" className="day-card day-card--tap" onClick={() => editEvent(e)}>
-                <span className="day-card__head">
-                  <EventBadge kind="vet" text="" />
-                  {e.title ? `${t('visitWord')} · ${e.title}` : t('copy.101')}
-                </span>
-                {e.detail && <span className="day-card__text">{e.detail}</span>}
-                {e.alsoDone && e.alsoDone.length > 0 && (
-                  <span className="day-card__chips">
-                    {e.alsoDone.map((a) => (
-                      <span key={a} className="day-card__chip">
-                        {t(ALSO_LABEL[a] ?? 'other')}
-                      </span>
-                    ))}
-                  </span>
-                )}
-              </button>
+              <EventCard key={e.id} event={e} tags={tagsOf(e)} onEdit={() => editEvent(e)} onOpenCondition={onOpenCondition} />
             ))}
             {day.events.symptoms.length > 0 && (
               <article className="day-card">
@@ -197,39 +187,21 @@ export function DayView({ date, onBack, onStep, onInvalid, onUsualDay }: Props) 
                         <span className="day-card__row-label">{symptomLabel(e.title, t)}</span>
                         <span className="day-card__row-value">{symptomDetail(e, t)}</span>
                       </button>
+                      <ConditionTags conditions={tagsOf(e)} onOpen={onOpenCondition} row />
                     </li>
                   ))}
                 </ul>
               </article>
             )}
-            {day.events.others.map((e) => {
-              const kind = BADGE_FOR[e.type];
-              const tap = !!eventKindOf(e.type);
-              const content = (
-                <>
-                  <span className="day-card__head">
-                    {kind ? (
-                      <EventBadge kind={kind} text={kind === 'front' ? 'F' : kind === 'worm' ? 'D' : ''} />
-                    ) : (
-                      <span className="day-card__glyph" aria-hidden="true">
-                        {e.type === 'note' ? <NoteIcon /> : <DotsIcon />}
-                      </span>
-                    )}
-                    {f.eventTitle(e)}
-                  </span>
-                  {e.detail && <span className="day-card__text">{e.detail}</span>}
-                </>
-              );
-              return tap ? (
-                <button key={e.id} type="button" className="day-card day-card--tap" onClick={() => editEvent(e)}>
-                  {content}
-                </button>
-              ) : (
-                <article key={e.id} className="day-card">
-                  {content}
-                </article>
-              );
-            })}
+            {day.events.others.map((e) => (
+              <EventCard
+                key={e.id}
+                event={e}
+                tags={tagsOf(e)}
+                onEdit={eventKindOf(e.type) ? () => editEvent(e) : null}
+                onOpenCondition={onOpenCondition}
+              />
+            ))}
           </>
         )}
 

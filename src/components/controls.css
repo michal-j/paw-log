@@ -282,6 +282,7 @@ select.input { padding: 0 var(--space-2); }
 .nav__item[aria-current='page'] { color: var(--color-mint-deep); font-weight: 700; }
 .nav__item[aria-current='page']::before { content: ''; position: absolute; top: -7px; width: 28px; height: 2px; background: var(--color-mint); }
 .nav__add-wrap { grid-column: 3; display: flex; align-items: center; justify-content: center; }
+.nav__item--tracked { grid-column: 4; }
 .nav__add { width: 100%; max-width: 76px; height: 40px; padding: 0 var(--space-2); border-radius: var(--radius-lg); font-weight: 700; }
 
 /* ---------- Header menu ---------- */
