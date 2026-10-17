@@ -27,6 +27,7 @@ import type {
   Unit,
 } from './types';
 import { photoPath } from './types';
+import { UploadError, defaultUploader, type UploadResponse, type Uploader } from './upload';
 
 export { DuplicateSlotEntryError, NoDogError, RepositoryError };
 
@@ -382,6 +383,8 @@ export interface SupabaseRepositoryOptions {
    * fake backend has no network address, loads it through the client and hands out a blob: URL.
    */
   displayUrl?: (signedUrl: string) => Promise<string>;
+  /** How file bytes are sent (default: XMLHttpRequest with progress-based limits; tests use the fake's fetch). */
+  upload?: Uploader;
 }
 
 function requireUuid(operation: string, id: string) {
@@ -403,7 +406,10 @@ export class SupabaseRepository implements Repository {
     private readonly client: SupabaseClient,
     private readonly now: () => Date = () => new Date(),
     private readonly options: SupabaseRepositoryOptions = {},
-  ) {}
+  ) {
+    this.upload = options.upload ?? defaultUploader();
+  }
+  private readonly upload: Uploader;
 
   today(): PlainDate {
     return localDate(this.now());
@@ -665,20 +671,42 @@ export class SupabaseRepository implements Repository {
     return rows.map(toPhoto);
   }
 
-  /** Upsert both files (same paths every time), so a retry replaces what an earlier attempt left. */
+  /**
+   * Upsert both files (same paths every time), so a retry replaces what an earlier attempt left.
+   * Each file: a signed upload URL for its path (a short request, checked against the storage
+   * policies), then the bytes through `options.upload`, which has upload limits of its own
+   * (src/data/upload.ts) instead of the 10 s / 15 s of other calls: slow mobile data still works.
+   */
   async uploadPhotoFiles(photo: Photo, files: PhotoFiles): Promise<void> {
     requireUuid('uploadPhotoFiles', photo.id);
     const bucket = this.client.storage.from(PHOTO_BUCKET);
     for (const size of ['thumb', 'full'] as const) {
-      // Sent as raw bytes with its content type (not multipart): the same on every platform.
-      const body = await files[size].arrayBuffer();
-      const { error } = await bucket.upload(photoPath(photo, size), body, {
-        contentType: 'image/jpeg',
-        upsert: true,
-        // A path never gets other content (a changed photo is a new attachment), so it may be cached for long.
-        cacheControl: '31536000',
-      });
-      if (error) throw new RepositoryError('uploadPhotoFiles', storageCode(error), error.message);
+      const { data, error } = await bucket.createSignedUploadUrl(photoPath(photo, size), { upsert: true });
+      if (error || !data) throw new RepositoryError('uploadPhotoFiles', error ? storageCode(error) : undefined, error?.message ?? 'no upload URL');
+      let res: UploadResponse;
+      try {
+        res = await this.upload({
+          url: data.signedUrl,
+          headers: {
+            'content-type': 'image/jpeg',
+            'x-upsert': 'true',
+            // A path never gets other content (a changed photo is a new attachment), so it may be cached for long.
+            'cache-control': 'max-age=31536000',
+          },
+          body: files[size],
+        });
+      } catch (err) {
+        throw new RepositoryError('uploadPhotoFiles', err instanceof UploadError ? err.kind : undefined, String((err as Error).message));
+      }
+      if (res.status < 200 || res.status >= 300) {
+        let message = res.text;
+        try {
+          message = (JSON.parse(res.text) as { message?: string }).message ?? message;
+        } catch {
+          /* not JSON */
+        }
+        throw new RepositoryError('uploadPhotoFiles', String(res.status), message);
+      }
     }
   }
 

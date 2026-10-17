@@ -9,7 +9,7 @@
 // Postgres code (23505 unique violation → 409, 42501 → 403, other constraint errors → 400).
 // Auth: only the token refresh (POST /auth/v1/token), answering a new session for the seed user
 // (JCB-71); the harness signs in with a fake AuthService. Not covered: embedded resources, RPC.
-// Storage (JCB-7): upload (raw body, x-upsert), batch signing, signed and public downloads, remove;
+// Storage (JCB-7): upload (raw body, x-upsert; or a signed upload URL, then PUT with its token), batch signing, signed and public downloads, remove;
 // each runs as the user on storage.objects, so the migration's storage policies apply.
 //
 // Nothing here ever reaches a network: the fetch never calls the real one. All data is fictional.
@@ -344,6 +344,35 @@ export async function createFakeBackend(options: { start?: string; seed?: boolea
     return storageError(400, 'Error', (err as Error).message);
   };
 
+  const uploadTokens = new Map<string, { key: string; upsert: boolean; owner: string }>();
+  const insertObject = (upsert: boolean) =>
+    `insert into storage.objects (bucket_id, name, owner, owner_id, metadata) values ($1, $2, $3::uuid, $3::text, $4::jsonb)` +
+    (upsert ? ' on conflict (bucket_id, name) do update set updated_at = now(), metadata = excluded.metadata' : '');
+
+  /** Store an upload after the bucket's limits; `asOwner`: run the insert as the user (RLS) rather than as the server. */
+  async function putObject(request: Request, bucket: string, name: string, upsert: boolean, owner: string, asOwner: boolean): Promise<[number, string]> {
+    const bytes = new Uint8Array(await request.arrayBuffer());
+    const type = (request.headers.get('content-type') ?? '').split(';')[0] as string;
+    const [b] = (
+      await db.query<{ file_size_limit: string | null; allowed_mime_types: string[] | null }>(
+        'select file_size_limit, allowed_mime_types from storage.buckets where id = $1',
+        [bucket],
+      )
+    ).rows;
+    if (!b) return storageError(404, 'Bucket not found', 'Bucket not found');
+    if (b.file_size_limit !== null && bytes.length > Number(b.file_size_limit)) return storageError(413, 'Payload too large', 'The object exceeded the maximum allowed size');
+    if (b.allowed_mime_types && !b.allowed_mime_types.includes(type)) return storageError(415, 'invalid_mime_type', `mime type ${type} is not supported`);
+    const params = [bucket, name, owner, JSON.stringify({ mimetype: type, size: bytes.length })];
+    try {
+      if (asOwner) await asUser((tx) => tx.query(insertObject(upsert), params));
+      else await db.query(insertObject(upsert), params);
+    } catch (err) {
+      return pgStorageError(err);
+    }
+    files.set(`${bucket}/${name}`, { bytes, type });
+    return [200, JSON.stringify({ Id: crypto.randomUUID(), Key: `${bucket}/${name}` })];
+  }
+
   async function storage(request: Request, url: URL): Promise<[number, string | Uint8Array, string?]> {
     const path = decodeURIComponent(url.pathname.replace(/^\/storage\/v1/, ''));
     const method = request.method;
@@ -389,35 +418,36 @@ export async function createFakeBackend(options: { start?: string; seed?: boolea
       for (const r of gone.rows) files.delete(`${bucket}/${r.name}`);
       return [200, JSON.stringify(gone.rows.map((r) => ({ name: r.name, bucket_id: bucket })))];
     }
-    m = /^\/object\/([a-z0-9_-]+)\/(.+)$/.exec(path);
-    if (m && (method === 'POST' || method === 'PUT')) {
+    // Signed upload URL: the storage policies are checked now, as the user; the upload itself then
+    // only needs the token (as on Supabase).
+    m = /^\/object\/upload\/sign\/([a-z0-9_-]+)\/(.+)$/.exec(path);
+    if (m && method === 'POST') {
       const bucket = m[1] as string;
       const name = m[2] as string;
-      const bytes = new Uint8Array(await request.arrayBuffer());
-      const type = (request.headers.get('content-type') ?? '').split(';')[0] as string;
-      const [b] = (
-        await db.query<{ file_size_limit: string | null; allowed_mime_types: string[] | null }>(
-          'select file_size_limit, allowed_mime_types from storage.buckets where id = $1',
-          [bucket],
-        )
-      ).rows;
-      if (!b) return storageError(404, 'Bucket not found', 'Bucket not found');
-      if (b.file_size_limit !== null && bytes.length > Number(b.file_size_limit)) return storageError(413, 'Payload too large', 'The object exceeded the maximum allowed size');
-      if (b.allowed_mime_types && !b.allowed_mime_types.includes(type)) return storageError(415, 'invalid_mime_type', `mime type ${type} is not supported`);
-      const upsert = method === 'PUT' || request.headers.get('x-upsert') === 'true';
+      const upsert = request.headers.get('x-upsert') === 'true';
+      const ROLLBACK = new Error('rollback');
       try {
-        await asUser((tx) =>
-          tx.query(
-            `insert into storage.objects (bucket_id, name, owner, owner_id, metadata) values ($1, $2, $3::uuid, $3::text, $4::jsonb)` +
-              (upsert ? ' on conflict (bucket_id, name) do update set updated_at = now(), metadata = excluded.metadata' : ''),
-            [bucket, name, userId, JSON.stringify({ mimetype: type, size: bytes.length })],
-          ),
-        );
+        await asUser(async (tx) => {
+          await tx.query(insertObject(upsert), [bucket, name, userId, '{}']);
+          throw ROLLBACK; // only a check: nothing is stored until the upload
+        });
       } catch (err) {
-        return pgStorageError(err);
+        if (err !== ROLLBACK) return pgStorageError(err);
       }
-      files.set(`${bucket}/${name}`, { bytes, type });
-      return [200, JSON.stringify({ Id: crypto.randomUUID(), Key: `${bucket}/${name}` })];
+      const token = crypto.randomUUID();
+      uploadTokens.set(token, { key: `${bucket}/${name}`, upsert, owner: userId });
+      return [200, JSON.stringify({ url: `/object/upload/sign/${bucket}/${name}?token=${token}`, token })];
+    }
+    if (m && method === 'PUT') {
+      const bucket = m[1] as string;
+      const name = m[2] as string;
+      const t = uploadTokens.get(url.searchParams.get('token') ?? '');
+      if (!t || t.key !== `${bucket}/${name}`) return storageError(400, 'InvalidSignature', 'The signature is invalid or has expired');
+      return putObject(request, bucket, name, t.upsert || request.headers.get('x-upsert') === 'true', t.owner, false);
+    }
+    m = /^\/object\/([a-z0-9_-]+)\/(.+)$/.exec(path);
+    if (m && (method === 'POST' || method === 'PUT')) {
+      return putObject(request, m[1] as string, m[2] as string, method === 'PUT' || request.headers.get('x-upsert') === 'true', userId, true);
     }
     return storageError(404, 'not_found', `${method} ${path} is not supported by the fake`);
   }

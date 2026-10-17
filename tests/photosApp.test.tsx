@@ -6,7 +6,7 @@ import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-li
 import { App } from '../src/App';
 import { I18nProvider } from '../src/i18n';
 import { SEED } from './harness/fakeBackend';
-import { createFakeSupabase, type FakeSupabase } from './harness/fakeSupabase';
+import { createFakeSupabase, fakeUploader, type FakeSupabase } from './harness/fakeSupabase';
 
 vi.mock('../src/photos/resize', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../src/photos/resize')>()),
@@ -41,13 +41,15 @@ const twoPhotos = `${withLump}
     ('${P1}', '${SEED.dog}', '${E1}', '${SEED.dog}/${P1}.jpg', 1600, 1200),
     ('${P2}', '${SEED.dog}', '${E2}', '${SEED.dog}/${P2}.jpg', 1600, 1200);`;
 
-async function at(path: string, prep?: string, timeoutMs?: number) {
-  fake = await createFakeSupabase({ start: '2026-10-01', client: { requestTimeoutMs: 60_000 } });
+async function at(path: string, prep?: string, opts: { timeoutMs?: number; requestTimeoutMs?: number; uploadLimitMs?: number } = {}) {
+  fake = await createFakeSupabase({ start: '2026-10-01', client: { requestTimeoutMs: opts.requestTimeoutMs ?? 60_000 } });
   if (prep) await fake.backend.db.exec(prep);
   window.history.replaceState(null, '', path);
+  const limit = opts.uploadLimitMs;
+  const upload = limit ? fakeUploader(fake.backend, () => limit) : undefined;
   render(
     <I18nProvider initial="en">
-      <App repository={fake.repository(NOW, timeoutMs)} />
+      <App repository={fake.repository(NOW, opts.timeoutMs, upload ? { upload } : {})} />
     </I18nProvider>,
   );
 }
@@ -109,18 +111,36 @@ describe('photos, real data path', () => {
     expect(fake!.backend.files()).toEqual([]);
   });
 
-  it('an upload that gets no answer releases Save; trying again uploads to the same paths, one photo', async () => {
-    await at('/day/2026-10-15', undefined, 400);
+  const addPhoto = async () => {
     await screen.findAllByText('Cooked meal');
     fireEvent.click(screen.getByRole('button', { name: 'Add' }));
     fireEvent.click(within(dialog()).getByText('Photo'));
     pick();
     await within(dialog()).findByText(/date from the photo/);
-    fake!.backend.hangNext(1, (method, table) => method === 'POST' && table === 'storage');
+  };
+  const isUpload = (method: string, table: string) => method === 'PUT' && table === 'storage';
+
+  it('a slow upload on mobile data is not cut off by the 10 s request or 15 s call limits', async () => {
+    // Both general limits are tiny here; the upload takes longer than either and still goes through.
+    await at('/day/2026-10-15', undefined, { timeoutMs: 1500, requestTimeoutMs: 1500 });
+    await addPhoto();
+    fake!.backend.setLatency((method, table) => (isUpload(method, table) ? 2000 : 0));
+    fireEvent.click(within(dialog()).getByRole('button', { name: 'Save' }));
+    expect(await screen.findByText('Saved')).toBeTruthy();
+    expect(screen.queryByText("Couldn't save · Try again")).toBeNull();
+    expect(fake!.backend.files()).toHaveLength(2);
+    expect(await rows(`select count(*)::int as n from attachment`)).toEqual([{ n: 1 }]);
+  });
+
+  it('a stalled upload gives up and releases Save; trying again uploads to the same paths, one photo', async () => {
+    await at('/day/2026-10-15', undefined, { uploadLimitMs: 400 });
+    await addPhoto();
+    fake!.backend.hangNext(1, isUpload);
     fireEvent.click(within(dialog()).getByRole('button', { name: 'Save' }));
     expect(await screen.findByText("Couldn't save · Try again")).toBeTruthy();
     const save = within(dialog()).getByRole('button', { name: 'Save' }) as HTMLButtonElement;
     await waitFor(() => expect(save.disabled).toBe(false));
+    expect(await rows(`select count(*)::int as n from attachment`)).toEqual([{ n: 0 }]);
     fake!.backend.release(); // the lost upload reaches the server after all
     fireEvent.click(save);
     expect(await screen.findByText('Saved')).toBeTruthy();

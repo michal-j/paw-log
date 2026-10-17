@@ -49,7 +49,11 @@ function FullImage({ photo, alt, className }: { photo: Photo; alt: string; class
   const full = usePhotoUrl(photo, 'full');
   const thumb = usePhotoUrl(photo, 'thumb');
   const src = full ?? thumb;
-  return src ? <img className={className} src={src} alt={alt} draggable={false} /> : <span className={className} role="img" aria-label={alt} />;
+  return src ? (
+    <img className={className} src={src} alt={alt} draggable={false} />
+  ) : (
+    <span className={className ?? 'viewer__placeholder'} role="img" aria-label={alt} />
+  );
 }
 
 /**
