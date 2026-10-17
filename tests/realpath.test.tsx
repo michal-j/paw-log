@@ -483,6 +483,56 @@ describe('real data path', () => {
     ]);
   });
 
+  // A later slot of the item and part: 1 pill 1 to 11 Oct, then 2 pills from 12 Oct.
+  const WITH_LATER = `with later as (
+      insert into schedule_slot (dog_id, item_id, day_part, flavour, amount, unit, active_from, position)
+      select dog_id, item_id, day_part, flavour, 2, unit, '2026-10-12', position from schedule_slot where item_id = '${SEED.items.arvelin}'
+    ) update schedule_slot set active_to = '2026-10-11' where item_id = '${SEED.items.arvelin}'`;
+
+  it('(JCB-72 QA) a start on or after the next slot of the item is refused, nothing is saved', async () => {
+    await at('/usual/2026-10-05', '2026-10-01', WITH_LATER);
+    await edit({ from: '2026-10-13' });
+    expect(await screen.findByText(/Pick a later start/)).toBeTruthy();
+    expect(await arvelinSlots()).toEqual([
+      { a: 1, f: '2026-10-01', t: '2026-10-11' },
+      { a: 2, f: '2026-10-12', t: null },
+    ]);
+  });
+
+  it('(JCB-72 QA) a start inside the gap keeps the end before the next slot; the offer shows the real last day', async () => {
+    await at('/usual/2026-10-05', '2026-10-06', WITH_LATER);
+    await edit({ from: '2026-10-03' });
+    await offered();
+    expect(await arvelinSlots()).toEqual([
+      { a: 1, f: '2026-10-03', t: '2026-10-11' },
+      { a: 2, f: '2026-10-12', t: null },
+    ]);
+    expect(await screen.findByText(/on 9 past days \(3 Oct – 11 Oct\)/)).toBeTruthy();
+  });
+
+  it('(JCB-72 QA) a "No end" or a longer course cannot run into the next slot either', async () => {
+    await at('/usual/2026-10-05', '2026-10-01', WITH_LATER);
+    fireEvent.click(await screen.findByText('Arvelin'));
+    fireEvent.click(within(dialog()).getByRole('radio', { name: '14 days' }));
+    click('Save');
+    await screen.findByText('Usual day updated');
+    expect(await arvelinSlots()).toEqual([
+      { a: 1, f: '2026-10-01', t: '2026-10-11' },
+      { a: 2, f: '2026-10-12', t: null },
+    ]);
+  });
+
+  it('(JCB-72 QA) trimming an earlier course keeps it a course, shorter', async () => {
+    await at('/usual/2026-10-15', '2026-10-01', WITH_EARLIER);
+    await fake!.backend.sql(`update schedule_slot set is_course = true where active_to = '2026-10-09'`);
+    await edit({ from: '2026-10-06' });
+    await offered();
+    expect(await rows(`select amount::float as a, active_to::text as t, is_course as course from schedule_slot where item_id = '${SEED.items.arvelin}' order by active_from`)).toEqual([
+      { a: 1, t: '2026-10-05', course: true },
+      { a: 2, t: null, course: false },
+    ]);
+  });
+
   it('(QA 3) Undo on the toast closes the past-days question', async () => {
     await at('/usual/2026-10-15', '2026-10-06');
     fireEvent.click(await screen.findByText('Arvelin'));

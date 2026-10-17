@@ -6,6 +6,7 @@ import * as act from './actions';
 import { useFormat } from './format';
 import { useBusy } from './useBusy';
 import { useLog } from './LogProvider';
+import { shiftDate } from '../timeline/model';
 import { backfillDays, plannedEntry, slotsAfter } from './plan';
 
 /**
@@ -15,7 +16,7 @@ import { backfillDays, plannedEntry, slotsAfter } from './plan';
  * worked out from the records as they reload, so entries the other phone added are counted.
  */
 export function BackfillSheet({ slot }: { slot: ScheduleSlot }) {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const f = useFormat();
   const { records, repository, run, close } = useLog();
   const { busy, guard } = useBusy();
@@ -29,10 +30,14 @@ export function BackfillSheet({ slot }: { slot: ScheduleSlot }) {
   const item = records?.items.find((i) => i.id === slot.itemId);
   const name = f.name(item?.name ?? '', slot.flavour);
   const from = days[0] ?? slot.activeFrom;
+  const last = days[days.length - 1] ?? from;
+  const isYesterday = !!records && last === shiftDate(records.today, -1);
+  // The real last day, not always "yesterday": the item may end earlier or days may have been logged.
+  const to = isYesterday ? t('copy.114').toLocaleLowerCase(lang) : f.dayMonth(last);
   const text =
     days.length === 1
-      ? fill(t('backfillAskOne'), { item: name, from: f.dayMonth(from) })
-      : fill(t('backfillAsk'), { item: name, n: days.length, from: f.dayMonth(from) });
+      ? fill(t(isYesterday ? 'backfillAskOne' : 'backfillAskOneOn'), { item: name, from: f.dayMonth(from) })
+      : fill(t('backfillAsk'), { item: name, n: days.length, from: f.dayMonth(from), to });
 
   const yes = async () => {
     let added = 0;

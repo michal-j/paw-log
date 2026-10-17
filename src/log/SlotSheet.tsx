@@ -130,7 +130,19 @@ export function SlotSheet({ date, part, slot, group: onlyGroup }: { date: PlainD
         ? records.slots.filter((x) => x.id !== slot.id && x.itemId === slot.itemId && x.dayPart === slot.dayPart && x.activeFrom < slot.activeFrom && (x.activeTo === null || x.activeTo >= form.from))
         : [];
     if (before.some((x) => x.activeFrom >= form.from)) return set({ err: 'overlap' });
-    const trimmed = before.map((x) => ({ ...x, activeTo: shiftDate(form.from, -1), course: false }));
+    // A trimmed course stays a course, now as long as the days it still has ("day n of m").
+    const trimmed = before.map((x) => ({ ...x, activeTo: shiftDate(form.from, -1), course: !!x.course }));
+    // The next slot of the item and part: nothing saved here may reach into it (JCB-72 QA).
+    const next = slot
+      ? records.slots
+          .filter((x) => x.id !== slot.id && x.itemId === slot.itemId && x.dayPart === slot.dayPart && x.activeFrom > slot.activeFrom)
+          .sort((a, b) => a.activeFrom.localeCompare(b.activeFrom))[0]
+      : undefined;
+    if (next && (form.from >= next.activeFrom || (slot && effective >= next.activeFrom))) return set({ err: 'overlap' });
+    const fitGap = (x: ScheduleSlot): ScheduleSlot =>
+      next && x.itemId === next.itemId && x.dayPart === next.dayPart && (x.activeTo === null || x.activeTo >= next.activeFrom)
+        ? { ...x, activeTo: shiftDate(next.activeFrom, -1), course: false }
+        : x;
     const base = same
       ? {
           save:
@@ -140,7 +152,7 @@ export function SlotSheet({ date, part, slot, group: onlyGroup }: { date: PlainD
           remove: [] as string[],
         }
       : changeFrom(records.slots, restart ?? null, { ...values, course }, effective, end, act.newId, records.dogId);
-    const change = { ...base, save: [...trimmed, ...base.save], ...('slot' in base ? { slot: base.slot } : {}) } as Pick<typeof base, 'save' | 'remove'> & { slot?: ScheduleSlot };
+    const change = { ...base, save: [...trimmed, ...base.save.map(fitGap)], ...('slot' in base ? { slot: fitGap(base.slot) } : {}) } as Pick<typeof base, 'save' | 'remove'> & { slot?: ScheduleSlot };
     // A new flavour joins a food's list (the colour of an existing item is changed under Edit item).
     const itemChange = group === 'food' ? withFlavour(item, values.flavour) : null;
     if (!change.save.length && !newItem && !itemChange) return close();

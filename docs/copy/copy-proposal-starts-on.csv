@@ -1,3 +1,4 @@
 #,Where (code name),English,Polish,EN chars,PL chars,Fit note,Your notes
 J1,newDoseFrom,New amount from,Nowa ilość od,15,13,,JCB-72; DRAFT pending CEO review
 J3,startsOverlap,An earlier entry of this item covers these days. Pick a later start.,Wcześniejszy wpis tej pozycji obejmuje te dni. Wybierz późniejszy początek.,68,75,Two lines at 390 in PL,JCB-72; DRAFT pending CEO review
+J4,backfillAskOneOn,Log {item} as given on {from}? A day already logged for it stays as it is.,"Zapisać {item} jako podane w dniu {from}? Jeśli już to zapisano, zostanie bez zmian.",70,75,"Same as backfillAskOne for a day that is not yesterday; {to} in backfillAsk is the last day or ""yesterday""",JCB-72 QA; DRAFT pending CEO review
