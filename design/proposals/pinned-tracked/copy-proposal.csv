@@ -1,0 +1,66 @@
+﻿#,Where (code name),English,Polish,EN chars,PL chars,Fit note,Your notes
+P1,trackedTitle,Tracked conditions,Śledzone sprawy,18,15,,DRAFT pending CEO review; Screen title. Replaces #34 'Tracked issues' in EN (CEO calls them conditions); PL unchanged
+P2,newShort,New,Nowa,3,4,,DRAFT pending CEO review; Header button on Pinned and Tracked (notatka and sprawa are both feminine). Screen readers get addPinned / trackNew
+P3,reorder,Reorder,Zmień kolejność,7,15,PL >20% longer; fits at 390 (checked),DRAFT pending CEO review; Text button above the pinned notes
+P4,done,Done,Gotowe,4,6,,DRAFT pending CEO review; Ends reorder mode
+P5,moveUp,Move up: {x},Przesuń wyżej: {x},12,18,PL >20% longer; fits at 390 (checked),DRAFT pending CEO review; Screen-reader label of the up arrow
+P6,moveDown,Move down: {x},Przesuń niżej: {x},14,18,PL >20% longer; fits at 390 (checked),DRAFT pending CEO review; Screen-reader label of the down arrow
+P7,notes_one,1 note,1 notatka,6,9,,DRAFT pending CEO review; Caption above the title
+P8,notes_few,{n} notes,{n} notatki,9,11,,"DRAFT pending CEO review; Polish 2-4, 22-24 ..."
+P9,notes_many,{n} notes,{n} notatek,9,11,,DRAFT pending CEO review; Polish 5+
+P10,editPinned,Edit pinned note,Edytuj przypiętą notatkę,16,24,PL >20% longer; fits at 390 (checked),DRAFT pending CEO review; Sheet title; PL 24 chars fits the sheet head
+P11,pinTitle,Title,Tytuł,5,5,,"DRAFT pending CEO review; Field label, optional"
+P12,pinText,Note,Notatka,4,7,,DRAFT pending CEO review; Field label (same words as note.154)
+P13,pinTextErr,Write the note.,Wpisz notatkę.,15,14,,DRAFT pending CEO review; Field error
+P14,toastPinDeleted,Note deleted,Notatka usunięta,12,16,PL >20% longer; fits at 390 (checked),DRAFT pending CEO review; Toast with Undo
+P15,pinEmpty,"Nothing pinned yet. Pin what you both should always know: allergies, how to give a medication, the vet's standing advice.","Nic jeszcze nie przypięto. Przypnij to, co oboje zawsze powinniście wiedzieć: alergie, jak podawać lek, stałe zalecenia weta.",121,125,,DRAFT pending CEO review; Empty state
+P16,editedOn,Edited {d},Zmieniono {d},10,13,,DRAFT pending CEO review; Quiet line under a pinned note
+P17,openCount,{n} open,Otwarte: {n},8,12,PL >20% longer; fits at 390 (checked),DRAFT pending CEO review; Caption above the title; PL avoids plural forms
+P18,openSection,Open,Otwarte,4,7,,DRAFT pending CEO review; Section caption (uppercase)
+P19,resolvedSection,Resolved,Zakończone,8,10,,DRAFT pending CEO review; Section caption (uppercase)
+P20,since,Since {d},Od {d},9,6,,DRAFT pending CEO review; Meta line on a condition card
+P21,photos_one,1 photo,1 zdjęcie,7,9,,DRAFT pending CEO review; Meta line
+P22,photos_few,{n} photos,{n} zdjęcia,10,11,,"DRAFT pending CEO review; Meta line, Polish 2-4"
+P23,photos_many,{n} photos,{n} zdjęć,10,9,,"DRAFT pending CEO review; Meta line, Polish 5+"
+P24,events_one,1 event,1 zdarzenie,7,11,PL >20% longer; fits at 390 (checked),DRAFT pending CEO review; Meta line
+P25,events_few,{n} events,{n} zdarzenia,10,13,,"DRAFT pending CEO review; Meta line, Polish 2-4"
+P26,events_many,{n} events,{n} zdarzeń,10,11,,"DRAFT pending CEO review; Meta line, Polish 5+"
+P27,trackedEmpty,"Nothing tracked yet. Track something you want to follow over time, like a lump: photos and linked events in one place.","Nic jeszcze nie śledzisz. Śledź to, co chcesz obserwować w czasie, np. guzek: zdjęcia i powiązane zdarzenia w jednym miejscu.",118,125,,DRAFT pending CEO review; Empty state
+P28,statusOpen,Open · since {d},Otwarta · od {d},16,16,,DRAFT pending CEO review; Caption above the condition name
+P29,statusResolved,Resolved · {a} – {b},Zakończona · {a} – {b},20,22,,DRAFT pending CEO review; Caption above the condition name
+P30,compare,Compare,Porównaj,7,8,,DRAFT pending CEO review; Link next to the Photos caption; opens first vs latest
+P31,history,History,Historia,7,8,,DRAFT pending CEO review; Section caption on the condition page
+P32,addToX,Add to {x},Dodaj do: {x},10,13,,DRAFT pending CEO review; Button on the condition page and the + Add sheet title from there
+P33,noPhotos,No photos yet. Take one now and then to see how it changes.,"Brak zdjęć. Rób je co jakiś czas, żeby widzieć zmiany.",59,54,,"DRAFT pending CEO review; Condition page, empty photo strip"
+P34,noEvents,"Nothing linked yet. Link a symptom, vet visit or note from its form, or add one here.","Nic jeszcze nie powiązano. Powiąż objaw, wizytę lub notatkę w jej formularzu albo dodaj ją tutaj.",85,97,,"DRAFT pending CEO review; Condition page, empty history"
+P35,markResolved,Mark as resolved,Oznacz jako zakończoną,16,22,PL >20% longer; fits at 390 (checked),DRAFT pending CEO review; Button at the end of an open condition
+P36,reopen,Reopen,Otwórz ponownie,6,15,PL >20% longer; fits at 390 (checked),DRAFT pending CEO review; Button at the end of a resolved condition
+P37,resolvedOn,Resolved on,Data zakończenia,11,16,PL >20% longer; fits at 390 (checked),DRAFT pending CEO review; Date field label
+P38,toastResolved,Moved to Resolved,Przeniesiono do zakończonych,17,28,PL >20% longer; fits at 390 (checked),DRAFT pending CEO review; Toast with Undo
+P39,toastReopened,Open again,Znów otwarta,10,12,,DRAFT pending CEO review; Toast with Undo
+P40,editCond,Edit tracked condition,Edytuj śledzoną sprawę,22,22,,DRAFT pending CEO review; Sheet title
+P41,condName,Name,Nazwa,4,5,,DRAFT pending CEO review; Field label
+P42,condStart,Started on,Data początku,10,13,,DRAFT pending CEO review; Field label
+P43,condNameErr,Give it a name.,Podaj nazwę.,15,12,,DRAFT pending CEO review; Field error
+P44,condDeleteNote,Deleting it keeps the linked events and photos in the log.,Po usunięciu powiązane zdarzenia i zdjęcia zostają w dzienniku.,58,63,,DRAFT pending CEO review; Field note above Delete
+P45,toastCondDeleted,Tracked condition deleted,Usunięto śledzoną sprawę,25,24,,DRAFT pending CEO review; Toast with Undo
+P46,condField,Tracked conditions,Śledzone sprawy,18,15,,"DRAFT pending CEO review; Field label in the event and photo forms; replaces #159 'Tracked issue (optional)', now several can be picked"
+P47,newCond,New,Nowa,3,4,,DRAFT pending CEO review; Chip that adds a condition from inside a form
+P48,resolvedTag,{x} (resolved),{x} (zakończona),14,16,,DRAFT pending CEO review; Chip of a resolved condition already linked
+P49,showResolved,Resolved ({n}),Zakończone ({n}),14,16,,DRAFT pending CEO review; Chip that shows resolved conditions in the picker
+P50,editPhoto,Edit photo,Edytuj zdjęcie,10,14,PL >20% longer; fits at 390 (checked),DRAFT pending CEO review; Sheet title
+P51,pickPhoto,Take or choose a photo,Zrób lub wybierz zdjęcie,22,24,,DRAFT pending CEO review; Big tile in the photo form; iPhone then shows its own menu
+P52,photoErr,Add a photo first.,Najpierw dodaj zdjęcie.,18,23,PL >20% longer; fits at 390 (checked),DRAFT pending CEO review; Field error
+P53,photoResized,Saved smaller (about 1600 px) so the app stays quick.,"Zapisywane w mniejszym rozmiarze (ok. 1600 px), żeby aplikacja działała szybko.",53,79,PL >20% longer; fits at 390 (checked),DRAFT pending CEO review; Field note under the preview
+P54,photoDate,date from the photo,data ze zdjęcia,19,15,,DRAFT pending CEO review; Added to the date line when the date comes from the picture
+P55,toastPhotoDeleted,Photo deleted,Zdjęcie usunięte,13,16,,DRAFT pending CEO review; Toast with Undo
+P56,iOfN,{i} of {n},{i} z {n},10,9,,DRAFT pending CEO review; Photo viewer position
+P57,openDay,Open day,Otwórz dzień,8,12,PL >20% longer; fits at 390 (checked),DRAFT pending CEO review; Link in the photo viewer
+P58,edit,Edit,Edytuj,4,6,,DRAFT pending CEO review; Link in the photo viewer and on the condition page
+P59,prevPhoto,Previous photo,Poprzednie zdjęcie,14,18,PL >20% longer; fits at 390 (checked),DRAFT pending CEO review; Screen-reader label
+P60,nextPhoto,Next photo,Następne zdjęcie,10,16,PL >20% longer; fits at 390 (checked),DRAFT pending CEO review; Screen-reader label
+P61,photoAlt,"Photo, {d}","Zdjęcie, {d}",10,12,,DRAFT pending CEO review; Alt text when there is no description
+P62,first,First,Pierwsze,5,8,,DRAFT pending CEO review; Compare view label
+P63,latest,Latest,Ostatnie,6,8,,DRAFT pending CEO review; Compare view label
+P64,openX,Open {x},Otwórz: {x},8,11,,DRAFT pending CEO review; Screen-reader label of a condition tag
+P65,tracked,Tracked,Śledzone,7,8,,DRAFT pending CEO review; Back button from a condition page (same words as #173)

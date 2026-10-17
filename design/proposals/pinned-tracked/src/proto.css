@@ -1,0 +1,189 @@
+/* Pinned notes, Tracked conditions, photos: proposal styles on top of the app's own CSS
+   (tokens.css, global.css, controls.css, marks.css, day.css, timeline.css are inlined before this file).
+   Tokens only. New components are marked NEW and listed in README.md. */
+
+/* ---------- Prototype frame (not part of the proposal) ---------- */
+html, body { height: 100%; }
+body { background: var(--color-ground); }
+.proto { display: flex; justify-content: center; align-items: flex-start; gap: var(--space-6); min-height: 100%; }
+.proto .app { width: 100%; max-width: none; height: 100dvh; }
+@media (min-width: 760px) {
+  .proto { padding: var(--space-6) var(--space-4); }
+  .proto .app { flex: none; width: 390px; height: 844px; border: 1px solid var(--color-line); border-radius: var(--radius-sheet); box-shadow: var(--shadow-sheet); }
+}
+/* Screenshot mode (#shot=1): a fixed 390x844 frame at the top left, no Flows panel. */
+body.shot .proto { display: block; padding: 0; }
+body.shot .proto .app { width: 390px; height: 844px; margin: 0; border: 0; border-radius: 0; box-shadow: none; }
+body.shot .flows { display: none !important; }
+.flows { display: none; }
+@media (min-width: 760px) {
+  .flows { display: block; width: 260px; flex: none; position: sticky; top: var(--space-6); }
+}
+.flows__title { margin: 0 0 var(--space-1); font: var(--type-heading-weight) var(--type-heading-size) / var(--type-heading-line) var(--type-heading-family); }
+.flows__note { margin: 0 0 var(--space-3); color: var(--color-ink-3); font: var(--type-small-weight) var(--type-small-size) / var(--type-small-line) var(--type-small-family); }
+.flows__list { margin: 0 0 var(--space-4); padding: 0; list-style: none; display: grid; gap: 6px; }
+.flows__list .menu-row { min-height: 40px; font-size: 13px; text-decoration: none; }
+.flows .lang { margin-bottom: var(--space-3); }
+
+/* ---------- NavBar: four destinations in four equal columns (Search, later, makes it five again) ---------- */
+.nav { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.nav__item svg { flex: none; }
+
+/* ---------- List screens (Pinned, Tracked): the Usual day header ---------- */
+.list { display: flex; flex-direction: column; flex: 1; min-height: 0; background: var(--color-ground); }
+.list .usual__head { padding-top: var(--space-4); }
+.list__titlerow { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); }
+.list__titlerow .usual__title { min-width: 0; overflow-wrap: anywhere; }
+.list__new { flex: none; }
+.list__new .btn__icon { color: var(--color-mint-deep); }
+.list .day__body { padding-bottom: var(--space-6); }
+.list .day__body > .day-empty:first-child { margin-top: var(--space-4); }
+
+/* ---------- Pinned note card ---------- */
+.pin-card { white-space: normal; }
+.pin-card .day-card__text { display: block; white-space: pre-line; color: var(--color-ink); }
+.pin-card__meta { display: block; margin-top: var(--space-2); color: var(--color-ink-3); font: var(--type-small-weight) 12px / 16px var(--type-small-family); }
+.pin-card--untitled .day-card__text { margin-top: 0; }
+.pin-row { display: flex; align-items: stretch; gap: var(--space-2); margin-bottom: var(--space-2); }
+.pin-row .day-card { flex: 1; min-width: 0; margin: 0; }
+.pin-move { flex: none; display: flex; flex-direction: column; justify-content: center; gap: var(--space-2); }
+
+/* ---------- Condition card (Tracked list) ---------- */
+.cond-card { display: flex; align-items: center; gap: var(--space-3); }
+.cond-card__text { flex: 1; min-width: 0; }
+.cond-card__meta { display: block; margin-top: 3px; color: var(--color-ink-3); font: var(--type-small-weight) var(--type-small-size) / var(--type-small-line) var(--type-small-family); }
+.cond-card__chev { flex: none; color: var(--color-ink-3); display: inline-flex; }
+.cond-card--resolved { background: var(--color-surface-tint); box-shadow: none; }
+.cond-card--resolved .day-card__head { color: var(--color-ink-2); }
+
+/* ---------- NEW PhotoThumb: a photo at a fixed square size ---------- */
+.photo-thumb {
+  position: relative;
+  flex: none;
+  display: block;
+  width: var(--thumb, 72px);
+  height: var(--thumb, 72px);
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-tint);
+  box-shadow: var(--shadow-card);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.photo-thumb img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.photo-thumb:active { opacity: 0.7; }
+.photo-thumb--sm { --thumb: 52px; }
+.photo-thumb--lg { --thumb: 104px; border-radius: var(--radius-lg); }
+.photo-row { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: 10px; }
+
+/* ---------- NEW ConditionTag: a Card chip that links to a tracked condition ---------- */
+.cond-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 9px; }
+.cond-tags--row { justify-content: flex-end; margin: 0 0 var(--space-2); }
+.cond-tag {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin: 0;
+  padding: 3px 9px 3px 7px;
+  border: 1px solid var(--color-badge-photo-line);
+  border-radius: var(--radius-sm);
+  background: var(--color-badge-photo-top);
+  color: var(--color-badge-photo-ink);
+  font: 600 12px / 16px var(--type-body-family);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.cond-tag::after { content: ''; position: absolute; left: 0; right: 0; top: -10px; bottom: -10px; }
+.cond-tag:active { opacity: 0.6; }
+.cond-tag svg { flex: none; }
+.cond-tag--resolved { border-color: var(--color-line-strong); background: var(--color-surface-tint); color: var(--color-ink-2); }
+
+/* Event card with tags or photos: the head and text open the event; tags and photos are their own targets. */
+.ev-card { position: relative; }
+.ev-card__open { display: block; width: 100%; margin: 0; padding: 0; border: 0; background: transparent; color: var(--color-ink); font: inherit; text-align: left; cursor: pointer; }
+.ev-card__open:active { opacity: 0.6; }
+.ev-card__open .day-card__text { display: block; }
+
+/* ---------- Condition page ---------- */
+.cond__top { justify-content: space-between; }
+.cond__desc { margin: 6px 0 0; color: var(--color-ink-2); font: var(--type-body-weight) var(--type-body-size) / var(--type-body-line) var(--type-body-family); }
+.usual__asof--resolved { color: var(--color-ink-3); }
+.cond__end { margin: var(--space-6) 0 var(--space-2); }
+.cond__end .btn { width: 100%; }
+.cond__group { margin: 14px var(--space-1) 6px; color: var(--color-ink-3); font: var(--type-caption-weight) var(--type-caption-size) / var(--type-caption-line) var(--type-caption-family); letter-spacing: var(--type-caption-tracking); text-transform: uppercase; }
+.cond__add { width: 100%; margin-top: var(--space-2); }
+
+/* ---------- NEW PhotoStrip: a condition's photos, oldest on the left, the add tile last ---------- */
+.strip { display: flex; gap: 10px; margin: 0 calc(-1 * var(--space-3)); padding: 2px var(--space-3) var(--space-2); overflow-x: auto; scroll-snap-type: x proximity; scrollbar-width: none; }
+.strip::-webkit-scrollbar { display: none; }
+.strip__item { flex: none; display: flex; flex-direction: column; align-items: center; gap: 5px; scroll-snap-align: start; }
+.strip-empty { display: flex; align-items: center; gap: var(--space-3); padding-bottom: var(--space-2); }
+.strip-empty__text { flex: 1; margin: 0; color: var(--color-ink-3); font: var(--type-small-weight) var(--type-small-size) / var(--type-small-line) var(--type-small-family); }
+.strip__date { color: var(--color-ink-2); font: 600 12px / 16px var(--type-body-family); font-variant-numeric: tabular-nums; }
+
+/* ---------- NEW PhotoPick: dashed tile that starts the iPhone photo menu ---------- */
+.photo-pick {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  width: 100%;
+  min-height: 150px;
+  margin: 0;
+  padding: var(--space-3);
+  border: 1.5px dashed var(--color-line-strong);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-tint);
+  color: var(--color-mint-deep);
+  font: 600 15px / 20px var(--type-body-family);
+  cursor: pointer;
+}
+.photo-pick:active { opacity: 0.6; }
+.photo-pick__icon { width: 44px; height: 44px; display: inline-flex; align-items: center; justify-content: center; border: 1px solid var(--color-mint-line); border-radius: var(--radius-lg); background: var(--color-mint-bg); }
+.photo-pick--tile { width: 104px; min-height: 104px; height: 104px; padding: var(--space-1); gap: var(--space-1); font-size: 12px; line-height: 15px; text-align: center; }
+.photo-pick--tile .photo-pick__icon { width: 30px; height: 30px; }
+.photo-pick--sm { width: 52px; min-height: 52px; height: 52px; padding: 0; border-radius: var(--radius-md); }
+.photo-preview { position: relative; overflow: hidden; border: 1px solid var(--color-line); border-radius: var(--radius-lg); background: var(--color-surface-tint); }
+.photo-preview img { display: block; width: 100%; height: 200px; object-fit: cover; }
+.photo-preview__change { position: absolute; right: var(--space-2); bottom: var(--space-2); height: 34px; }
+
+/* ---------- NEW PhotoViewer: full screen, light, swipe between photos ---------- */
+.viewer { position: absolute; inset: 0; z-index: 25; display: flex; flex-direction: column; background: var(--color-ground); animation: pl-fade 180ms ease-out both; }
+.viewer__bar { flex: none; display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); padding: calc(var(--space-2) + env(safe-area-inset-top)) var(--space-2) var(--space-2) var(--space-4); border-bottom: 1px solid var(--color-line); background: var(--color-surface-tint); }
+.viewer__pos { margin: 0; color: var(--color-ink-2); font: var(--type-caption-weight) var(--type-caption-size) / var(--type-caption-line) var(--type-caption-family); letter-spacing: var(--type-caption-tracking); text-transform: uppercase; }
+.viewer__stage { position: relative; flex: 1; min-height: 0; display: flex; align-items: center; overflow: hidden; touch-action: pan-y; }
+.viewer__track { display: flex; width: 100%; height: 100%; transition: transform 220ms cubic-bezier(0.2, 0.7, 0.2, 1); }
+.viewer__slide { flex: none; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; padding: var(--space-3); }
+.viewer__slide img { max-width: 100%; max-height: 100%; border-radius: var(--radius-md); box-shadow: var(--shadow-card); user-select: none; -webkit-user-drag: none; }
+.viewer__step { position: absolute; top: 50%; margin-top: -18px; z-index: 2; }
+.viewer__step--prev { left: var(--space-2); }
+.viewer__step--next { right: var(--space-2); }
+.viewer__info { flex: none; padding: var(--space-3) var(--space-4) calc(var(--space-4) + env(safe-area-inset-bottom)); border-top: 1px solid var(--color-line); background: var(--color-surface); }
+.viewer__date { margin: 0; font: var(--type-heading-weight) var(--type-heading-size) / var(--type-heading-line) var(--type-heading-family); letter-spacing: var(--type-heading-tracking); }
+.viewer__caption { margin: 4px 0 0; color: var(--color-ink-2); }
+.viewer__links { display: flex; justify-content: space-between; margin: var(--space-1) calc(-1 * var(--space-3)) calc(-1 * var(--space-2)); }
+
+/* Compare: first and latest, one above the other, same size. */
+.compare__body { flex: 1; min-height: 0; overflow-y: auto; padding: var(--space-3); display: grid; gap: var(--space-3); align-content: start; }
+.compare__item { margin: 0; }
+.compare__item img { display: block; width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: var(--radius-md); border: 1px solid var(--color-line); }
+.compare__cap { display: flex; justify-content: space-between; align-items: center; gap: var(--space-2); margin-top: 6px; }
+.compare__which { color: var(--color-mint-deep); font: var(--type-caption-weight) var(--type-caption-size) / var(--type-caption-line) var(--type-caption-family); letter-spacing: var(--type-caption-tracking); text-transform: uppercase; }
+.compare__date { color: var(--color-ink-2); font: 600 13px / 18px var(--type-body-family); }
+.compare__steps { display: flex; gap: var(--space-2); }
+
+/* ---------- Simulated iPhone photo menu (stands in for the system menu; not ours to style) ---------- */
+.ios-menu { position: absolute; inset: 0; z-index: 40; display: flex; flex-direction: column; justify-content: flex-end; padding: var(--space-2) var(--space-2) calc(var(--space-2) + env(safe-area-inset-bottom)); background: color-mix(in srgb, var(--color-ink) 28%, transparent); animation: pl-fade 150ms ease-out both; }
+.ios-menu__group { overflow: hidden; border-radius: 14px; background: var(--color-surface); }
+.ios-menu__note { margin: 0; padding: 10px var(--space-3); color: var(--color-ink-3); font: 500 12px / 16px var(--type-body-family); text-align: center; border-bottom: 1px solid var(--color-line); }
+.ios-menu__btn { display: block; width: 100%; min-height: 56px; margin: 0; padding: 0; border: 0; border-bottom: 1px solid var(--color-line); background: transparent; color: var(--color-badge-front-ink); font: 400 19px / 24px system-ui, sans-serif; cursor: pointer; }
+.ios-menu__btn:last-child { border-bottom: 0; }
+.ios-menu__cancel { margin-top: var(--space-2); font-weight: 600; }
+
+/* Polish runs longer: the header button and links never wrap mid-word. */
+.list__new, .day__link { white-space: nowrap; }
