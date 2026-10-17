@@ -41,6 +41,9 @@
 
 /* Event card with tags: the head and text open the event; each tag is its own target. */
 .ev-card { position: relative; }
+/* The open button covers the whole card (at least 44px); the tags sit above it as their own targets. */
+.ev-card__open::after { content: ''; position: absolute; inset: 0; border-radius: var(--radius-lg); }
+.ev-card .cond-tags { position: relative; z-index: 1; }
 .ev-card__open { display: block; width: 100%; margin: 0; padding: 0; border: 0; background: transparent; color: var(--color-ink); font: inherit; text-align: left; cursor: pointer; }
 .ev-card__open:active { opacity: 0.6; }
 .ev-card__open .day-card__text, .ev-card__static .day-card__text { display: block; }
@@ -54,6 +57,9 @@
 .cond__end .btn { width: 100%; }
 .cond__group { margin: 14px var(--space-1) 6px; color: var(--color-ink-3); font: var(--type-caption-weight) var(--type-caption-size) / var(--type-caption-line) var(--type-caption-family); letter-spacing: var(--type-caption-tracking); text-transform: uppercase; }
 .list .day__link { white-space: nowrap; }
+
+/* Condition picker: a long name wraps inside its chip instead of widening the sheet. */
+.cond-chips .chip { max-width: 100%; height: auto; min-height: 36px; padding-top: var(--space-2); padding-bottom: var(--space-2); white-space: normal; overflow-wrap: anywhere; text-align: left; }
 
 /* Condition picker in the event forms: the inline "New" row. */
 .cond-new-row .input { flex: 1; min-width: 0; }

@@ -3,7 +3,7 @@ import type { Condition } from '../data';
 import { PlusIcon } from '../components/icons';
 import { Chip, Field } from '../components/Sheet';
 import { fill, useI18n } from '../i18n';
-import { openConditions, resolvedConditions } from './model';
+import { NAME_MAX, openConditions, resolvedConditions } from './model';
 
 /**
  * "Tracked conditions" in the event forms: multi-select chips. Open conditions first; resolved ones
@@ -51,7 +51,7 @@ export function ConditionPicker({
 
   return (
     <Field label={t('condField')} hint={t('optional')}>
-      <div className="chips" role="group" aria-label={t('condField')}>
+      <div className="chips cond-chips" role="group" aria-label={t('condField')}>
         {openConditions(conditions).map(chip)}
         {pending.map(chip)}
         {linkedResolved.map(chip)}
@@ -77,6 +77,7 @@ export function ConditionPicker({
             className="input"
             aria-label={t('condName')}
             placeholder={t('photo.160')}
+            maxLength={NAME_MAX}
             value={name}
             onChange={(e) => setName(e.target.value)}
             onKeyDown={(e) => {

@@ -283,6 +283,8 @@ describe.each(subjects)('%s', (_name, make) => {
   it('a condition cannot be resolved before it started', async () => {
     const { repo, condition } = await conditionSetup();
     await expect(repo.saveCondition(condition({ resolvedOn: '2026-10-01' }))).rejects.toThrow();
+    await expect(repo.saveCondition(condition({ name: 'x'.repeat(61) }))).rejects.toThrow();
+    await expect(repo.saveCondition(condition({ description: 'x'.repeat(501) }))).rejects.toThrow();
   });
 
   it('an event links to several conditions; saving it again sets exactly its links', async () => {

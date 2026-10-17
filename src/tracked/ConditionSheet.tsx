@@ -5,7 +5,7 @@ import { useI18n } from '../i18n';
 import * as act from '../log/actions';
 import { useLog } from '../log/LogProvider';
 import { useBusy } from '../log/useBusy';
-import { linkedEvents, normaliseDates } from './model';
+import { DESCRIPTION_MAX, NAME_MAX, linkedEvents, normaliseDates } from './model';
 
 /**
  * Create (no `condition`) or edit a tracked condition: name, started on, resolved on (only when
@@ -67,6 +67,7 @@ export function ConditionSheet({ condition, onCreated }: { condition?: Condition
           id="cond-name"
           className="input"
           placeholder={t('photo.160')}
+          maxLength={NAME_MAX}
           value={name}
           onChange={(e) => {
             setName(e.target.value);
@@ -106,7 +107,7 @@ export function ConditionSheet({ condition, onCreated }: { condition?: Condition
         )}
       </div>
       <Field label={t('photo.157')} hint={t('optional')} htmlFor="cond-desc">
-        <textarea id="cond-desc" className="input" rows={3} value={description} onChange={(e) => setDescription(e.target.value)} />
+        <textarea id="cond-desc" className="input" rows={3} maxLength={DESCRIPTION_MAX} value={description} onChange={(e) => setDescription(e.target.value)} />
       </Field>
       {condition && <p className="field__note">{t('condDeleteNote')}</p>}
     </Sheet>

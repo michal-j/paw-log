@@ -3,6 +3,10 @@
 import type { Condition, HealthEvent, PlainDate } from '../data';
 import { EVENT_ORDER } from '../day/model';
 
+/** Longest name and description a condition takes (same limits as the database checks). */
+export const NAME_MAX = 60;
+export const DESCRIPTION_MAX = 500;
+
 export const isOpen = (c: Pick<Condition, 'resolvedOn'>) => c.resolvedOn === null;
 
 const byStart = (a: Condition, b: Condition) =>

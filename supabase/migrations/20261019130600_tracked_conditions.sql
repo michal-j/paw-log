@@ -21,9 +21,9 @@ alter table public.event add constraint event_id_dog_id_key unique (id, dog_id);
 create table public.condition (
   id uuid primary key default gen_random_uuid(),
   dog_id uuid not null references public.dog (id) on delete cascade,
-  name text not null check (btrim(name) <> ''),
+  name text not null check (btrim(name) <> '' and char_length(name) <= 60),
   started_on date not null,
-  description text not null default '',
+  description text not null default '' check (char_length(description) <= 500),
   resolved_on date check (resolved_on is null or resolved_on >= started_on),
   -- Tie-breaker in lists; the Tracked list orders by started_on / resolved_on.
   position integer not null default 0,

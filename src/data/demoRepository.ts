@@ -192,6 +192,7 @@ export class DemoRepository implements Repository {
   async saveCondition(condition: Condition) {
     if (condition.resolvedOn && condition.resolvedOn < condition.startedOn) throw new Error('saveCondition: resolved before it started');
     if (!condition.name.trim()) throw new Error('saveCondition: no name');
+    if (condition.name.length > 60 || condition.description.length > 500) throw new Error('saveCondition: too long');
     this.data.conditions = upsert(this.conditions(), copy(condition));
     this.persist();
   }

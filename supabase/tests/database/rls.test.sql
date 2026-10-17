@@ -4,7 +4,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(112);
+select plan(114);
 
 -- Fixtures (as the postgres role, which bypasses RLS, like the bootstrap SQL).
 -- Household A: users a1, a2, dog A. Household B: user b1, dog B. User c belongs to no household.
@@ -291,6 +291,12 @@ select throws_ok(
 select throws_ok(
   $$insert into public.condition (dog_id, name, started_on) values ('20000000-0000-4000-8000-00000000000a', '  ', '2026-10-03')$$,
   '23514', null, 'a condition has a name');
+select throws_ok(
+  $$insert into public.condition (dog_id, name, started_on) values ('20000000-0000-4000-8000-00000000000a', repeat('x', 61), '2026-10-03')$$,
+  '23514', null, 'a condition name has at most 60 characters');
+select throws_ok(
+  $$insert into public.condition (dog_id, name, started_on, description) values ('20000000-0000-4000-8000-00000000000a', 'x', '2026-10-03', repeat('x', 501))$$,
+  '23514', null, 'a condition description has at most 500 characters');
 select lives_ok(
   $$insert into public.event_condition (event_id, condition_id, dog_id)
     values ('50000000-0000-4000-8000-00000000000a', '70000000-0000-4000-8000-0000000000a2', '20000000-0000-4000-8000-00000000000a')$$,
