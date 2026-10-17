@@ -4,7 +4,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(90);
+select plan(114);
 
 -- Fixtures (as the postgres role, which bypasses RLS, like the bootstrap SQL).
 -- Household A: users a1, a2, dog A. Household B: user b1, dog B. User c belongs to no household.
@@ -42,6 +42,12 @@ insert into public.pinned_note (id, dog_id, title, body, position) values
 insert into public.event (id, dog_id, date, type, title) values
   ('50000000-0000-4000-8000-00000000000a', '20000000-0000-4000-8000-00000000000a', '2026-10-02', 'vet', 'Check-up A'),
   ('50000000-0000-4000-8000-00000000000b', '20000000-0000-4000-8000-00000000000b', '2026-10-02', 'vet', 'Check-up B');
+insert into public.condition (id, dog_id, name, started_on) values
+  ('70000000-0000-4000-8000-00000000000a', '20000000-0000-4000-8000-00000000000a', 'Condition A', '2026-10-01'),
+  ('70000000-0000-4000-8000-00000000000b', '20000000-0000-4000-8000-00000000000b', 'Condition B', '2026-10-01');
+insert into public.event_condition (event_id, condition_id, dog_id) values
+  ('50000000-0000-4000-8000-00000000000a', '70000000-0000-4000-8000-00000000000a', '20000000-0000-4000-8000-00000000000a'),
+  ('50000000-0000-4000-8000-00000000000b', '70000000-0000-4000-8000-00000000000b', '20000000-0000-4000-8000-00000000000b');
 
 -- 1. Anonymous visitors get nothing, not even an empty list.
 set local role anon;
@@ -59,6 +65,8 @@ select throws_ok('select * from public.pinned_note', '42501', null, 'anon cannot
 select throws_ok(
   $$insert into public.pinned_note (dog_id, body) values ('20000000-0000-4000-8000-00000000000a', 'x')$$,
   '42501', null, 'anon cannot write pinned_note');
+select throws_ok('select * from public.condition', '42501', null, 'anon cannot read condition');
+select throws_ok('select * from public.event_condition', '42501', null, 'anon cannot read event_condition');
 select throws_ok(
   $$insert into public.entry (dog_id, date, day_part, item_id, state)
     values ('20000000-0000-4000-8000-00000000000a', '2026-10-03', 1, '30000000-0000-4000-8000-00000000000a', 'given')$$,
@@ -262,6 +270,70 @@ select is((select updated_at from public.pinned_note where id = '70000000-0000-4
   now(), 'an update that changes neither title nor text keeps updated_at (the client cannot set it)');
 update public.pinned_note set position = 5 where id = '70000000-0000-4000-8000-0000000000a2';
 select is((select position from public.pinned_note where id = '70000000-0000-4000-8000-0000000000a2'), 5, 'a note can be moved');
+-- 3f. JCB-6: tracked conditions and their links to events.
+select is((select count(*)::int from public.condition), 1, 'a1 sees only the conditions of dog A');
+select is((select count(*)::int from public.event_condition), 1, 'a1 sees only the links of dog A');
+select throws_ok('select issue_id from public.event', '42703', null, 'event.issue_id is gone');
+select lives_ok(
+  $$insert into public.condition (id, dog_id, name, started_on, description, created_by)
+    values ('70000000-0000-4000-8000-0000000000a2', '20000000-0000-4000-8000-00000000000a', 'Lump', '2026-10-03', 'Left side',
+            '00000000-0000-4000-8000-0000000000b1')$$,
+  'a1 can add a condition for dog A');
+select is((select created_by from public.condition where id = '70000000-0000-4000-8000-0000000000a2'),
+  '00000000-0000-4000-8000-0000000000a1'::uuid, 'a condition''s created_by is the signed-in user');
+select throws_ok(
+  $$insert into public.condition (dog_id, name, started_on) values ('20000000-0000-4000-8000-00000000000b', 'x', '2026-10-03')$$,
+  '42501', null, 'a1 cannot add a condition for dog B');
+select throws_ok(
+  $$insert into public.condition (dog_id, name, started_on, resolved_on)
+    values ('20000000-0000-4000-8000-00000000000a', 'x', '2026-10-03', '2026-10-02')$$,
+  '23514', null, 'a condition cannot be resolved before it started');
+select throws_ok(
+  $$insert into public.condition (dog_id, name, started_on) values ('20000000-0000-4000-8000-00000000000a', '  ', '2026-10-03')$$,
+  '23514', null, 'a condition has a name');
+select throws_ok(
+  $$insert into public.condition (dog_id, name, started_on) values ('20000000-0000-4000-8000-00000000000a', repeat('x', 61), '2026-10-03')$$,
+  '23514', null, 'a condition name has at most 60 characters');
+select throws_ok(
+  $$insert into public.condition (dog_id, name, started_on, description) values ('20000000-0000-4000-8000-00000000000a', 'x', '2026-10-03', repeat('x', 501))$$,
+  '23514', null, 'a condition description has at most 500 characters');
+select lives_ok(
+  $$insert into public.event_condition (event_id, condition_id, dog_id)
+    values ('50000000-0000-4000-8000-00000000000a', '70000000-0000-4000-8000-0000000000a2', '20000000-0000-4000-8000-00000000000a')$$,
+  'a1 can link an event of dog A to a second condition');
+select throws_ok(
+  $$insert into public.event_condition (event_id, condition_id, dog_id)
+    values ('50000000-0000-4000-8000-00000000000a', '70000000-0000-4000-8000-0000000000a2', '20000000-0000-4000-8000-00000000000a')$$,
+  '23505', null, 'an event is linked to a condition once');
+select throws_ok(
+  $$insert into public.event_condition (event_id, condition_id, dog_id)
+    values ('50000000-0000-4000-8000-00000000000a', '70000000-0000-4000-8000-00000000000b', '20000000-0000-4000-8000-00000000000a')$$,
+  '23503', null, 'an event cannot be linked to a condition of another dog');
+select throws_ok(
+  $$insert into public.event_condition (event_id, condition_id, dog_id)
+    values ('50000000-0000-4000-8000-00000000000b', '70000000-0000-4000-8000-00000000000b', '20000000-0000-4000-8000-00000000000b')$$,
+  '42501', null, 'a1 cannot link events of dog B');
+update public.condition set name = 'tampered' where id = '70000000-0000-4000-8000-00000000000b';
+delete from public.condition where id = '70000000-0000-4000-8000-00000000000b';
+delete from public.event_condition where condition_id = '70000000-0000-4000-8000-00000000000b';
+select throws_ok(
+  $$update public.condition set dog_id = '20000000-0000-4000-8000-00000000000b' where id = '70000000-0000-4000-8000-0000000000a2'$$,
+  '42501', null, 'a1 cannot move a condition to dog B');
+select lives_ok($$update public.condition set resolved_on = '2026-10-10' where id = '70000000-0000-4000-8000-0000000000a2'$$,
+  'a1 can resolve a condition');
+select lives_ok($$delete from public.condition where id = '70000000-0000-4000-8000-0000000000a2'$$,
+  'a1 can delete a condition');
+select is((select count(*)::int from public.event_condition where event_id = '50000000-0000-4000-8000-00000000000a'), 1,
+  'deleting a condition deletes its links only');
+select is((select count(*)::int from public.event where id = '50000000-0000-4000-8000-00000000000a'), 1,
+  'the linked event stays');
+insert into public.event (id, dog_id, date, type, title)
+  values ('50000000-0000-4000-8000-0000000000a9', '20000000-0000-4000-8000-00000000000a', '2026-10-09', 'note', 'Linked note');
+insert into public.event_condition (event_id, condition_id, dog_id)
+  values ('50000000-0000-4000-8000-0000000000a9', '70000000-0000-4000-8000-00000000000a', '20000000-0000-4000-8000-00000000000a');
+delete from public.event where id = '50000000-0000-4000-8000-0000000000a9';
+select is((select count(*)::int from public.event_condition where condition_id = '70000000-0000-4000-8000-00000000000a'), 1,
+  'deleting an event deletes its links, the condition keeps the others');
 
 -- 4. Nobody can grant themselves access: households, members and dogs are read-only.
 select throws_ok(
@@ -321,6 +393,8 @@ select is((select count(*)::int from public.item), 1, 'b1 does not see the item 
 select is((select count(*)::int from public.schedule_slot), 1, 'b1 sees only the schedule slot of dog B');
 select is((select usual_time from public.day_part), '08:00'::time, 'b1 sees only dog B''s day-part time, which a1 could not change');
 select is((select log_start from public.dog_settings), '2026-01-01'::date, 'b1 sees only dog B''s log start, which a1 could not change');
+select is((select name from public.condition), 'Condition B', 'b1 sees only dog B''s condition, which a1 could not change or delete');
+select is((select count(*)::int from public.event_condition), 1, 'b1 sees only dog B''s link, which a1 could not delete');
 reset role;
 
 select * from finish();

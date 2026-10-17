@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from 'react';
-import type { AlsoDone, EventType, HealthEvent, PlainDate } from '../data';
+import type { AlsoDone, Condition, EventType, HealthEvent, PlainDate } from '../data';
 import { Chip, Chips, Field, Sheet } from '../components/Sheet';
 import { useI18n, type MessageKey } from '../i18n';
 import * as act from './actions';
@@ -8,6 +8,7 @@ import { useBusy } from './useBusy';
 import { useDraftIds } from './useDraftIds';
 import { useLog, type EventKind } from './LogProvider';
 import { SYMPTOMS, isIntensity, propsFor, symptomKey, symptomTitle } from './symptoms';
+import { ConditionPicker } from '../tracked/ConditionPicker';
 
 type OtherType = 'frontline' | 'deworming' | 'anal_glands' | 'nails' | 'other';
 const OTHER_TYPES: readonly { type: OtherType; label: MessageKey }[] = [
@@ -40,10 +41,14 @@ interface Form {
   intensity: string;
   alsoDone: AlsoDone[];
   detail: string;
+  /** Linked tracked conditions, including new ones in `pending`. */
+  conditionIds: string[];
+  /** Conditions named with "+ New" here; created on Save (only those still picked). */
+  pending: Condition[];
   err: boolean;
 }
 
-function initial(kind: EventKind, date: PlainDate, event: HealthEvent | undefined, ctxOpen: boolean): Form {
+function initial(kind: EventKind, date: PlainDate, event: HealthEvent | undefined, ctxOpen: boolean, linkTo?: string): Form {
   const known = event?.type === 'symptom' ? symptomKey(event.title) : undefined;
   return {
     date: event?.date ?? date,
@@ -55,6 +60,8 @@ function initial(kind: EventKind, date: PlainDate, event: HealthEvent | undefine
     intensity: event?.intensity ?? '',
     alsoDone: [...(event?.alsoDone ?? [])],
     detail: event?.detail ?? '',
+    conditionIds: event ? [...event.conditionIds] : linkTo ? [linkTo] : [],
+    pending: [],
     err: false,
   };
 }
@@ -65,12 +72,15 @@ export function EventSheet({
   date,
   event,
   ctxOpen = false,
+  linkTo,
   onShowDay,
 }: {
   kind: EventKind;
   date: PlainDate;
   event?: HealthEvent;
   ctxOpen?: boolean;
+  /** Started from a condition page: linked to it, and that page stays after saving. */
+  linkTo?: string;
   onShowDay: (date: PlainDate) => void;
 }) {
   const { t } = useI18n();
@@ -78,13 +88,13 @@ export function EventSheet({
   const { busy, guard } = useBusy();
   // A new event keeps its id across Save attempts, so a retry never adds a copy (JCB-71).
   const draft = useDraftIds();
-  const [form, setForm] = useState<Form>(() => initial(kind, date, event, ctxOpen));
+  const [form, setForm] = useState<Form>(() => initial(kind, date, event, ctxOpen, linkTo));
   if (!records) return null;
   const set = (patch: Partial<Form>) => setForm((x) => ({ ...x, ...patch }));
 
   const clinics = [...new Set(records.events.filter((e) => e.type === 'vet' && e.title).map((e) => e.title))];
 
-  const build = (): Omit<HealthEvent, 'id' | 'dogId' | 'date' | 'issueId'> | null => {
+  const build = (): Omit<HealthEvent, 'id' | 'dogId' | 'date' | 'conditionIds'> | null => {
     const detail = form.detail.trim();
     const title = form.titleText.trim();
     if (kind === 'symptom') {
@@ -106,10 +116,12 @@ export function EventSheet({
   const save = async () => {
     const fields = build();
     if (!fields) return set({ err: true });
-    const next: HealthEvent = { id: event?.id ?? draft.id('event'), dogId: records.dogId, date: form.date, issueId: event?.issueId ?? null, ...fields };
-    if (await run(() => act.saveEvent(repository, next, event ?? null), t('toastSaved'))) {
+    // New conditions named here start on the event's date; only those still picked are created.
+    const created = form.pending.filter((c) => form.conditionIds.includes(c.id)).map((c) => ({ ...c, startedOn: form.date }));
+    const next: HealthEvent = { id: event?.id ?? draft.id('event'), dogId: records.dogId, date: form.date, conditionIds: form.conditionIds, ...fields };
+    if (await run(() => act.saveEvent(repository, next, event ?? null, created), t('toastSaved'))) {
       close();
-      onShowDay(next.date);
+      if (!linkTo) onShowDay(next.date);
     }
   };
   const remove = async () => {
@@ -276,6 +288,18 @@ export function EventSheet({
         onDate={(d) => set({ date: d })}
       />
       {body}
+      <ConditionPicker
+        conditions={records.conditions}
+        pending={form.pending}
+        selected={form.conditionIds}
+        onToggle={(id) =>
+          set({ conditionIds: form.conditionIds.includes(id) ? form.conditionIds.filter((x) => x !== id) : [...form.conditionIds, id] })
+        }
+        onAdd={(name) => {
+          const c: Condition = { id: act.newId(), dogId: records.dogId, name, startedOn: form.date, description: '', resolvedOn: null, position: 0 };
+          set({ pending: [...form.pending, c], conditionIds: [...form.conditionIds, c.id] });
+        }}
+      />
     </Sheet>
   );
 }

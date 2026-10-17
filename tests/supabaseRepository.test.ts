@@ -39,6 +39,7 @@ class FakeQuery implements PromiseLike<Result> {
   upsert = (...a: unknown[]) => this.add('upsert', a);
   delete = (...a: unknown[]) => this.add('delete', a);
   in = (...a: unknown[]) => this.add('in', a);
+  not = (...a: unknown[]) => this.add('not', a);
   has(name: string) {
     return this.calls.find((c) => c[0] === name);
   }
@@ -158,15 +159,40 @@ describe('SupabaseRepository reads', () => {
     ]);
   });
 
-  it('maps events', async () => {
+  it('maps events with their condition links', async () => {
     const f = withDog({
       event: () => ({
-        data: [{ id: 'v1', dog_id: DOG.id, date: '2026-10-14', type: 'symptom', title: 'Poo', detail: '', intensity: null, props: { consistency: 'soft' }, also_done: null, issue_id: null }],
+        data: [
+          { id: 'v1', dog_id: DOG.id, date: '2026-10-14', type: 'symptom', title: 'Poo', detail: '', intensity: null, props: { consistency: 'soft' }, also_done: null },
+          { id: 'v2', dog_id: DOG.id, date: '2026-10-14', type: 'note', title: '', detail: 'x', intensity: null, props: null, also_done: null },
+        ],
+        error: null,
+      }),
+      event_condition: () => ({
+        data: [
+          { event_id: 'v1', condition_id: 'c1' },
+          { event_id: 'v1', condition_id: 'c2' },
+        ],
         error: null,
       }),
     });
-    expect(await new SupabaseRepository(f.client).listEvents()).toEqual([
-      { id: 'v1', dogId: DOG.id, date: '2026-10-14', type: 'symptom', title: 'Poo', detail: '', intensity: null, props: { consistency: 'soft' }, alsoDone: [], issueId: null },
+    const events = await new SupabaseRepository(f.client).listEvents();
+    expect(events[0]).toEqual({
+      id: 'v1', dogId: DOG.id, date: '2026-10-14', type: 'symptom', title: 'Poo', detail: '', intensity: null, props: { consistency: 'soft' }, alsoDone: [], conditionIds: ['c1', 'c2'],
+    });
+    expect(events[1]?.conditionIds).toEqual([]);
+    expect(f.of('event_condition')[0]?.calls).toContainEqual(['eq', 'dog_id', DOG.id]);
+  });
+
+  it('maps conditions', async () => {
+    const f = withDog({
+      condition: () => ({
+        data: [{ id: 'c1', dog_id: DOG.id, name: 'Lump', started_on: '2026-10-03', description: '', resolved_on: null, position: 0 }],
+        error: null,
+      }),
+    });
+    expect(await new SupabaseRepository(f.client).listConditions()).toEqual([
+      { id: 'c1', dogId: DOG.id, name: 'Lump', startedOn: '2026-10-03', description: '', resolvedOn: null, position: 0 },
     ]);
   });
 
@@ -215,7 +241,7 @@ describe('SupabaseRepository writes', () => {
     type: 'symptom',
     title: 'Vomiting',
     detail: 'After dinner',
-    issueId: null,
+    conditionIds: [],
   };
 
   it('upserts an entry in snake_case without created_by (the database sets it)', async () => {
@@ -233,8 +259,32 @@ describe('SupabaseRepository writes', () => {
     const f = fake({});
     await new SupabaseRepository(f.client).saveEvent(event);
     expect(f.of('event')[0]?.has('upsert')?.[1]).toEqual({
-      id: event.id, dog_id: DOG.id, date: '2026-10-15', type: 'symptom', title: 'Vomiting', detail: 'After dinner', intensity: null, props: {}, also_done: [], issue_id: null,
+      id: event.id, dog_id: DOG.id, date: '2026-10-15', type: 'symptom', title: 'Vomiting', detail: 'After dinner', intensity: null, props: {}, also_done: [],
     });
+  });
+
+  it("saves an event's condition links: adds the picked ones, then drops the rest", async () => {
+    const f = fake({});
+    const c1 = 'c0000000-0000-4000-8000-000000000001';
+    await new SupabaseRepository(f.client).saveEvent({ ...event, conditionIds: [c1] });
+    const [add, drop] = f.of('event_condition');
+    expect(add?.has('upsert')).toEqual([
+      'upsert',
+      [{ event_id: event.id, condition_id: c1, dog_id: DOG.id }],
+      { onConflict: 'event_id,condition_id', ignoreDuplicates: true },
+    ]);
+    expect(drop?.has('delete')).toBeTruthy();
+    expect(drop?.calls).toContainEqual(['eq', 'event_id', event.id]);
+    expect(drop?.calls).toContainEqual(['not', 'condition_id', 'in', `(${c1})`]);
+  });
+
+  it('with no conditions picked, drops every link of the event', async () => {
+    const f = fake({});
+    await new SupabaseRepository(f.client).saveEvent(event);
+    const links = f.of('event_condition');
+    expect(links).toHaveLength(1);
+    expect(links[0]?.has('delete')).toBeTruthy();
+    expect(links[0]?.has('not')).toBeUndefined();
   });
 
   it('refuses ids that are not UUIDs before calling the server', async () => {

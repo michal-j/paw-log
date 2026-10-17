@@ -1,5 +1,5 @@
 // Writes through the repository, each returning how to undo it. The UI shows the Undo toast.
-import type { Entry, HealthEvent, PinnedNote, RemovedSlot, Repository, ScheduleSlot } from '../data';
+import type { Condition, Entry, HealthEvent, PinnedNote, RemovedSlot, Repository, ScheduleSlot } from '../data';
 import { DuplicateSlotEntryError } from '../data/errors';
 import type { SlotChange } from './plan';
 
@@ -82,9 +82,33 @@ export async function addPlanned(repo: Repository, entries: Entry[]): Promise<{ 
   return { added: ids.length, undo: () => repo.deleteEntries(ids) };
 }
 
-export async function saveEvent(repo: Repository, next: HealthEvent, prev: HealthEvent | null): Promise<Undo> {
+/**
+ * Save an event and its condition links. `created`: conditions made with "+ New" in the form, saved
+ * first so the event can link to them; Undo removes them again after restoring the event.
+ */
+export async function saveEvent(repo: Repository, next: HealthEvent, prev: HealthEvent | null, created: Condition[] = []): Promise<Undo> {
+  for (const c of created) await repo.saveCondition(c);
   await repo.saveEvent(next);
-  return prev ? () => repo.saveEvent(prev) : () => repo.deleteEvent(next.id);
+  return async () => {
+    if (prev) await repo.saveEvent(prev);
+    else await repo.deleteEvent(next.id);
+    for (const c of created) await repo.deleteCondition(c.id);
+  };
+}
+
+/** Create, edit, resolve or reopen a condition. Undo puts the previous version back (or deletes a new one). */
+export async function saveCondition(repo: Repository, next: Condition, prev: Condition | null): Promise<Undo> {
+  await repo.saveCondition(next);
+  return prev ? () => repo.saveCondition(prev) : () => repo.deleteCondition(next.id);
+}
+
+/** Delete a condition; its events stay. Undo brings it back with its links to `eventIds`. */
+export async function deleteCondition(repo: Repository, condition: Condition, eventIds: string[]): Promise<Undo> {
+  await repo.deleteCondition(condition.id);
+  return async () => {
+    await repo.saveCondition(condition);
+    await repo.linkEvents(condition.id, eventIds);
+  };
 }
 
 export async function deleteEvent(repo: Repository, event: HealthEvent): Promise<Undo> {

@@ -90,6 +90,22 @@ describe('Save never hangs (JCB-71)', () => {
     expect(await rows(`select body from pinned_note`)).toEqual([{ body: 'Fictional note' }]);
   });
 
+  it('a tracked condition retried after a lost save is written once', async () => {
+    fake = await createFakeSupabase({ start: '2026-10-01', client: { requestTimeoutMs: 60_000 } });
+    mount(fake.repository(NOW, 300), '/tracked');
+    fireEvent.click(await screen.findByRole('button', { name: 'Track something new' }));
+    fireEvent.change(within(dialog()).getByLabelText('Name'), { target: { value: 'Fictional lump' } });
+    fake.backend.hangNext(1, (method, table) => method === 'POST' && table === 'condition');
+    click('Save');
+    expect(await screen.findByText("Couldn't save · Try again")).toBeTruthy();
+    fake.backend.release();
+    await waitFor(() => expect(posts('condition').length).toBe(1));
+    await waitFor(() => expect(saveButton().disabled).toBe(false));
+    click('Save');
+    expect(await screen.findByRole('heading', { name: 'Fictional lump' })).toBeTruthy();
+    expect(await rows(`select name from condition`)).toEqual([{ name: 'Fictional lump' }]);
+  });
+
   it('a token refresh lost in the background no longer blocks saving once the app is back', async () => {
     // Signed in with a stored session, as on the phone.
     const store = new Map<string, string>([[AUTH_STORAGE_KEY, JSON.stringify(fakeSession(SEED.user, 3600))]]);

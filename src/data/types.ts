@@ -129,7 +129,23 @@ export interface HealthEvent {
   props?: Record<string, string>;
   /** Vet visit: what else was done. */
   alsoDone?: AlsoDone[];
-  issueId: string | null;
+  /** Tracked conditions this event belongs to (several allowed); saving the event saves its links. */
+  conditionIds: string[];
+}
+
+/**
+ * A tracked condition (a lump, stomach trouble): followed over time through the events linked to it.
+ * Open while `resolvedOn` is null; reopening clears it.
+ */
+export interface Condition {
+  id: string;
+  dogId: string;
+  name: string;
+  startedOn: PlainDate;
+  description: string;
+  resolvedOn: PlainDate | null;
+  /** Tie-breaker in lists (the Tracked list orders by dates); 0 by default. */
+  position: number;
 }
 
 /**

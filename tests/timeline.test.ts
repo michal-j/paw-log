@@ -29,7 +29,7 @@ const entry = (date: string, dayPart: Entry['dayPart'], itemId: string, state: E
   id: `${date}-${dayPart}-${itemId}`, dogId: 'd', date, dayPart, itemId, amount: 1, unit: 'pill', flavour: '', state, note: '', createdBy: 'm',
 });
 const ev = (date: string, type: HealthEvent['type']): HealthEvent => ({
-  id: `${date}-${type}-${Math.random()}`, dogId: 'd', date, type, title: type, detail: '', issueId: null,
+  id: `${date}-${type}-${Math.random()}`, dogId: 'd', date, type, title: type, detail: '', conditionIds: [],
 });
 
 async function demoTimeline(): Promise<Timeline> {

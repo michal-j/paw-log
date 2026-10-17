@@ -4,6 +4,7 @@ import type { Repository } from './repository';
 import { DEFAULT_DAY_PART_TIMES } from './repository';
 import type {
   AlsoDone,
+  Condition,
   DateRange,
   DayPart,
   DayPartTimes,
@@ -99,7 +100,19 @@ interface EventRow {
   intensity: Intensity | null;
   props: Record<string, string> | null;
   also_done: AlsoDone[] | null;
-  issue_id: string | null;
+}
+interface ConditionRow {
+  id: string;
+  dog_id: string;
+  name: string;
+  started_on: string;
+  description: string;
+  resolved_on: string | null;
+  position: number;
+}
+interface LinkRow {
+  event_id: string;
+  condition_id: string;
 }
 
 const DOG_COLUMNS = 'id, household_id, name';
@@ -108,7 +121,8 @@ const ITEM_COLUMNS =
 const SLOT_COLUMNS = 'id, dog_id, item_id, day_part, flavour, amount, unit, active_from, active_to, is_course';
 const ENTRY_COLUMNS =
   'id, dog_id, date, day_part, item_id, schedule_slot_id, amount, unit, flavour, dose_text, state, note, created_by, updated_by';
-const EVENT_COLUMNS = 'id, dog_id, date, type, title, detail, intensity, props, also_done, issue_id';
+const EVENT_COLUMNS = 'id, dog_id, date, type, title, detail, intensity, props, also_done';
+const CONDITION_COLUMNS = 'id, dog_id, name, started_on, description, resolved_on, position';
 const PINNED_COLUMNS = 'id, dog_id, title, body, position, created_by, updated_by, updated_at';
 /** entry.state of a usual-day item removed for a day (migration 20261017120000). */
 const REMOVED = 'removed';
@@ -245,7 +259,8 @@ export const fromPinnedNote = (n: PinnedNote) => ({
   position: n.position,
 });
 
-export const toEvent = (r: EventRow): HealthEvent => ({
+/** `conditionIds`: the event's links (event_condition), read separately. */
+export const toEvent = (r: EventRow, conditionIds: string[] = []): HealthEvent => ({
   id: r.id,
   dogId: r.dog_id,
   date: r.date,
@@ -255,7 +270,28 @@ export const toEvent = (r: EventRow): HealthEvent => ({
   intensity: r.intensity,
   props: r.props ?? {},
   alsoDone: r.also_done ?? [],
-  issueId: r.issue_id,
+  conditionIds,
+});
+
+export const toCondition = (r: ConditionRow): Condition => ({
+  id: r.id,
+  dogId: r.dog_id,
+  name: r.name,
+  startedOn: r.started_on,
+  description: r.description ?? '',
+  resolvedOn: r.resolved_on,
+  position: r.position ?? 0,
+});
+
+/** created_by, updated_by and the timestamps are set by the database. */
+export const fromCondition = (c: Condition) => ({
+  id: c.id,
+  dog_id: c.dogId,
+  name: c.name,
+  started_on: c.startedOn,
+  description: c.description,
+  resolved_on: c.resolvedOn,
+  position: c.position,
 });
 
 /** created_by, updated_by and the timestamps are set by the database, never by the client. */
@@ -284,7 +320,6 @@ export const fromEvent = (e: HealthEvent) => ({
   intensity: e.intensity ?? null,
   props: e.props ?? {},
   also_done: e.alsoDone ?? [],
-  issue_id: e.issueId,
 });
 
 function requireUuid(operation: string, id: string) {
@@ -439,7 +474,9 @@ export class SupabaseRepository implements Repository {
       if (range?.to) q = q.lte('date', range.to);
       return q.order('date').order('id').range(from, to);
     });
-    return rows.map(toEvent);
+    const links = new Map<string, string[]>();
+    for (const l of await this.links('listEvents', dog.id)) links.set(l.event_id, [...(links.get(l.event_id) ?? []), l.condition_id]);
+    return rows.map((r) => toEvent(r, links.get(r.id)));
   }
 
   async saveEntry(entry: Entry): Promise<void> {
@@ -474,13 +511,77 @@ export class SupabaseRepository implements Repository {
     unwrap('deleteEntries', await this.client.from('entry').delete().in('id', ids));
   }
 
+  /**
+   * Upsert the event, then make its links exactly `conditionIds`: add the missing ones first, then
+   * drop the others. Each step can be repeated safely, so a retry after a failure converges.
+   */
   async saveEvent(event: HealthEvent): Promise<void> {
     requireUuid('saveEvent', event.id);
+    event.conditionIds.forEach((id) => requireUuid('saveEvent', id));
     unwrap('saveEvent', await this.client.from('event').upsert(fromEvent(event), { onConflict: 'id' }));
+    const ids = [...new Set(event.conditionIds)];
+    if (ids.length) {
+      const rows = ids.map((condition_id) => ({ event_id: event.id, condition_id, dog_id: event.dogId }));
+      unwrap(
+        'saveEvent',
+        await this.client.from('event_condition').upsert(rows, { onConflict: 'event_id,condition_id', ignoreDuplicates: true }),
+      );
+    }
+    let stale = this.client.from('event_condition').delete().eq('event_id', event.id);
+    if (ids.length) stale = stale.not('condition_id', 'in', `(${ids.join(',')})`);
+    unwrap('saveEvent', await stale);
   }
 
+  /** Its links go with it (on delete cascade). */
   async deleteEvent(id: string): Promise<void> {
     unwrap('deleteEvent', await this.client.from('event').delete().eq('id', id));
+  }
+
+  async listConditions(): Promise<Condition[]> {
+    const dog = await this.getDog();
+    const rows = await this.pages<ConditionRow>('listConditions', (from, to) =>
+      this.client
+        .from('condition')
+        .select(CONDITION_COLUMNS)
+        .eq('dog_id', dog.id)
+        .order('started_on', { ascending: false })
+        .order('position')
+        .order('id')
+        .range(from, to),
+    );
+    return rows.map(toCondition);
+  }
+
+  async saveCondition(condition: Condition): Promise<void> {
+    requireUuid('saveCondition', condition.id);
+    unwrap('saveCondition', await this.client.from('condition').upsert(fromCondition(condition), { onConflict: 'id' }));
+  }
+
+  /** Its links go with it (on delete cascade); the events stay. */
+  async deleteCondition(id: string): Promise<void> {
+    unwrap('deleteCondition', await this.client.from('condition').delete().eq('id', id));
+  }
+
+  async linkEvents(conditionId: string, eventIds: string[]): Promise<void> {
+    if (!eventIds.length) return;
+    const dog = await this.getDog();
+    const rows = eventIds.map((event_id) => ({ event_id, condition_id: conditionId, dog_id: dog.id }));
+    unwrap(
+      'linkEvents',
+      await this.client.from('event_condition').upsert(rows, { onConflict: 'event_id,condition_id', ignoreDuplicates: true }),
+    );
+  }
+
+  private links(operation: string, dogId: string): Promise<LinkRow[]> {
+    return this.pages<LinkRow>(operation, (from, to) =>
+      this.client
+        .from('event_condition')
+        .select('event_id, condition_id')
+        .eq('dog_id', dogId)
+        .order('event_id')
+        .order('condition_id')
+        .range(from, to),
+    );
   }
 
   async listPinnedNotes(): Promise<PinnedNote[]> {
