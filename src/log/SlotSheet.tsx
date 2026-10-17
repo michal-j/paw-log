@@ -121,8 +121,13 @@ export function SlotSheet({ date, part, slot, group: onlyGroup }: { date: PlainD
       form.length === 'none' && slot && !slot.course && slot.activeTo
         ? slot.activeTo
         : endFor(lengthOnly && slot ? slot.activeFrom : form.from, form.length, form.to);
+    // A slot that has not started yet has no past to keep: the new values and the new start replace it
+    // (changeFrom would end it the day before and open a second slot, leaving the old values running, JCB-72).
+    const notStarted = !!slot && !same && slot.activeFrom > date;
     const moved: ScheduleSlot | null =
-      startOnly && slot ? { ...slot, activeFrom: form.from, activeTo: end && end < form.from ? form.from : end, course: course && end !== null } : null;
+      (startOnly || notStarted) && slot
+        ? { ...slot, ...values, activeFrom: form.from, activeTo: end && end < form.from ? form.from : end, course: course && end !== null }
+        : null;
     const change = moved
       ? { save: [moved], remove: [], slot: moved }
       : lengthOnly && slot

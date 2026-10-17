@@ -228,6 +228,22 @@ describe('usual day and menu', () => {
     expect(await screen.findByText('day 2 of 14, until 27 Oct')).toBeTruthy();
   });
 
+  it('an item that has not started: a new dose and a new start are both saved, in one slot (JCB-72)', async () => {
+    const repo = repoAt(16, 30);
+    await repo.deleteScheduleSlot('slot-arvelin-5');
+    const slot = (await repo.listScheduleSlots()).find((s) => s.id === 'slot-arvelin-1')!;
+    await repo.saveScheduleSlot({ ...slot, activeFrom: '2026-10-20' });
+    at('/demo/usual/2026-10-15', repo);
+    fireEvent.click(await screen.findByText('Arvelin'));
+    fireEvent.click(within(dialog()).getByRole('radio', { name: '2' }));
+    fireEvent.change(within(dialog()).getByLabelText('Starts on'), { target: { value: '2026-10-25' } });
+    click('Save');
+    expect(await screen.findByText('Usual day updated')).toBeTruthy();
+    const mine = (await repo.listScheduleSlots()).filter((s) => s.itemId === 'item-arvelin');
+    expect(mine).toHaveLength(1);
+    expect(mine[0]).toMatchObject({ amount: 2, activeFrom: '2026-10-25', activeTo: null });
+  });
+
   it('day-part times are editable in the menu and decide what is due today', async () => {
     const repo = at('/demo/day/2026-10-15', repoAt(7, 45));
     expect(await screen.findByText('Up to now: 1 not logged (07:45)')).toBeTruthy();
