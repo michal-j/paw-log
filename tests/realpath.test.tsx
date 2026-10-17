@@ -93,33 +93,78 @@ describe('real data path', () => {
     expect(await rows(`select count(*)::int as n from entry`)).toEqual([{ n: 1 }]);
   });
 
-  it('(13) deleting a filled usual-day item shows it as removed for the day, no Fill for it, Undo restores', async () => {
+  it('(13, JCB-60) deleting a filled usual-day item: gone from the day, no Fill for it, Undo restores', async () => {
     await at('/day/2026-10-15');
     fireEvent.click(await screen.findByRole('button', { name: 'Fill with your usual day: 4' }));
     expect(await screen.findByText('4 logged as given')).toBeTruthy();
     await waitFor(() => expect(screen.queryByText(/not logged/)).toBeNull());
     fireEvent.click(await screen.findByText('Arvelin'));
     click('Delete');
-    expect(await screen.findByText('Removed for this day')).toBeTruthy();
+    expect(await screen.findByText('Entry deleted')).toBeTruthy();
+    await waitFor(() => expect(screen.queryByText('Arvelin')).toBeNull());
+    expect(screen.getByText('Removed from the usual day: 1')).toBeTruthy();
     expect(screen.queryByText(/not logged/)).toBeNull();
     expect(screen.queryByRole('button', { name: /Fill with your usual day/ })).toBeNull();
     expect(screen.queryByRole('button', { name: 'Mark Arvelin as given' })).toBeNull();
     expect(await rows(`select state from entry where item_id = '${SEED.items.arvelin}'`)).toEqual([{ state: 'removed' }]);
     click('Undo');
-    await waitFor(() => expect(screen.queryByText('Removed for this day')).toBeNull());
+    expect(await screen.findByText('Arvelin')).toBeTruthy();
+    expect(screen.queryByText(/Removed from the usual day/)).toBeNull();
     expect(await rows(`select state from entry where item_id = '${SEED.items.arvelin}'`)).toEqual([{ state: 'given' }]);
   });
 
-  it('(13) a removed item can still be logged that day, in its own row', async () => {
+  it('(JCB-60) deleting an ad-hoc entry and a filled one looks the same: both rows go, Undo toast each time', async () => {
     await at('/day/2026-10-15');
-    fireEvent.click(await screen.findByRole('button', { name: 'Fill with your usual day: 4' }));
-    await waitFor(() => expect(screen.queryByText(/not logged/)).toBeNull());
+    await screen.findAllByText('Cooked meal');
+    // Ad-hoc: Farm Fresh is not on the usual day.
+    click('Add to Breakfast');
+    fireEvent.click(within(dialog()).getByText('Food'));
+    fireEvent.click(within(dialog()).getByRole('radio', { name: 'Farm Fresh' }));
+    click('Save');
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+    fireEvent.click(await screen.findByRole('button', { name: 'Mark Arvelin as given' }));
+    expect(await screen.findByText('1 logged as given')).toBeTruthy();
+    await waitFor(() => expect(screen.queryByRole('button', { name: 'Mark Arvelin as given' })).toBeNull());
+    fireEvent.click(await screen.findByText('Farm Fresh, turkey'));
+    click('Delete');
+    expect(await screen.findByText('Entry deleted')).toBeTruthy();
+    await waitFor(() => expect(screen.queryByText('Farm Fresh, turkey')).toBeNull());
     fireEvent.click(await screen.findByText('Arvelin'));
     click('Delete');
-    fireEvent.click(await screen.findByText('Removed for this day'));
-    click('Save');
-    await waitFor(() => expect(screen.queryByText('Removed for this day')).toBeNull());
-    expect(await rows(`select state from entry where item_id = '${SEED.items.arvelin}'`)).toEqual([{ state: 'given' }]);
+    await waitFor(() => expect(screen.queryByText('Arvelin')).toBeNull());
+    expect(screen.getByRole('button', { name: 'Undo' })).toBeTruthy();
+    expect(document.querySelectorAll('.day-item--removed')).toHaveLength(0);
+    expect(await rows(`select item_id, state from entry order by state`)).toEqual([{ item_id: SEED.items.arvelin, state: 'removed' }]);
+    // The Timeline draws neither.
+    fireEvent.click(document.querySelector('.day-btn--back') as HTMLElement);
+    await screen.findByText('October 2026');
+    const today = document.querySelector('[href="/day/2026-10-15"]')?.closest('.tl-row');
+    expect(today).toBeTruthy();
+    expect(today!.querySelectorAll('.dose-mark')).toHaveLength(0);
+  });
+
+  it('(JCB-60) Restore puts a removed item back as not logged, Fill then logs it, Undo removes it again', async () => {
+    await at('/day/2026-10-15');
+    fireEvent.click(await screen.findByRole('button', { name: 'Mark Arvelin as given' }));
+    await screen.findByText('1 logged as given');
+    await waitFor(() => expect(screen.queryByRole('button', { name: 'Mark Arvelin as given' })).toBeNull());
+    fireEvent.click(await screen.findByText('Arvelin'));
+    click('Delete');
+    expect(await screen.findByText('Removed from the usual day: 1')).toBeTruthy();
+    click('Restore');
+    expect(await screen.findByText('Back on the usual day: 1')).toBeTruthy();
+    expect(await screen.findByRole('button', { name: 'Mark Arvelin as given' })).toBeTruthy();
+    expect(screen.queryByText(/Removed from the usual day/)).toBeNull();
+    expect(await rows(`select count(*)::int as n from entry`)).toEqual([{ n: 0 }]);
+    click('Undo');
+    expect(await screen.findByText('Removed from the usual day: 1')).toBeTruthy();
+    await waitFor(() => expect(screen.queryByRole('button', { name: 'Mark Arvelin as given' })).toBeNull());
+    expect(await rows(`select state from entry`)).toEqual([{ state: 'removed' }]);
+    click('Restore');
+    await screen.findByText('Back on the usual day: 1');
+    fireEvent.click(await screen.findByRole('button', { name: 'Fill with your usual day: 4' }));
+    expect(await screen.findByText('4 logged as given')).toBeTruthy();
+    expect(await rows(`select count(*)::int as n from entry where state = 'given'`)).toEqual([{ n: 4 }]);
   });
 
   it('(1, 5) day-part times save on commit, once, and the last value wins even when answers are slow', async () => {
@@ -348,7 +393,7 @@ describe('real data path', () => {
     expect((await screen.findByText('Fill with your usual day: 3')).closest('.day-fill')).not.toBeNull();
     cleanup();
     await fake!.backend.close();
-    // A day opened with one entry: delete it; the removed row keeps the day "worked on", no banner.
+    // A day opened with one entry: delete it; the removed item keeps the day "worked on", no banner.
     await at('/day/2026-10-15');
     fireEvent.click(await screen.findByRole('button', { name: 'Mark Arvelin as given' }));
     await screen.findByText('1 logged as given');
@@ -361,7 +406,7 @@ describe('real data path', () => {
     );
     fireEvent.click(await screen.findByText('Arvelin'));
     click('Delete');
-    expect(await screen.findByText('Removed for this day')).toBeTruthy();
+    expect(await screen.findByText('Removed from the usual day: 1')).toBeTruthy();
     expect(document.querySelector('.day-fill')).toBeNull();
     expect((await screen.findByRole('button', { name: 'Fill with your usual day: 3' })).closest('.day-fill-quiet')).not.toBeNull();
   });

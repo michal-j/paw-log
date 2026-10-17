@@ -166,7 +166,7 @@ describe('removed for the day (JCB-43, 13)', () => {
     expect(dueOpenSlots('2026-10-11', slots, [], clock, [marker]).map((s) => s.id)).toEqual(['a', 'c']);
   });
 
-  it('the Day view shows it as a removed row, not a planned one', () => {
+  it('the Day view does not draw it as a row (JCB-60): it is only counted in the part', () => {
     const day = buildDay({
       date: '2026-10-10',
       bounds: { first: '2026-10-01', last: '2026-10-15' },
@@ -176,7 +176,8 @@ describe('removed for the day (JCB-43, 13)', () => {
       plan: { slots, removed: [marker], today: '2026-10-15', now: '10:00', times },
     });
     const breakfast = day.parts.find((p) => p.part === 2);
-    expect(breakfast?.rows.map((r) => r.kind)).toEqual(['removed']);
+    expect(breakfast?.rows).toEqual([]);
+    expect(breakfast?.removed.map((r) => r.marker.id)).toEqual(['m']);
     expect(breakfast?.due).toEqual([]);
   });
 });

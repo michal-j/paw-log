@@ -79,7 +79,8 @@ export function DayView({ date, onBack, onStep, onInvalid, onUsualDay }: Props) 
   // The prominent Fill banner is for a day with nothing logged; otherwise Fill is a quiet action below the parts.
   // A removed item counts: the day was worked on. The choice is made when the day opens and kept
   // while it stays open, so Given, a delete or Undo never make the banner jump in or out.
-  const anyLogged = day ? day.parts.some((p) => p.entries.length > 0 || p.rows.some((r) => r.kind === 'removed')) : false;
+  const removed = day ? day.parts.flatMap((p) => p.removed) : [];
+  const anyLogged = day ? day.parts.some((p) => p.entries.length > 0) || removed.length > 0 : false;
   const [quietFor, setQuietFor] = useState<{ date: PlainDate; quiet: boolean } | null>(null);
   if (day && quietFor?.date !== date) setQuietFor({ date, quiet: anyLogged });
   const quietFill = quietFor?.date === date ? quietFor.quiet : anyLogged;
@@ -113,6 +114,10 @@ export function DayView({ date, onBack, onStep, onInvalid, onUsualDay }: Props) 
     anchor.current = partsRef.current?.getBoundingClientRect().top ?? null;
     void giveGuarded(rows);
   };
+  const restore = guard(async () => {
+    const markers = removed.map((r) => r.marker);
+    await run(() => act.restoreRemoved(repository, markers), fill(t('toastRestored'), { n: markers.length }));
+  });
   const fillHead = date === today ? `${fill(t('fillTodayH'), { n: due.length })} (${now})` : fill(t('fillPastH'), { n: due.length });
 
   const editEntry = (e: Entry) => open({ kind: 'entry', group: itemGroup(e.itemId), date: e.date, part: e.dayPart, entry: e });
@@ -268,27 +273,6 @@ export function DayView({ date, onBack, onStep, onInvalid, onUsualDay }: Props) 
                       const name = f.name(r.name, r.flavour);
                       const amount = f.amount(r.amount, r.unit, r.conversion, r.kind === 'logged' ? r.doseText : '');
                       const course = r.course ? fill(t('dayNofM'), r.course) : '';
-                      if (r.kind === 'removed') {
-                        return (
-                          <li key={r.id} className="day-item day-item--removed">
-                            <button
-                              type="button"
-                              className="day-item__open"
-                              onClick={() =>
-                                open({ kind: 'entry', group: itemGroup(r.itemId), date, part: p.part, slot: r.slot, replaces: r.marker })
-                              }
-                            >
-                              <span className="day-item__mark">
-                                <DoseMark colour={r.colour} size={r.size} state="planned" />
-                              </span>
-                              <span className="day-item__text">
-                                <span className="day-item__name">{name}</span>
-                                <span className="day-item__sub">{t('removedDay')}</span>
-                              </span>
-                            </button>
-                          </li>
-                        );
-                      }
                       if (r.kind === 'planned') {
                         const subText = [r.due ? t('planned') : t('laterToday'), course].filter(Boolean).join(' · ');
                         return (
@@ -368,6 +352,15 @@ export function DayView({ date, onBack, onStep, onInvalid, onUsualDay }: Props) 
               {fill(t('fillBtn'), { n: due.length })}
             </button>
           </div>
+        )}
+        {removed.length > 0 && (
+          <p className="day-removed">
+            <span className="day-removed__text">{fill(t('removedUsual'), { n: removed.length })}</span>
+            <span aria-hidden="true"> · </span>
+            <button type="button" className="day-removed__btn" disabled={busy} onClick={() => void restore()}>
+              {t('restore')}
+            </button>
+          </p>
         )}
       </div>
     </section>
