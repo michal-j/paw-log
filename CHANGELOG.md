@@ -4,6 +4,8 @@ Format: [Keep a Changelog](https://keepachangelog.com). "Unreleased" means not y
 
 ## Unreleased
 
+## 2026-10-16 to 2026-10-17 (merged to main)
+
 ### Changed
 - Deleting an entry in the Day view looks the same for every entry (JCB-60): it disappears from the day and the Timeline with the "Entry deleted" toast and Undo. A usual-day item still keeps its `removed` marker underneath, so Fill and Given do not offer it again, but it is no longer drawn as a "Removed for this day" row; one quiet line at the bottom of the day ("Removed from the usual day: 1 · Restore") puts it back as not logged, with Undo. Draft copy in `docs/copy/copy-proposal-consistent-delete.csv`.
 
