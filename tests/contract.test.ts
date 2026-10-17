@@ -4,6 +4,7 @@
 // must behave the same, so a flow that works in /demo works on real data.
 import { afterEach, describe, expect, it } from 'vitest';
 import { DemoRepository, DuplicateSlotEntryError, type Entry, type Item, type Repository, type ScheduleSlot } from '../src/data';
+import { deleteEntry, restoreRemoved } from '../src/log/actions';
 import { createFakeSupabase } from './harness/fakeSupabase';
 
 const NOW = () => new Date(2026, 9, 15, 16, 30); // the demo's frozen date, 15 Oct 2026
@@ -159,6 +160,43 @@ describe.each(subjects)('%s', (_name, make) => {
     await repo.saveEntry(e);
     expect((await onDay()).map(shape)).toEqual([shape(e)]);
     expect(await repo.listRemovedSlots({ from: '2026-10-10', to: '2026-10-10' })).toEqual([]);
+  });
+
+  it('deleting an ad-hoc and a filled entry: both leave the entries list, Undo restores each exactly (JCB-60)', async () => {
+    const { entry, repo, onDay, slot } = await setup();
+    const filled = entry({ note: 'filled' });
+    const adHoc = entry({ scheduleSlotId: null, dayPart: 2, note: 'extra' });
+    await repo.saveEntry(filled);
+    await repo.saveEntry(adHoc);
+    const undoAdHoc = await deleteEntry(repo, adHoc, null);
+    const undoFilled = await deleteEntry(repo, filled, slot);
+    expect(await onDay()).toEqual([]);
+    expect((await repo.listRemovedSlots()).map((r) => r.id)).toEqual([filled.id]);
+    await undoFilled();
+    await undoAdHoc();
+    expect((await onDay()).map(shape).sort((a, b) => a.dayPart - b.dayPart)).toEqual([shape(adHoc), shape(filled)]);
+    expect(await repo.listRemovedSlots()).toEqual([]);
+  });
+
+  it('restoring a removed slot makes it open again; Undo removes it again unless it was logged (JCB-60)', async () => {
+    const { entry, repo, onDay, slot } = await setup();
+    const e = entry();
+    await repo.saveEntry(e);
+    await repo.removeFromDay(e, slot.id);
+    const markers = await repo.listRemovedSlots();
+    const undo = await restoreRemoved(repo, markers);
+    expect(await repo.listRemovedSlots()).toEqual([]);
+    expect(await onDay()).toEqual([]);
+    await undo();
+    expect(await repo.listRemovedSlots()).toEqual(markers);
+    expect(await repo.addPlannedEntries([entry()])).toEqual([]);
+    // Restore, then Fill logs it; an Undo of the restore now leaves that entry alone.
+    const undo2 = await restoreRemoved(repo, markers);
+    const fill = entry();
+    expect(await repo.addPlannedEntries([fill])).toEqual([fill.id]);
+    await undo2();
+    expect((await onDay()).map(shape)).toEqual([shape(fill)]);
+    expect(await repo.listRemovedSlots()).toEqual([]);
   });
 
   it('logging a removed slot again takes the marker row', async () => {

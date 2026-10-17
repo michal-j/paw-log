@@ -27,7 +27,8 @@ export async function saveEntry(repo: Repository, next: Entry, prev: Entry | nul
 
 /**
  * Delete an entry. One that filled a usual-day slot (`slot`) leaves that slot removed for the day,
- * so it is not offered as "not logged" again or filled by Fill. Undo brings the entry back.
+ * so it is not offered as "not logged" again or filled by Fill. Either way the entry is gone from the
+ * Day view and the Timeline (the marker is never drawn as a row). Undo brings the entry back.
  */
 export async function deleteEntry(repo: Repository, entry: Entry, slot: ScheduleSlot | null = null): Promise<Undo> {
   if (slot) {
@@ -41,6 +42,38 @@ export async function deleteEntry(repo: Repository, entry: Entry, slot: Schedule
   }
   await repo.deleteEntry(entry.id);
   return () => repo.saveEntry(entry);
+}
+
+/**
+ * Put usual-day items removed for a day back on it: their markers go, so the slots are planned (and
+ * fillable) again. Undo removes them again, except a slot someone has logged in the meantime.
+ */
+export async function restoreRemoved(repo: Repository, markers: RemovedSlot[]): Promise<Undo> {
+  await repo.deleteEntries(markers.map((m) => m.id));
+  return async () => {
+    for (const m of markers) {
+      const entry: Entry = {
+        id: m.id,
+        dogId: m.dogId,
+        date: m.date,
+        dayPart: m.dayPart,
+        itemId: m.itemId,
+        scheduleSlotId: m.scheduleSlotId,
+        amount: null,
+        unit: null,
+        flavour: '',
+        doseText: '',
+        state: 'given',
+        note: '',
+        createdBy: '',
+      };
+      try {
+        await repo.removeFromDay(entry, m.scheduleSlotId);
+      } catch (err) {
+        if (!(err instanceof DuplicateSlotEntryError)) throw err;
+      }
+    }
+  };
 }
 
 /** Given (one slot) and Fill (all due slots): slots someone already filled are skipped. */

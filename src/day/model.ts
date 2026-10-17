@@ -74,12 +74,15 @@ export interface PlannedRow {
   due: boolean;
 }
 
-/** A usual-day item removed for this day (its entry was deleted): shown quietly, never filled again. */
+/**
+ * A usual-day item removed for this day (its entry was deleted): never filled again and never drawn as
+ * an item row; the Day view only counts these in one quiet line with Restore (JCB-60).
+ */
 export interface RemovedRow extends Omit<PlannedRow, 'due'> {
   marker: RemovedSlot;
 }
 
-export type DayRow = ({ kind: 'logged' } & DayEntry) | ({ kind: 'planned' } & PlannedRow) | ({ kind: 'removed' } & RemovedRow);
+export type DayRow = ({ kind: 'logged' } & DayEntry) | ({ kind: 'planned' } & PlannedRow);
 
 export interface DayPartGroup {
   part: DayPart;
@@ -90,6 +93,8 @@ export interface DayPartGroup {
   rows: DayRow[];
   /** Planned rows whose time has passed. */
   due: PlannedRow[];
+  /** Usual-day items removed for this day in this part: not rows, so a delete looks the same for every entry. */
+  removed: RemovedRow[];
 }
 
 /** What decides "planned" and "due": the usual day and the clock. Without it, a day shows only what was logged. */
@@ -170,9 +175,8 @@ export function groupDayParts(date: PlainDate, items: Item[], entries: Entry[], 
     const rows: DayRow[] = [
       ...logged.map((e) => ({ kind: 'logged' as const, ...e })),
       ...planned.map((p) => ({ kind: 'planned' as const, ...p })),
-      ...removedRows.map((r) => ({ kind: 'removed' as const, ...r })),
     ].sort(compare);
-    return { part, meal: MEAL_PARTS.has(part), entries: logged, rows, due: planned.filter((p) => p.due) };
+    return { part, meal: MEAL_PARTS.has(part), entries: logged, rows, due: planned.filter((p) => p.due), removed: removedRows.sort(compare) };
   });
 }
 
