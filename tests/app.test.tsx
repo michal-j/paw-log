@@ -36,6 +36,17 @@ describe('timeline home', () => {
     expect(localStorage.getItem('pawlog.lang')).toBe('pl');
   });
 
+  it('sets <html lang> from the stored language on a fresh load', async () => {
+    document.documentElement.lang = 'en';
+    render(
+      <I18nProvider initial="pl">
+        <App repository={new DemoRepository(null)} />
+      </I18nProvider>,
+    );
+    expect(document.documentElement.lang).toBe('pl');
+    await screen.findByText('październik 2026');
+  });
+
   it('scrubs the rail to the first day when the list cannot scroll (log fits on one screen)', async () => {
     mount();
     await screen.findByText('October 2026');

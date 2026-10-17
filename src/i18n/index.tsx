@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import catalogues from './catalogues.generated.json';
 
 export type Lang = 'en' | 'pl';
@@ -53,6 +53,10 @@ export function I18nProvider({ children, initial }: { children: ReactNode; initi
       /* storage unavailable */
     }
   }, []);
+  // A stored Polish choice must reach <html lang> on a fresh load too, not only when switching.
+  useEffect(() => {
+    document.documentElement.lang = lang;
+  }, [lang]);
   const value = useMemo<I18n>(() => ({ lang, setLang, t: (key) => translate(lang, key) }), [lang, setLang]);
   return <Context.Provider value={value}>{children}</Context.Provider>;
 }
