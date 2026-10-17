@@ -17,12 +17,16 @@ import type {
   Intensity,
   Item,
   ItemKind,
+  Photo,
+  PhotoFiles,
+  PhotoSize,
   PinnedNote,
   PlainDate,
   RemovedSlot,
   ScheduleSlot,
   Unit,
 } from './types';
+import { photoPath } from './types';
 
 export { DuplicateSlotEntryError, NoDogError, RepositoryError };
 
@@ -114,6 +118,16 @@ interface LinkRow {
   event_id: string;
   condition_id: string;
 }
+interface AttachmentRow {
+  id: string;
+  dog_id: string;
+  event_id: string;
+  width: number;
+  height: number;
+  taken_at: string | null;
+  caption: string;
+  position: number;
+}
 
 const DOG_COLUMNS = 'id, household_id, name';
 const ITEM_COLUMNS =
@@ -124,6 +138,12 @@ const ENTRY_COLUMNS =
 const EVENT_COLUMNS = 'id, dog_id, date, type, title, detail, intensity, props, also_done';
 const CONDITION_COLUMNS = 'id, dog_id, name, started_on, description, resolved_on, position';
 const PINNED_COLUMNS = 'id, dog_id, title, body, position, created_by, updated_by, updated_at';
+const ATTACHMENT_COLUMNS = 'id, dog_id, event_id, width, height, taken_at, caption, position';
+/** The private storage bucket of photos (migration 20261020120000). */
+export const PHOTO_BUCKET = 'photos';
+/** Signed photo URLs last this long; one is reused until it has less than PHOTO_URL_MARGIN_S left. */
+export const PHOTO_URL_TTL_S = 600;
+const PHOTO_URL_MARGIN_S = 120;
 /** entry.state of a usual-day item removed for a day (migration 20261017120000). */
 const REMOVED = 'removed';
 /** Postgres unique_violation: on entry, the one-entry-per-slot-per-day index. */
@@ -136,6 +156,12 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 interface Result<T> {
   data: T | null;
   error: { message: string; code?: string } | null;
+}
+
+/** Storage errors carry an HTTP status rather than a Postgres code. */
+function storageCode(error: { message: string; status?: number; statusCode?: string }): string | undefined {
+  const status = 'status' in error ? error.status : undefined;
+  return status ? String(status) : error.statusCode;
 }
 
 function unwrap<T>(operation: string, { data, error }: Result<T>): T {
@@ -322,6 +348,42 @@ export const fromEvent = (e: HealthEvent) => ({
   also_done: e.alsoDone ?? [],
 });
 
+/** `taken_at` comes back as `YYYY-MM-DDTHH:MM:SS` or `YYYY-MM-DD HH:MM:SS`; the app uses the first. */
+const wallClock = (v: string | null) => (v ? v.replace(' ', 'T').slice(0, 19) : null);
+
+export const toPhoto = (r: AttachmentRow): Photo => ({
+  id: r.id,
+  dogId: r.dog_id,
+  eventId: r.event_id,
+  width: r.width,
+  height: r.height,
+  takenAt: wallClock(r.taken_at),
+  caption: r.caption ?? '',
+  position: r.position ?? 0,
+});
+
+/** created_by, updated_by and the timestamps are set by the database. */
+export const fromPhoto = (p: Photo) => ({
+  id: p.id,
+  dog_id: p.dogId,
+  event_id: p.eventId,
+  kind: 'photo',
+  storage_path: photoPath(p),
+  width: p.width,
+  height: p.height,
+  taken_at: p.takenAt,
+  caption: p.caption,
+  position: p.position,
+});
+
+export interface SupabaseRepositoryOptions {
+  /**
+   * Turns a signed URL into the URL an <img> gets. The app uses it as it is; the dev harness, whose
+   * fake backend has no network address, loads it through the client and hands out a blob: URL.
+   */
+  displayUrl?: (signedUrl: string) => Promise<string>;
+}
+
 function requireUuid(operation: string, id: string) {
   if (!UUID.test(id)) {
     throw new RepositoryError(operation, undefined, `id "${id}" is not a UUID; create new ids with crypto.randomUUID()`);
@@ -334,10 +396,13 @@ function requireUuid(operation: string, id: string) {
  */
 export class SupabaseRepository implements Repository {
   private dog: Promise<Dog> | null = null;
+  /** Signed photo URLs by storage path, reused while they have time left (the browser then caches the image). */
+  private readonly signed = new Map<string, { url: string; until: number }>();
 
   constructor(
     private readonly client: SupabaseClient,
     private readonly now: () => Date = () => new Date(),
+    private readonly options: SupabaseRepositoryOptions = {},
   ) {}
 
   today(): PlainDate {
@@ -582,6 +647,80 @@ export class SupabaseRepository implements Repository {
         .order('condition_id')
         .range(from, to),
     );
+  }
+
+  async listPhotos(): Promise<Photo[]> {
+    const dog = await this.getDog();
+    const rows = await this.pages<AttachmentRow>('listPhotos', (from, to) =>
+      this.client
+        .from('attachment')
+        .select(ATTACHMENT_COLUMNS)
+        .eq('dog_id', dog.id)
+        .eq('kind', 'photo')
+        .order('event_id')
+        .order('position')
+        .order('id')
+        .range(from, to),
+    );
+    return rows.map(toPhoto);
+  }
+
+  /** Upsert both files (same paths every time), so a retry replaces what an earlier attempt left. */
+  async uploadPhotoFiles(photo: Photo, files: PhotoFiles): Promise<void> {
+    requireUuid('uploadPhotoFiles', photo.id);
+    const bucket = this.client.storage.from(PHOTO_BUCKET);
+    for (const size of ['thumb', 'full'] as const) {
+      // Sent as raw bytes with its content type (not multipart): the same on every platform.
+      const body = await files[size].arrayBuffer();
+      const { error } = await bucket.upload(photoPath(photo, size), body, {
+        contentType: 'image/jpeg',
+        upsert: true,
+        // A path never gets other content (a changed photo is a new attachment), so it may be cached for long.
+        cacheControl: '31536000',
+      });
+      if (error) throw new RepositoryError('uploadPhotoFiles', storageCode(error), error.message);
+    }
+  }
+
+  async savePhoto(photo: Photo): Promise<void> {
+    requireUuid('savePhoto', photo.id);
+    unwrap('savePhoto', await this.client.from('attachment').upsert(fromPhoto(photo), { onConflict: 'id' }));
+  }
+
+  async deletePhoto(id: string): Promise<void> {
+    unwrap('deletePhoto', await this.client.from('attachment').delete().eq('id', id));
+  }
+
+  /** The storage policy refuses files whose row still exists, so this never removes a photo that is shown. */
+  async purgePhotoFiles(photos: Pick<Photo, 'id' | 'dogId'>[]): Promise<void> {
+    if (!photos.length) return;
+    const paths = photos.flatMap((p) => [photoPath(p), photoPath(p, 'thumb')]);
+    const { error } = await this.client.storage.from(PHOTO_BUCKET).remove(paths);
+    if (error) throw new RepositoryError('purgePhotoFiles', storageCode(error), error.message);
+    for (const path of paths) this.signed.delete(path);
+  }
+
+  /** One signing request for every path without a fresh URL; the others come from memory. */
+  async photoUrls(photos: Pick<Photo, 'id' | 'dogId'>[], size: PhotoSize): Promise<Record<string, string>> {
+    const now = this.now().getTime();
+    const pathOf = new Map(photos.map((p) => [p.id, photoPath(p, size)]));
+    const stale = [...new Set(pathOf.values())].filter((path) => (this.signed.get(path)?.until ?? 0) <= now);
+    if (stale.length) {
+      const { data, error } = await this.client.storage.from(PHOTO_BUCKET).createSignedUrls(stale, PHOTO_URL_TTL_S);
+      if (error) throw new RepositoryError('photoUrls', storageCode(error), error.message);
+      const until = now + (PHOTO_URL_TTL_S - PHOTO_URL_MARGIN_S) * 1000;
+      for (const item of data ?? []) {
+        if (!item.signedUrl || !item.path || item.error) continue;
+        const url = this.options.displayUrl ? await this.options.displayUrl(item.signedUrl) : item.signedUrl;
+        this.signed.set(item.path, { url, until });
+      }
+    }
+    const out: Record<string, string> = {};
+    for (const [id, path] of pathOf) {
+      const hit = this.signed.get(path);
+      if (hit) out[id] = hit.url;
+    }
+    return out;
   }
 
   async listPinnedNotes(): Promise<PinnedNote[]> {

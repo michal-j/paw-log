@@ -114,18 +114,27 @@ export interface Badge {
   text: string;
 }
 
-/** Badge order and text per docs/DESIGN.md "Event badges". Other event types have no badge yet. */
-export function badgesFor(events: Pick<HealthEvent, 'type'>[]): Badge[] {
+/**
+ * Badge order and text per docs/DESIGN.md "Event badges". Other event types have no badge yet.
+ * The camera shows once for a day with any photo: a photo event, or another event with photos
+ * (`withPhotos`: ids of events that have photos, JCB-7). Never one per photo, so the row keeps its geometry.
+ */
+export function badgesFor(events: Pick<HealthEvent, 'type' | 'id'>[], withPhotos: ReadonlySet<string> = new Set()): Badge[] {
   const count = (t: EventType) => events.filter((e) => e.type === t).length;
   const out: Badge[] = [];
   const vet = count('vet');
   const sym = count('symptom');
   if (vet) out.push({ kind: 'vet', text: String(vet) });
   if (sym) out.push({ kind: 'sym', text: sym > 1 ? `!${sym}` : '!' });
-  if (count('photo')) out.push({ kind: 'photo', text: '' });
+  if (hasPhoto(events, withPhotos)) out.push({ kind: 'photo', text: '' });
   if (count('frontline')) out.push({ kind: 'front', text: 'F' });
   if (count('deworming')) out.push({ kind: 'worm', text: 'D' });
   return out;
+}
+
+/** A day has a photo: a photo event, or an event carrying photos. */
+export function hasPhoto(events: Pick<HealthEvent, 'type' | 'id'>[], withPhotos: ReadonlySet<string> = new Set()): boolean {
+  return events.some((e) => e.type === 'photo' || withPhotos.has(e.id));
 }
 
 // ---------- Rows ----------
@@ -220,6 +229,8 @@ export function buildTimeline(input: {
   events: HealthEvent[];
   /** First day shown ("Log starts on"); defaults to the first record. Empty days in between are shown too. */
   start?: PlainDate;
+  /** Ids of events that have photos (the camera badge, JCB-7). */
+  withPhotos?: ReadonlySet<string>;
 }): Timeline {
   const { today, items } = input;
   const entries = input.entries.filter((e) => e.date <= today);
@@ -269,7 +280,7 @@ export function buildTimeline(input: {
       height: DAY_ROW_H,
       isToday,
       slots,
-      badges: badgesFor(dayEvents),
+      badges: badgesFor(dayEvents, input.withPhotos),
       events: dayEvents,
       anySkipped: dayEntries.some((e) => e.state === 'skipped'),
       logged: dayEntries.length > 0 || dayEvents.length > 0,

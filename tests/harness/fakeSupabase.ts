@@ -1,7 +1,7 @@
 // The real supabase-js client and SupabaseRepository wired to the fake backend (tests/harness/fakeBackend.ts).
 import type { SupabaseClient, SupabaseClientOptions } from '@supabase/supabase-js';
 import { createSupabaseClient } from '../../src/auth/supabaseClient';
-import { SupabaseRepository } from '../../src/data/supabaseRepository';
+import { SupabaseRepository, type SupabaseRepositoryOptions } from '../../src/data/supabaseRepository';
 import { withTimeout } from '../../src/data/timeout';
 import { FAKE_ANON_KEY, FAKE_URL, createFakeBackend, type FakeBackend } from './fakeBackend';
 
@@ -34,9 +34,18 @@ export function fakeClient(backend: FakeBackend, options: ClientOptions = {}): S
 }
 
 /** The real-path repository the app uses: SupabaseRepository, limited in time. */
-export function timedRepository(client: SupabaseClient, now?: () => Date, timeoutMs?: number) {
-  return withTimeout(new SupabaseRepository(client, now), timeoutMs);
+export function timedRepository(client: SupabaseClient, now?: () => Date, timeoutMs?: number, options?: SupabaseRepositoryOptions) {
+  return withTimeout(new SupabaseRepository(client, now, options), timeoutMs);
 }
+
+/**
+ * For the browser harness: the fake backend has no network address, so an <img> cannot load a
+ * signed URL itself. Load it through the fake and hand out a blob: URL instead.
+ */
+export const harnessDisplayUrl = (backend: FakeBackend) => async (signedUrl: string) => {
+  const res = await backend.fetch(signedUrl);
+  return URL.createObjectURL(await res.blob());
+};
 
 export async function createFakeSupabase(
   options: Parameters<typeof createFakeBackend>[0] & { client?: ClientOptions } = {},

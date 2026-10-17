@@ -16,7 +16,7 @@ import { I18nProvider } from '../../src/i18n';
 import { shiftDate } from '../../src/timeline/model';
 import { localDate } from '../../src/data/supabaseRepository';
 import { SEED, createFakeBackend } from './fakeBackend';
-import { fakeClient, timedRepository } from './fakeSupabase';
+import { fakeClient, harnessDisplayUrl, timedRepository } from './fakeSupabase';
 
 const params = new URLSearchParams(location.search);
 const HARNESS_COOKIE = 'pawlog_harness';
@@ -49,7 +49,11 @@ const client = fakeClient(backend);
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <I18nProvider>
-      <AuthGate auth={auth} createRepository={() => timedRepository(client)} confirm={() => true} />
+      <AuthGate
+        auth={auth}
+        createRepository={() => timedRepository(client, undefined, undefined, { displayUrl: harnessDisplayUrl(backend) })}
+        confirm={() => true}
+      />
     </I18nProvider>
   </StrictMode>,
 );

@@ -1,6 +1,7 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type MouseEvent, type PointerEvent, type ReactNode } from 'react';
 import type { HealthEvent, Item, PlainDate } from '../data';
 import { useLog } from '../log/LogProvider';
+import { eventsWithPhotos } from '../photos/model';
 import { useI18n, type Lang, type MessageKey } from '../i18n';
 import { symptomLabel } from './labels';
 import { DoseMark, colourVar } from '../components/DoseMark';
@@ -81,6 +82,7 @@ export function Timeline({ initialScrollTop = 0, dayHref, onOpenDay }: Props) {
           entries: records.entries,
           events: records.events,
           start: records.logStart,
+          withPhotos: eventsWithPhotos(records.photos),
         }),
         items: new Map(records.items.map((i) => [i.id, i])),
       },
@@ -204,7 +206,7 @@ export function Timeline({ initialScrollTop = 0, dayHref, onOpenDay }: Props) {
   const scrubLabel = !focusRow ? '' : focusRow.kind === 'day' ? fmt.full(focusRow.date) : fmt.month(focusRow.month);
 
   const summary = (row: DayRow) => {
-    const flags = flagsFor(row.events, row.anySkipped, t);
+    const flags = flagsFor(row.events, row.badges.some((b) => b.kind === 'photo'), row.anySkipped, t);
     return `${fmt.long(row.date)}: ${flags.length ? flags.join(', ') : row.logged ? t('copy.95') : t('nothingLogged')}`;
   };
 
@@ -413,13 +415,13 @@ function ColumnBox({ col, hidden, children }: { col: Column; hidden?: boolean; c
 }
 
 /** Words for the screen-reader summary of a day row. */
-function flagsFor(events: HealthEvent[], anySkipped: boolean, t: (k: MessageKey) => string): string[] {
+function flagsFor(events: HealthEvent[], photo: boolean, anySkipped: boolean, t: (k: MessageKey) => string): string[] {
   const out: string[] = [];
   const vet = events.filter((e) => e.type === 'vet').length;
   if (vet) out.push(vet > 1 ? `${t('copy.101')} ×${vet}` : t('copy.101'));
   const syms = events.filter((e) => e.type === 'symptom').map((e) => symptomLabel(e.title, t));
   if (syms.length) out.push(syms.join(', '));
-  if (events.some((e) => e.type === 'photo')) out.push(t('copy.103'));
+  if (photo) out.push(t('copy.103'));
   if (events.some((e) => e.type === 'frontline')) out.push(t('kFront'));
   if (events.some((e) => e.type === 'deworming')) out.push(t('copy.102'));
   if (anySkipped) out.push(t('copy.93'));

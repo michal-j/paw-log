@@ -58,7 +58,14 @@ export const NoteIcon = ({ size = 15 }: { size?: number }) => (
     <path d="M9 12h6M9 16h6" />
   </svg>
 );
-export const DotsIcon = ({ size = 15 }: { size?: number }) => (
+/** A camera: photo pick tiles and the + Add sheet's Photo (same shape as the photo EventBadge). */
+export const CameraIcon = ({ size = 22 }: { size?: number }) => (
+  <svg {...stroke(size)}>
+    <path d="M3 8h4l2-3h6l2 3h4v12H3z" />
+    <circle cx="12" cy="13.5" r="3.5" />
+  </svg>
+);
+export const DotsIcon =({ size = 15 }: { size?: number }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
     <circle cx="5" cy="12" r="2" />
     <circle cx="12" cy="12" r="2" />

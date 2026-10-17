@@ -1,0 +1,107 @@
+/* Photos (JCB-7), after design/proposals/pinned-tracked: PhotoThumb, PhotoStrip, PhotoPick, PhotoViewer
+   with Compare. Tokens only; thumbnail sizes are the design's fixed px (52, 72, 104). */
+
+/* ---------- PhotoThumb: a photo at a fixed square size ---------- */
+.photo-thumb {
+  position: relative;
+  flex: none;
+  display: block;
+  width: var(--thumb, 72px);
+  height: var(--thumb, 72px);
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-tint);
+  box-shadow: var(--shadow-card);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.photo-thumb img { display: block; width: 100%; height: 100%; object-fit: cover; }
+button.photo-thumb:active { opacity: 0.7; }
+.photo-thumb--sm { --thumb: 52px; }
+.photo-thumb--lg { --thumb: 104px; border-radius: var(--radius-lg); }
+span.photo-thumb { cursor: default; }
+.photo-row { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: 10px; }
+.photo-row--field { margin-top: 0; }
+/* Above the card's open button (which covers the card), like the condition tags. */
+.ev-card .photo-row { position: relative; z-index: 1; }
+
+/* ---------- PhotoStrip: a condition's photos, oldest on the left, the add tile last ---------- */
+.strip { display: flex; gap: 10px; margin: 0 calc(-1 * var(--space-3)); padding: 2px var(--space-3) var(--space-2); overflow-x: auto; scroll-snap-type: x proximity; scrollbar-width: none; }
+.strip::-webkit-scrollbar { display: none; }
+.strip__item { flex: none; display: flex; flex-direction: column; align-items: center; gap: 5px; scroll-snap-align: start; }
+.strip-empty { display: flex; align-items: center; gap: var(--space-3); padding-bottom: var(--space-2); }
+.strip-empty__text { flex: 1; margin: 0; color: var(--color-ink-3); font: var(--type-small-weight) var(--type-small-size) / var(--type-small-line) var(--type-small-family); }
+.strip__date { color: var(--color-ink-2); font: 600 12px / 16px var(--type-body-family); font-variant-numeric: tabular-nums; }
+
+/* ---------- PhotoPick: dashed tile that starts the iPhone photo menu ---------- */
+.photo-pick {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  width: 100%;
+  min-height: 150px;
+  margin: 0;
+  padding: var(--space-3);
+  border: 1.5px dashed var(--color-line-strong);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-tint);
+  color: var(--color-mint-deep);
+  font: 600 15px / 20px var(--type-body-family);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.photo-pick:active { opacity: 0.6; }
+.photo-pick[aria-busy='true'] { color: var(--color-ink-3); cursor: progress; }
+.photo-pick__icon { width: 44px; height: 44px; display: inline-flex; align-items: center; justify-content: center; border: 1px solid var(--color-mint-line); border-radius: var(--radius-lg); background: var(--color-mint-bg); }
+.photo-pick--tile { width: 104px; min-height: 104px; height: 104px; padding: var(--space-1); gap: var(--space-1); font-size: 12px; line-height: 15px; text-align: center; }
+.photo-pick--tile .photo-pick__icon { width: 30px; height: 30px; }
+.photo-pick--sm { width: 52px; min-height: 52px; height: 52px; padding: 0; border-radius: var(--radius-md); }
+.photo-input { display: none; }
+.photo-preview { position: relative; overflow: hidden; border: 1px solid var(--color-line); border-radius: var(--radius-lg); background: var(--color-surface-tint); }
+.photo-preview img, .photo-preview__blank { display: block; width: 100%; height: 200px; object-fit: cover; }
+.photo-preview__change { position: absolute; right: var(--space-2); bottom: var(--space-2); height: 34px; }
+/* 44px hit area around the 34px Change button. */
+.photo-preview__change::after { content: ''; position: absolute; inset: -5px; }
+
+/* ---------- PhotoViewer: full screen, light, swipe between photos ---------- */
+.viewer { position: absolute; inset: 0; z-index: 25; display: flex; flex-direction: column; background: var(--color-ground); animation: viewer-in 180ms cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+@keyframes viewer-in { from { opacity: 0; } to { opacity: 1; } }
+.viewer__bar { flex: none; display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); padding: calc(var(--space-2) + env(safe-area-inset-top)) var(--space-2) var(--space-2) var(--space-4); border-bottom: 1px solid var(--color-line); background: var(--color-surface-tint); }
+.viewer__pos { margin: 0; min-width: 0; overflow-wrap: anywhere; color: var(--color-ink-2); font: var(--type-caption-weight) var(--type-caption-size) / var(--type-caption-line) var(--type-caption-family); letter-spacing: var(--type-caption-tracking); text-transform: uppercase; }
+.viewer__stage { position: relative; flex: 1; min-height: 0; display: flex; align-items: center; overflow: hidden; touch-action: pan-y; }
+.viewer__track { display: flex; width: 100%; height: 100%; transition: transform 220ms cubic-bezier(0.2, 0.7, 0.2, 1); }
+.viewer__track--drag { transition: none; }
+.viewer__slide { flex: none; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; padding: var(--space-3); }
+.viewer__slide img { max-width: 100%; max-height: 100%; border-radius: var(--radius-md); box-shadow: var(--shadow-card); user-select: none; -webkit-user-select: none; -webkit-user-drag: none; -webkit-touch-callout: none; }
+.viewer .viewer__step { position: absolute; top: 50%; margin-top: -18px; z-index: 2; }
+.viewer__step--prev { left: var(--space-2); }
+.viewer__step--next { right: var(--space-2); }
+.viewer__info { flex: none; padding: var(--space-3) var(--space-4) calc(var(--space-4) + env(safe-area-inset-bottom)); border-top: 1px solid var(--color-line); background: var(--color-surface); }
+.viewer__date { margin: 0; font: var(--type-heading-weight) var(--type-heading-size) / var(--type-heading-line) var(--type-heading-family); letter-spacing: var(--type-heading-tracking); }
+.viewer__caption { margin: 4px 0 0; color: var(--color-ink-2); white-space: pre-line; overflow-wrap: anywhere; }
+.viewer__links { display: flex; justify-content: space-between; margin: var(--space-1) calc(-1 * var(--space-3)) calc(-1 * var(--space-2)); }
+.viewer__links .link-btn { min-height: 44px; padding: 0 var(--space-3); }
+
+/* Compare: first and latest, one above the other, same size. */
+.compare__body { flex: 1; min-height: 0; overflow-y: auto; padding: var(--space-3) var(--space-3) calc(var(--space-3) + env(safe-area-inset-bottom)); display: grid; gap: var(--space-3); align-content: start; }
+.compare__item { margin: 0; }
+.compare__img { display: block; width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: var(--radius-md); border: 1px solid var(--color-line); background: var(--color-surface-tint); }
+.compare__cap { display: flex; justify-content: space-between; align-items: center; gap: var(--space-2); margin-top: 6px; }
+.compare__which { color: var(--color-mint-deep); font: var(--type-caption-weight) var(--type-caption-size) / var(--type-caption-line) var(--type-caption-family); letter-spacing: var(--type-caption-tracking); text-transform: uppercase; }
+.compare__date { color: var(--color-ink-2); font: 600 13px / 18px var(--type-body-family); }
+.compare__steps { display: flex; gap: var(--space-2); }
+
+@media (prefers-reduced-motion: reduce) {
+  .viewer { animation: none; }
+  .viewer__track { transition: none; }
+}
+
+/* + Add sheet: the Photo option's icon in the photo badge colours. */
+.add-opt__icon--photo { border-color: var(--color-badge-photo-line); background: var(--color-badge-photo-top); color: var(--color-badge-photo-ink); }
+/* Photos under a symptom row (Day view). */
+.photo-row--sym { margin: 0 0 var(--space-2); }

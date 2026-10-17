@@ -9,6 +9,9 @@ import { useDraftIds } from './useDraftIds';
 import { useLog, type EventKind } from './LogProvider';
 import { SYMPTOMS, isIntensity, propsFor, symptomKey, symptomTitle } from './symptoms';
 import { ConditionPicker } from '../tracked/ConditionPicker';
+import { nextPosition, photosOf } from '../photos/model';
+import { LocalThumb, PhotoPick, PhotoThumb } from '../photos/PhotoParts';
+import type { PreparedPhoto } from '../photos/resize';
 
 type OtherType = 'frontline' | 'deworming' | 'anal_glands' | 'nails' | 'other';
 const OTHER_TYPES: readonly { type: OtherType; label: MessageKey }[] = [
@@ -24,7 +27,7 @@ const ALSO: readonly { value: AlsoDone; label: MessageKey }[] = [
 ];
 const ADD_TITLE: Record<EventKind, MessageKey> = { symptom: 'symptom.139', vet: 'visit.146', note: 'note.153', other: 'addOther' };
 
-/** Which sheet edits an event of this type. Photos are not edited here (attachments come later). */
+/** Which sheet edits an event of this type. Photo events have their own sheet (src/photos/PhotoSheet). */
 export const eventKindOf = (type: EventType): EventKind | null =>
   type === 'symptom' || type === 'vet' || type === 'note' ? type : type === 'photo' ? null : 'other';
 
@@ -45,6 +48,9 @@ interface Form {
   conditionIds: string[];
   /** Conditions named with "+ New" here; created on Save (only those still picked). */
   pending: Condition[];
+  /** Photos picked here, saved with the event (symptom, vet visit, note). */
+  newPhotos: PreparedPhoto[];
+  photoErr: boolean;
   err: boolean;
 }
 
@@ -62,6 +68,8 @@ function initial(kind: EventKind, date: PlainDate, event: HealthEvent | undefine
     detail: event?.detail ?? '',
     conditionIds: event ? [...event.conditionIds] : linkTo ? [linkTo] : [],
     pending: [],
+    newPhotos: [],
+    photoErr: false,
     err: false,
   };
 }
@@ -89,7 +97,10 @@ export function EventSheet({
   // A new event keeps its id across Save attempts, so a retry never adds a copy (JCB-71).
   const draft = useDraftIds();
   const [form, setForm] = useState<Form>(() => initial(kind, date, event, ctxOpen, linkTo));
+  const [preparing, setPreparing] = useState(false);
   if (!records) return null;
+  const photos = event ? photosOf(event.id, records.photos) : [];
+  const withPhotos = kind !== 'other';
   const set = (patch: Partial<Form>) => setForm((x) => ({ ...x, ...patch }));
 
   const clinics = [...new Set(records.events.filter((e) => e.type === 'vet' && e.title).map((e) => e.title))];
@@ -119,13 +130,20 @@ export function EventSheet({
     // New conditions named here start on the event's date; only those still picked are created.
     const created = form.pending.filter((c) => form.conditionIds.includes(c.id)).map((c) => ({ ...c, startedOn: form.date }));
     const next: HealthEvent = { id: event?.id ?? draft.id('event'), dogId: records.dogId, date: form.date, conditionIds: form.conditionIds, ...fields };
-    if (await run(() => act.saveEvent(repository, next, event ?? null, created), t('toastSaved'))) {
+    // New photos keep their ids across Save attempts too: a retry uploads to the same paths.
+    const photoId = draft.seq('photo');
+    const start = nextPosition(photos);
+    const add = form.newPhotos.map((p, i) => ({
+      photo: { id: photoId(), dogId: records.dogId, eventId: next.id, width: p.width, height: p.height, takenAt: p.takenAt, caption: '', position: start + i },
+      files: { full: p.full, thumb: p.thumb },
+    }));
+    if (await run(() => act.saveEvent(repository, next, event ?? null, created, { add }), t('toastSaved'))) {
       close();
       if (!linkTo) onShowDay(next.date);
     }
   };
   const remove = async () => {
-    if (event && (await run(() => act.deleteEvent(repository, event), t('toastEventDeleted')))) close();
+    if (event && (await run(() => act.deleteEvent(repository, event, photos), t('toastEventDeleted')))) close();
   };
 
   const optional = t('optional');
@@ -274,7 +292,7 @@ export function EventSheet({
               {t('delete')}
             </button>
           )}
-          <button type="button" className="btn btn--primary btn--lg" disabled={busy || !canSave} onClick={guard(save)}>
+          <button type="button" className="btn btn--primary btn--lg" disabled={busy || preparing || !canSave} onClick={guard(save)}>
             {t('save')}
           </button>
         </>
@@ -288,6 +306,25 @@ export function EventSheet({
         onDate={(d) => set({ date: d })}
       />
       {body}
+      {withPhotos && (
+        <Field label={t('chips.109')} hint={optional} error={form.photoErr ? t('photoUnreadable') : undefined}>
+          <div className="photo-row photo-row--field">
+            {photos.map((p) => (
+              <PhotoThumb key={p.id} photo={p} size="sm" />
+            ))}
+            {form.newPhotos.map((p, i) => (
+              <LocalThumb key={i} file={p.thumb} />
+            ))}
+            <PhotoPick
+              variant="sm"
+              label={t('addPhoto')}
+              onPicked={(p) => setForm((x) => ({ ...x, newPhotos: [...x.newPhotos, p], photoErr: false }))}
+              onError={() => set({ photoErr: true })}
+              onBusy={setPreparing}
+            />
+          </div>
+        </Field>
+      )}
       <ConditionPicker
         conditions={records.conditions}
         pending={form.pending}
