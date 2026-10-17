@@ -76,7 +76,7 @@ interface LogApi {
   close: () => void;
   /**
    * Run a write, then reload and show `message` with Undo (when the write returns one).
-   * On failure: reload and show the generic error. Resolves true on success.
+   * On failure or time-out: reload and show "Couldn't save". Resolves true on success, false otherwise.
    */
   run: (work: () => Promise<Undo | null>, message: string | (() => string | null)) => Promise<boolean>;
   /** Reload everything (after a reset, say). */
@@ -194,8 +194,10 @@ export function LogProvider({ repository, children }: { repository: Repository; 
         if (text !== null) show(text, undo ?? undefined);
         return true;
       } catch {
+        // Failed, or no answer in time (the repository's time limit, JCB-71): the sheet stays open
+        // with what was typed and Save works again; a retry writes the same ids, so nothing doubles.
         reload();
-        show(t('auth.errUnknown'));
+        show(t('errSave'));
         return false;
       }
     },

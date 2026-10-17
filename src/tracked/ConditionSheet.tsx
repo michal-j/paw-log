@@ -5,6 +5,7 @@ import { useI18n } from '../i18n';
 import * as act from '../log/actions';
 import { useLog } from '../log/LogProvider';
 import { useBusy } from '../log/useBusy';
+import { useDraftIds } from '../log/useDraftIds';
 import { DESCRIPTION_MAX, NAME_MAX, linkedEvents, normaliseDates } from './model';
 
 /**
@@ -15,6 +16,8 @@ export function ConditionSheet({ condition, onCreated }: { condition?: Condition
   const { t } = useI18n();
   const { records, repository, run, close } = useLog();
   const { busy, guard } = useBusy();
+  // A new condition keeps its id across Save attempts, so a retry never adds a copy (JCB-71).
+  const draft = useDraftIds();
   const today = records?.today ?? repository.today();
   const [name, setName] = useState(condition?.name ?? '');
   const [startedOn, setStartedOn] = useState(condition?.startedOn ?? today);
@@ -26,7 +29,7 @@ export function ConditionSheet({ condition, onCreated }: { condition?: Condition
   const save = async () => {
     if (!name.trim()) return setErr(true);
     const next = normaliseDates({
-      id: condition?.id ?? act.newId(),
+      id: condition?.id ?? draft.id('condition'),
       dogId: records.dogId,
       name: name.trim(),
       startedOn,
