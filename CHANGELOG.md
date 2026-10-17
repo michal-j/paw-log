@@ -44,6 +44,7 @@ Format: [Keep a Changelog](https://keepachangelog.com). "Unreleased" means not y
 - Draft EN/PL copy for sign-in in `docs/copy/copy-proposal-auth.csv` (pending CEO review), merged into the generated catalogues.
 
 ### Changed
+- Home-screen icon: the CEO-approved option A (mint gradient, white paw) replaces the flat mint placeholder (JCB-63): `public/apple-touch-icon.png` (180, opaque), `icon-192.png`, `icon-512.png`, `icon.svg`, and a separate `icon-512-maskable.png` for the manifest's `maskable` entry (192 and 512 are `any`). Icon URLs carry `?v=2` so phones fetch the new files; the service worker precache ignores `v` when matching. Sources and generator in `design/proposals/app-icon/`.
 - Fill: the prominent banner shows only on a day with nothing logged; otherwise a quiet "Fill with your usual day: N" sits under the day parts.
 - The Timeline reads the shared records instead of loading on its own.
 - Demo data (fictional) moved to structured amounts: items carry a default unit and flavours ("Farm Fresh" with flavour turkey instead of "Farm Fresh, turkey"), Bellavet a 1 bar = 0,1 ml conversion; `data/demo/schedule.json` is the usual day; entries link to their slot; symptom details became properties. Demo storage key is now `pawlog.demo.v2` (older demo edits are dropped).
