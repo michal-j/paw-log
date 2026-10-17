@@ -8,6 +8,7 @@ import * as act from './actions';
 import { defaultUnitFor, groupOf, type KindGroup } from './amount';
 import { AmountFields, ColourPicker, FlavourPicker, ItemPicker, OTHER, amountValue, type AmountValue } from './fields';
 import { nextColour, withFlavour } from './items';
+import { ItemSheet } from './ItemSheet';
 import { useFormat } from './format';
 import { useBusy } from './useBusy';
 import { useLog } from './LogProvider';
@@ -20,7 +21,7 @@ interface Form {
   itemId: string | null;
   otherGroup: KindGroup;
   otherName: string;
-  /** The item's colour: a new item's, or a change to the edited item's. */
+  /** A new item's colour (an existing item's is changed under Edit item). */
   colour: string;
   flavour: string;
   amount: AmountValue;
@@ -35,7 +36,8 @@ const endFor = (from: PlainDate, length: Length, to: PlainDate | null): PlainDat
 
 /**
  * Usual day: add an item to a part (after choosing Food or Medication, `group`: only that kind is
- * listed), or change it from a date (amount, course length, colour), or remove it from a date on.
+ * listed), or change it from a date (amount, course length), or remove it from a date on. Edit item
+ * (name, colour, default unit, flavours) opens the item editor.
  */
 export function SlotSheet({ date, part, slot, group: onlyGroup }: { date: PlainDate; part: DayPart; slot?: ScheduleSlot; group?: KindGroup }) {
   const { t } = useI18n();
@@ -62,7 +64,10 @@ export function SlotSheet({ date, part, slot, group: onlyGroup }: { date: PlainD
   });
   // The start the form opened with: moving it is a change of its own (JCB-43 QA).
   const [openedFrom] = useState(form.from);
+  // "Edit item": the item editor shows in place of this sheet, which keeps its form.
+  const [editing, setEditing] = useState<Item | null>(null);
   if (!records) return null;
+  if (editing) return <ItemSheet item={editing} onDone={() => setEditing(null)} />;
   const set = (patch: Partial<Form>) => setForm((x) => ({ ...x, ...patch }));
 
   const item = records.items.find((i) => i.id === form.itemId) ?? null;
@@ -127,9 +132,8 @@ export function SlotSheet({ date, part, slot, group: onlyGroup }: { date: PlainD
             remove: [],
           }
         : changeFrom(records.slots, slot ?? null, { ...values, course }, form.from, end, act.newId, records.dogId);
-    // The edited item's colour, and a new flavour joining a food's list, are saved on the item.
-    const recoloured = item && slot && form.colour !== item.colour ? { ...item, colour: form.colour } : null;
-    const itemChange = group === 'food' ? withFlavour(recoloured ?? item, values.flavour) ?? recoloured : recoloured;
+    // A new flavour joins a food's list (the colour of an existing item is changed under Edit item).
+    const itemChange = group === 'food' ? withFlavour(item, values.flavour) : null;
     if (!change.save.length && !newItem && !itemChange) return close();
     if (
       await run(async () => {
@@ -177,15 +181,22 @@ export function SlotSheet({ date, part, slot, group: onlyGroup }: { date: PlainD
       }
     >
       {slot && item ? (
-        <div className="dateline dateline--item">
-          <span className="dateline__item">
-            <span className="chip__mark">
-              <DoseMark colour={item.colour} size={markSize(item)} state="given" />
+        <>
+          <div className="dateline dateline--item">
+            <span className="dateline__item">
+              <span className="chip__mark">
+                <DoseMark colour={item.colour} size={markSize(item)} state="given" />
+              </span>
+              {item.name}
             </span>
-            {item.name}
-          </span>
-          <span>{partLine}</span>
-        </div>
+            <button type="button" className="link-btn" onClick={() => setEditing(item)}>
+              {t('editItem')}
+            </button>
+          </div>
+          <div className="dateline">
+            <span>{partLine}</span>
+          </div>
+        </>
       ) : (
         <>
           <div className="dateline">
@@ -202,13 +213,14 @@ export function SlotSheet({ date, part, slot, group: onlyGroup }: { date: PlainD
               onOtherName={(s) => set({ otherName: s, err: null })}
               otherPlaceholder={t(g === 'food' ? 'otherFoodPh' : 'otherMedPh')}
               error={form.err === 'item' && g === (onlyGroup ?? 'med') ? t(g === 'food' ? 'pickFood' : 'pickMed') : undefined}
+              onEdit={setEditing}
             />
           ))}
         </>
       )}
       {form.itemId && (
         <>
-          {(form.itemId === OTHER || slot) && (
+          {form.itemId === OTHER && (
             <ColourPicker value={form.colour} size={group === 'food' ? 'food' : 'small'} onPick={(c) => set({ colour: c })} />
           )}
           <FlavourPicker flavours={item?.flavours ?? []} value={form.flavour} canAdd={group === 'food'} onPick={(x) => set({ flavour: x })} />

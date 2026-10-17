@@ -11,8 +11,9 @@ import { createFakeSupabase, type FakeSupabase } from './harness/fakeSupabase';
 const NOW = () => new Date(2026, 9, 15, 16, 30); // Thu 15 Oct 2026, 16:30
 let fake: FakeSupabase | null = null;
 
-async function at(path: string, start = '2026-10-01') {
+async function at(path: string, start = '2026-10-01', prep?: string) {
   fake = await createFakeSupabase({ start });
+  if (prep) await fake.backend.sql(prep);
   const repository = fake.repository(NOW);
   window.history.replaceState(null, '', path);
   render(
@@ -367,3 +368,88 @@ describe('real data path', () => {
   });
 });
 
+describe('item colours and the item editor (JCB-59)', () => {
+  // Items from before JCB-43 were grey (mark-neutral); one has a colour that is not an item token.
+  const GREY = `update item set colour = case when id = '${SEED.items.treat}' then 'mint' else 'mark-neutral' end
+    where id in ('${SEED.items.cooked}', '${SEED.items.arvelin}', '${SEED.items.treat}')`;
+  const markOf = (el: Element | null) => (el?.querySelector('.dose-mark') as HTMLElement | null)?.style.getPropertyValue('--mark');
+
+  it('grey items show an unused item colour at once, the same the data migration gives them', async () => {
+    await at('/day/2026-10-15', '2026-10-01', GREY);
+    await screen.findAllByText('Cooked meal');
+    click('Add to Breakfast');
+    fireEvent.click(within(dialog()).getByText('Food'));
+    // In lane order: Cooked meal (10) → food-cooked, Arvelin (30) → food-ocean, Treat (90) → med-arvelin
+    // (Farm Fresh and Bellavet keep food-farm and med-bellavet).
+    expect(markOf(within(dialog()).getByRole('radio', { name: 'Cooked meal' }))).toBe('var(--color-food-cooked)');
+    expect(markOf(within(dialog()).getByRole('radio', { name: 'Treat' }))).toBe('var(--color-med-arvelin)');
+    expect(document.querySelector('.dose-mark[style*="mark-neutral"]')).toBeNull();
+  });
+
+  it('Edit item from the entry form changes name, colour, unit and flavours, returns to the form; Undo restores', async () => {
+    await at('/day/2026-10-15');
+    await screen.findAllByText('Cooked meal');
+    click('Add to Dinner');
+    fireEvent.click(within(dialog()).getByText('Food'));
+    fireEvent.click(within(dialog()).getByRole('radio', { name: 'Farm Fresh' }));
+    click('Edit item');
+    expect(await screen.findByRole('heading', { name: 'Edit item' })).toBeTruthy();
+    const colours = within(dialog()).getByRole('radiogroup', { name: 'Colour' });
+    expect(within(colours).getByRole('radio', { name: 'Colour 2' }).getAttribute('aria-checked')).toBe('true');
+    fireEvent.click(within(colours).getByRole('radio', { name: 'Colour 9' }));
+    fireEvent.change(within(dialog()).getByLabelText('Name'), { target: { value: 'Farm Fresh Plus' } });
+    fireEvent.click(within(dialog()).getByRole('radio', { name: 'tray' }));
+    fireEvent.click(within(dialog()).getByRole('button', { name: 'Remove salmon' }));
+    fireEvent.change(within(dialog()).getByLabelText('New flavour'), { target: { value: 'duck' } });
+    fireEvent.click(within(dialog()).getByRole('button', { name: 'Add' }));
+    click('Save');
+    expect(await screen.findByText('Item saved')).toBeTruthy();
+    // Back in the entry form, with the item still picked.
+    expect(await screen.findByRole('heading', { name: 'Add food' })).toBeTruthy();
+    await waitFor(() => expect(within(dialog()).getByRole('radio', { name: 'Farm Fresh Plus' }).getAttribute('aria-checked')).toBe('true'));
+    expect(await rows(`select name, colour, default_unit, flavours from item where id = '${SEED.items.farm}'`)).toEqual([
+      { name: 'Farm Fresh Plus', colour: 'treat', default_unit: 'tray', flavours: ['turkey', 'duck'] },
+    ]);
+    click('Undo');
+    await waitFor(async () =>
+      expect(await rows(`select name, colour, default_unit, flavours from item where id = '${SEED.items.farm}'`)).toEqual([
+        { name: 'Farm Fresh', colour: 'food-farm', default_unit: 'can', flavours: ['turkey', 'salmon'] },
+      ]),
+    );
+  });
+
+  it('a grey item can be given a colour from the Usual day (Edit item), and a name is required', async () => {
+    await at('/usual/2026-10-15', '2026-10-01', GREY);
+    await screen.findByRole('heading', { name: 'Usual day' });
+    fireEvent.click((await screen.findAllByText(/Arvelin/))[0]!);
+    expect(await screen.findByRole('heading', { name: 'Usual day item' })).toBeTruthy();
+    click('Edit item');
+    const colours = within(dialog()).getByRole('radiogroup', { name: 'Colour' });
+    expect(within(colours).getByRole('radio', { name: 'Colour 3' }).getAttribute('aria-checked')).toBe('true');
+    fireEvent.click(within(colours).getByRole('radio', { name: 'Colour 5' }));
+    fireEvent.change(within(dialog()).getByLabelText('Name'), { target: { value: '  ' } });
+    click('Save');
+    expect(await within(dialog()).findByText('Type a name')).toBeTruthy();
+    fireEvent.change(within(dialog()).getByLabelText('Name'), { target: { value: 'Arvelin' } });
+    click('Save');
+    expect(await screen.findByText('Item saved')).toBeTruthy();
+    expect(await screen.findByRole('heading', { name: 'Usual day item' })).toBeTruthy();
+    expect(await rows(`select colour from item where id = '${SEED.items.arvelin}'`)).toEqual([{ colour: 'med-bellavet' }]);
+  });
+
+  it('Other while editing an entry makes a new item with an unused colour, not grey', async () => {
+    await at('/day/2026-10-15');
+    fireEvent.click(await screen.findByRole('button', { name: 'Fill with your usual day: 4' }));
+    expect(await screen.findByText('4 logged as given')).toBeTruthy();
+    await waitFor(() => expect(screen.queryByText(/not logged/)).toBeNull());
+    fireEvent.click(await screen.findByText('Cooked meal'));
+    // The item picker's Other (the amount has one too).
+    fireEvent.click(within(dialog()).getAllByRole('radio', { name: 'Other' })[0]!);
+    fireEvent.change(within(dialog()).getByLabelText('Name of the food'), { target: { value: 'Test stew' } });
+    const colours = within(dialog()).getByRole('radiogroup', { name: 'Colour' });
+    expect(within(colours).getByRole('radio', { name: 'Colour 3' }).getAttribute('aria-checked')).toBe('true');
+    click('Save');
+    expect(await screen.findByText('Saved')).toBeTruthy();
+    expect(await rows(`select colour from item where name = 'Test stew'`)).toEqual([{ colour: 'food-ocean' }]);
+  });
+});

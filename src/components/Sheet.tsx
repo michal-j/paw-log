@@ -65,12 +65,15 @@ export function Field({
   error,
   children,
   htmlFor,
+  action,
 }: {
   label: string;
   hint?: string;
   error?: string;
   children: ReactNode;
   htmlFor?: string;
+  /** A small link button at the right of the label row ("Edit item"). */
+  action?: ReactNode;
 }) {
   const id = useId();
   return (
@@ -84,6 +87,7 @@ export function Field({
           <span id={id}>{label}</span>
         )}
         {hint && <span className="field__hint">{hint}</span>}
+        {action}
       </div>
       {children}
       {error && (

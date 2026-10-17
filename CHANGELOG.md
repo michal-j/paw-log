@@ -5,6 +5,7 @@ Format: [Keep a Changelog](https://keepachangelog.com). "Unreleased" means not y
 ## Unreleased
 
 ### Fixed
+- Food and medication items still grey with no way to change the colour (JCB-59): JCB-43 only coloured items when they were created, so older items (`mark-neutral`) stayed grey, and the colour could only be changed inside a Usual day item. Every item without an item colour now shows the first unused one (lane order), and the new data migration `20261018120000_item_colours.sql` stores the same colours (per dog, idempotent). Editing an entry and picking Other no longer creates a grey item.
 - Real-data blockers from the first use on the iPhone PWA and desktop (JCB-43), reproduced on the real data path (SupabaseRepository and supabase-js against a PostgREST-like fake on Postgres), not only `/demo`:
   - Editing an entry (or logging a planned row) as another item or part kept the row but dropped its usual-day slot, so the slot came back as "not logged" and looked like a new entry: the entry now keeps the slot it filled or was opened from (same date), unless its new item has its own open slot.
   - Deleting a usual-day item in the Day view put it back as "not logged" and in Fill: it now stays as "Removed for this day" (an `entry` row with state `removed`, so Fill and the other phone skip it); tap it to log it after all; Undo restores the entry.
@@ -17,6 +18,7 @@ Format: [Keep a Changelog](https://keepachangelog.com). "Unreleased" means not y
   - QA round: changing only a usual-day item's "Starts on" now saves (and offers the past days); the Fill banner or quiet action is chosen when a day opens and kept while it is open (a removed item counts as worked on), so Given or a delete never makes it jump; Undo closes the past-days question; one-day wording; empty Timeline days read "nothing logged" to screen readers; the dev harness keeps its screen on reload.
 
 ### Added
+- Edit item (JCB-59): name, colour, default unit and flavours, with Undo; from "Edit item" next to the picked item in the entry form and on a Usual day item. The Usual day item sheet's own colour swatches moved into it. Draft copy `docs/copy/copy-proposal-item-colours.csv`; tests `tests/migrations.test.ts` plus item and real-path cases.
 - Log starts on (Menu): every day from that date to today is on the Timeline, empty days too, so past days can be opened and filled. Default: the earliest record or usual-day start, else a year back. Long logs render only the rows near the screen. New table `dog_settings` (JCB-43).
 - A usual-day item added or changed from a past date asks once to log it as given on the past days where it is still open ("Log … as given on N past days (… – yesterday)? Days already logged for it stay as they are."); Yes fills them and reports how many were already logged; Undo takes them back.
 - New food or medication gets the first unused item colour token (cycling when all are used); the colour can be changed with swatches of the item colour tokens, also on an existing usual-day item. Food: Add flavour adds a new flavour to the item.

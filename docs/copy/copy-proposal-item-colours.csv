@@ -1,0 +1,8 @@
+#,Where (code name),English,Polish,EN chars,PL chars,Fit note,Your notes
+C1,editItem,Edit item,Edytuj pozycję,9,14,"DRAFT pending CEO review; sheet title, and the link next to the picked item in the entry form and on a Usual day item","JCB-59: item editor (name, colour, default unit, flavours)"
+C2,itemName,Name,Nazwa,4,5,DRAFT pending CEO review; field label in the item editor,JCB-59
+C3,itemNameErr,Type a name,Wpisz nazwę,11,11,DRAFT pending CEO review; error under an empty name,JCB-59
+C4,defaultUnit,Default unit,Domyślna jednostka,12,18,DRAFT pending CEO review; field label; a new entry or usual-day row starts with this unit,JCB-59
+C5,flavours,Flavours,Smaki,8,5,DRAFT pending CEO review; field label in the item editor,JCB-59
+C6,removeFlavour,Remove {x},Usuń: {x},10,9,"DRAFT pending CEO review; screen-reader name of a flavour chip (tap removes it); {x} is the flavour",JCB-59
+C7,toastItem,Item saved,Zapisano pozycję,10,16,DRAFT pending CEO review; toast with Undo,JCB-59

@@ -7,6 +7,7 @@ import * as act from './actions';
 import { defaultUnitFor, groupOf, sameAmount, type KindGroup } from './amount';
 import { AmountFields, ColourPicker, DateLine, FlavourPicker, ItemPicker, OTHER, StatePicker, amountValue, type AmountValue } from './fields';
 import { lastUsed, nextColour, withFlavour } from './items';
+import { ItemSheet } from './ItemSheet';
 import { useFormat } from './format';
 import { useBusy } from './useBusy';
 import { useLog, type Records } from './LogProvider';
@@ -106,7 +107,8 @@ export function EntrySheet({
         part: entry.dayPart,
         itemId: entry.itemId,
         otherName: '',
-        colour: 'mark-neutral',
+        // Picking Other while editing makes a new item: it gets an unused colour too (JCB-59).
+        colour: records ? nextColour(records.items) : 'mark-neutral',
         flavour: entry.flavour,
         amount: amountValue(entry.amount, unit),
         state: entry.state,
@@ -138,11 +140,14 @@ export function EntrySheet({
     return { ...base, itemId: last.itemId, flavour: last.flavour, amount: amountValue(last.amount, unit) };
   });
 
+  // The item being edited ("Edit item"): its sheet shows in place of this one, which keeps its form.
+  const [editing, setEditing] = useState<Item | null>(null);
   const items = useMemo(
     () => (records ? pickerItems(records, group, form.date, form.part) : []),
     [records, group, form.date, form.part],
   );
   if (!records) return null;
+  if (editing) return <ItemSheet item={editing} onDone={() => setEditing(null)} />;
 
   const item = records.items.find((i) => i.id === form.itemId) ?? null;
   const selfId = entry?.id ?? replaces?.id;
@@ -269,6 +274,7 @@ export function EntrySheet({
         onOtherName={(s) => set({ otherName: s, err: null })}
         otherPlaceholder={t(group === 'food' ? 'otherFoodPh' : 'otherMedPh')}
         error={form.err === 'item' ? t(group === 'food' ? 'pickFood' : 'pickMed') : undefined}
+        onEdit={setEditing}
       />
       {form.itemId && (
         <>

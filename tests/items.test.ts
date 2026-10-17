@@ -2,7 +2,8 @@
 import { describe, expect, it } from 'vitest';
 import tokens from '../docs/design-system/tokens.json';
 import type { Entry, Item } from '../src/data';
-import { ITEM_COLOURS, lastUsed, nextColour, withFlavour } from '../src/log/items';
+import { ITEM_COLOURS, isItemColour, lastUsed, nextColour, withFlavour, withItemColours } from '../src/log/items';
+import { editedItem } from '../src/log/ItemSheet';
 import type { Records } from '../src/log/LogProvider';
 
 const item = (id: string, kind: Item['kind'], colour: string, flavours: string[] = []): Item => ({
@@ -50,6 +51,49 @@ describe('item colours', () => {
     const all = ITEM_COLOURS.map((colour) => ({ colour }));
     expect(nextColour(all)).toBe(ITEM_COLOURS[0]);
     expect(nextColour([...all, { colour: ITEM_COLOURS[0]! }])).toBe(ITEM_COLOURS[1]);
+  });
+});
+
+describe('items without an item colour (JCB-59)', () => {
+  const at = (id: string, colour: string, position: number) => ({ ...item(id, 'food', colour), position });
+
+  it('get the first unused colour in lane order (position, then list order); others keep theirs', () => {
+    const items = [at('a', 'food-cooked', 10), at('b', 'mark-neutral', 30), at('c', 'mark-neutral', 5), at('d', 'mint', 30), at('e', 'food-farm', 40)];
+    expect(withItemColours(items).map((i) => [i.id, i.colour])).toEqual([
+      ['a', 'food-cooked'],
+      ['b', 'med-arvelin'],
+      ['c', 'food-ocean'],
+      ['d', 'med-bellavet'],
+      ['e', 'food-farm'],
+    ]);
+  });
+
+  it('change nothing when every item has an item colour (same array)', () => {
+    const items = [at('a', 'food-cooked', 10), at('b', 'treat', 20)];
+    expect(withItemColours(items)).toBe(items);
+  });
+
+  it('only food-*, med-* and treat count as item colours', () => {
+    expect(ITEM_COLOURS.every(isItemColour)).toBe(true);
+    for (const c of ['mark-neutral', 'mint', 'ink', 'badge-vet-top', '']) expect(isItemColour(c)).toBe(false);
+  });
+});
+
+describe('item editor', () => {
+  const farm = { ...item('farm', 'food', 'food-farm', ['turkey', 'salmon']), defaultUnit: 'can' as const };
+
+  it('saves name, colour, default unit and flavours (trimmed, no blanks or doubles)', () => {
+    expect(editedItem(farm, { name: ' Farm Fresh Plus ', colour: 'treat', defaultUnit: 'tray', flavours: ['turkey', ' duck ', '', 'turkey'] })).toEqual({
+      ...farm,
+      name: 'Farm Fresh Plus',
+      colour: 'treat',
+      defaultUnit: 'tray',
+      flavours: ['turkey', 'duck'],
+    });
+  });
+
+  it('returns null when nothing changed', () => {
+    expect(editedItem(farm, { name: 'farm', colour: 'food-farm', defaultUnit: 'can', flavours: ['turkey', 'salmon'] })).toBeNull();
   });
 });
 

@@ -38,6 +38,7 @@ To remove someone's access: Authentication > Users > the user > Delete user (the
 SQL Editor > New query. Open each file on GitHub (button "Copy raw file"), paste it and run it, **in this order**, one at a time:
 1. [20261016120000_core_schema.sql](https://github.com/michal-j/paw-log/blob/main/supabase/migrations/20261016120000_core_schema.sql) (tables)
 2. [20261016120100_row_level_security.sql](https://github.com/michal-j/paw-log/blob/main/supabase/migrations/20261016120100_row_level_security.sql) (who may see and change what)
+3. Every later file in [supabase/migrations](https://github.com/michal-j/paw-log/tree/main/supabase/migrations), in file-name order. `20261018120000_item_colours.sql` changes data only: it gives every item that is still grey (`mark-neutral`) or has an unknown colour an unused item colour; running it again changes nothing.
 
 Each should end with "Success. No rows returned". If one fails, stop and send the error text (it contains no personal data) to the PM.
 

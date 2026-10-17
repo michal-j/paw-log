@@ -86,6 +86,7 @@ export function ItemPicker({
   onOtherName,
   otherPlaceholder,
   error,
+  onEdit,
 }: {
   label: string;
   items: Item[];
@@ -95,10 +96,18 @@ export function ItemPicker({
   onOtherName: (s: string) => void;
   otherPlaceholder: string;
   error?: string;
+  /** Offers "Edit item" for the picked item (JCB-59). */
+  onEdit?: (item: Item) => void;
 }) {
   const { t } = useI18n();
+  const picked = onEdit ? items.find((i) => i.id === value) : undefined;
+  const action = picked && onEdit && (
+    <button type="button" className="link-btn" onClick={() => onEdit(picked)}>
+      {t('editItem')}
+    </button>
+  );
   return (
-    <Field label={label} error={error}>
+    <Field label={label} error={error} action={action}>
       <Chips label={label}>
         {items.map((i) => (
           <Chip key={i.id} on={value === i.id} onClick={() => onPick(i.id)}>

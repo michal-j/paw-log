@@ -4,6 +4,7 @@ import { useI18n } from '../i18n';
 import { logStartOf } from '../timeline/model';
 import type { KindGroup } from './amount';
 import type { Undo } from './actions';
+import { withItemColours } from './items';
 
 /** Everything the Day view, the Usual day and the sheets read. Reloaded after every write. */
 export interface Records {
@@ -92,7 +93,9 @@ async function loadRecords(repository: Repository, version: number): Promise<Rec
     repository.getSettings(),
   ]);
   const logStart = logStartOf({ today, setting: settings.logStart, entries, events, slotStarts: slots.map((x) => x.activeFrom) });
-  return { dogId: dog.id, items, slots, entries, removed, events, times, settings, logStart, today, version };
+  // Items still grey (no item colour yet) show the colour the data migration gives them (JCB-59);
+  // the next save of the item stores it.
+  return { dogId: dog.id, items: withItemColours(items), slots, entries, removed, events, times, settings, logStart, today, version };
 }
 
 export function LogProvider({ repository, children }: { repository: Repository; children: ReactNode }) {

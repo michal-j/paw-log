@@ -16,6 +16,11 @@ export const PlusIcon = ({ size = 13 }: { size?: number }) => (
     <path d="M12 5v14M5 12h14" />
   </svg>
 );
+export const CrossIcon = ({ size = 12 }: { size?: number }) => (
+  <svg {...stroke(size, 2.6)}>
+    <path d="M6 6l12 12M18 6L6 18" />
+  </svg>
+);
 export const CheckIcon = ({ size = 14 }: { size?: number }) => (
   <svg {...stroke(size, 2.8)}>
     <path d="M5 12.5l4.5 4.5L19 7.5" />
