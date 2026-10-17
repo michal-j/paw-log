@@ -11,6 +11,7 @@ import { nextColourFor, withFlavour } from './items';
 import { ItemSheet } from './ItemSheet';
 import { useFormat } from './format';
 import { useBusy } from './useBusy';
+import { useDraftIds } from './useDraftIds';
 import { useLog } from './LogProvider';
 import { backfillDays, changeFrom, removeFrom, sameValues, slotsAfter } from './plan';
 
@@ -44,6 +45,8 @@ export function SlotSheet({ date, part, slot, group: onlyGroup }: { date: PlainD
   const f = useFormat();
   const { records, repository, run, close, open } = useLog();
   const { busy, guard } = useBusy();
+  // New rows keep their ids across Save attempts, so a retry never adds copies (JCB-71).
+  const draft = useDraftIds();
   const [form, setForm] = useState<Form>(() => {
     const item = slot && records?.items.find((i) => i.id === slot.itemId);
     const group = item ? groupOf(item.kind) : (onlyGroup ?? 'med');
@@ -88,7 +91,7 @@ export function SlotSheet({ date, part, slot, group: onlyGroup }: { date: PlainD
     if (form.amount.amount === null) return set({ err: 'amount' });
     const newItem: Item | null = isOther
       ? {
-          id: act.newId(),
+          id: draft.id('item'),
           dogId: records.dogId,
           kind: form.otherGroup === 'food' ? 'food' : 'medication',
           name: form.otherName.trim(),
@@ -133,7 +136,7 @@ export function SlotSheet({ date, part, slot, group: onlyGroup }: { date: PlainD
                 : [{ ...slot, activeTo: end && end < slot.activeFrom ? slot.activeFrom : end, course: course && end !== null }],
             remove: [],
           }
-        : changeFrom(records.slots, slot ?? null, { ...values, course }, form.from, end, act.newId, records.dogId);
+        : changeFrom(records.slots, slot ?? null, { ...values, course }, form.from, end, draft.seq('slot'), records.dogId);
     // A new flavour joins a food's list (the colour of an existing item is changed under Edit item).
     const itemChange = group === 'food' ? withFlavour(item, values.flavour) : null;
     if (!change.save.length && !newItem && !itemChange) return close();

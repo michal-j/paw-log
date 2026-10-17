@@ -4,6 +4,7 @@ import { Field, Sheet } from '../components/Sheet';
 import { useI18n } from '../i18n';
 import * as act from '../log/actions';
 import { useBusy } from '../log/useBusy';
+import { useDraftIds } from '../log/useDraftIds';
 import { useLog } from '../log/LogProvider';
 
 /**
@@ -15,6 +16,8 @@ export function PinnedSheet({ note }: { note?: PinnedNote }) {
   const { t } = useI18n();
   const { records, repository, run, close } = useLog();
   const { busy, guard } = useBusy();
+  // A new note keeps its id across Save attempts, so a retry never adds a copy (JCB-71).
+  const draft = useDraftIds();
   const [title, setTitle] = useState(note?.title ?? '');
   const [body, setBody] = useState(note?.body ?? '');
   const [err, setErr] = useState(false);
@@ -27,7 +30,7 @@ export function PinnedSheet({ note }: { note?: PinnedNote }) {
     // A new note goes on top. An edit keeps the position the note has now (it may have been moved since the sheet opened).
     const mine = records.pinned.find((n) => n.id === note?.id);
     const position = mine?.position ?? note?.position ?? (records.pinned.length ? Math.min(...records.pinned.map((n) => n.position)) - 1 : 0);
-    const next: PinnedNote = { id: note?.id ?? act.newId(), dogId: records.dogId, position, ...fields };
+    const next: PinnedNote = { id: note?.id ?? draft.id('note'), dogId: records.dogId, position, ...fields };
     if (await run(() => act.savePinnedNote(repository, next, note ?? null), t('toastSaved'))) close();
   };
   const remove = async () => {

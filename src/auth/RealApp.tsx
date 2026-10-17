@@ -1,4 +1,4 @@
-import { SupabaseRepository } from '../data';
+import { createRepository } from '../data';
 import { AuthGate } from './AuthGate';
 import { ConfigError } from './ConfigError';
 import { readSupabaseConfig, type SupabaseConfig } from './config';
@@ -9,7 +9,7 @@ import { createSupabaseClient } from './supabaseClient';
 // supabase-js and the demo makes no network calls. One client per page load.
 function connect(config: SupabaseConfig) {
   const client = createSupabaseClient(config);
-  return { auth: createSupabaseAuth(client), newRepository: () => new SupabaseRepository(client) };
+  return { auth: createSupabaseAuth(client), newRepository: () => createRepository(false, client) };
 }
 
 const config = readSupabaseConfig();

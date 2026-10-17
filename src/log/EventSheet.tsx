@@ -5,6 +5,7 @@ import { useI18n, type MessageKey } from '../i18n';
 import * as act from './actions';
 import { DateLine, OTHER } from './fields';
 import { useBusy } from './useBusy';
+import { useDraftIds } from './useDraftIds';
 import { useLog, type EventKind } from './LogProvider';
 import { SYMPTOMS, isIntensity, propsFor, symptomKey, symptomTitle } from './symptoms';
 
@@ -75,6 +76,8 @@ export function EventSheet({
   const { t } = useI18n();
   const { records, repository, run, close } = useLog();
   const { busy, guard } = useBusy();
+  // A new event keeps its id across Save attempts, so a retry never adds a copy (JCB-71).
+  const draft = useDraftIds();
   const [form, setForm] = useState<Form>(() => initial(kind, date, event, ctxOpen));
   if (!records) return null;
   const set = (patch: Partial<Form>) => setForm((x) => ({ ...x, ...patch }));
@@ -103,7 +106,7 @@ export function EventSheet({
   const save = async () => {
     const fields = build();
     if (!fields) return set({ err: true });
-    const next: HealthEvent = { id: event?.id ?? act.newId(), dogId: records.dogId, date: form.date, issueId: event?.issueId ?? null, ...fields };
+    const next: HealthEvent = { id: event?.id ?? draft.id('event'), dogId: records.dogId, date: form.date, issueId: event?.issueId ?? null, ...fields };
     if (await run(() => act.saveEvent(repository, next, event ?? null), t('toastSaved'))) {
       close();
       onShowDay(next.date);

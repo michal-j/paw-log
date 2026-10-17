@@ -12,12 +12,11 @@ import '../../src/styles/tokens.css';
 import '../../src/styles/global.css';
 import { AuthGate } from '../../src/auth/AuthGate';
 import type { AuthService, AuthUser } from '../../src/auth/authService';
-import { SupabaseRepository } from '../../src/data';
 import { I18nProvider } from '../../src/i18n';
 import { shiftDate } from '../../src/timeline/model';
 import { localDate } from '../../src/data/supabaseRepository';
 import { SEED, createFakeBackend } from './fakeBackend';
-import { fakeClient } from './fakeSupabase';
+import { fakeClient, timedRepository } from './fakeSupabase';
 
 const params = new URLSearchParams(location.search);
 const HARNESS_COOKIE = 'pawlog_harness';
@@ -41,7 +40,8 @@ const auth: AuthService = {
 
 const backend = await createFakeBackend({ start });
 const client = fakeClient(backend);
-// For poking at from the console: window.harness.backend.sql('select * from entry')
+// For poking at from the console: window.harness.backend.sql('select * from entry').
+// A lost request (JCB-71): window.harness.backend.hangNext(1), tap Save, then backend.release().
 (window as unknown as { harness: unknown }).harness = { backend, client };
 
 // The app routes on the pathname: /harness.html becomes the Timeline, any app path (after a reload) stays.
@@ -49,7 +49,7 @@ const client = fakeClient(backend);
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <I18nProvider>
-      <AuthGate auth={auth} createRepository={() => new SupabaseRepository(client)} confirm={() => true} />
+      <AuthGate auth={auth} createRepository={() => timedRepository(client)} confirm={() => true} />
     </I18nProvider>
   </StrictMode>,
 );

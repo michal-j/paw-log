@@ -7,7 +7,8 @@
 // POST insert and upsert (resolution=merge-duplicates / ignore-duplicates, on_conflict, columns),
 // return=representation; PATCH; DELETE. Errors come back as PostgREST error bodies with the
 // Postgres code (23505 unique violation → 409, 42501 → 403, other constraint errors → 400).
-// Not covered: embedded resources, RPC, auth endpoints (the harness signs in with a fake AuthService).
+// Auth: only the token refresh (POST /auth/v1/token), answering a new session for the seed user
+// (JCB-71); the harness signs in with a fake AuthService. Not covered: embedded resources, RPC.
 //
 // Nothing here ever reaches a network: the fetch never calls the real one. All data is fictional.
 import { PGlite } from '@electric-sql/pglite';
@@ -53,6 +54,14 @@ export interface FakeBackend {
   sql<T = Record<string, unknown>>(query: string, params?: unknown[]): Promise<T[]>;
   /** Make the next `n` requests fail like a network error (offline). */
   failNext(n: number): void;
+  /**
+   * Hold the next `n` requests (those `which` picks; default all): they get no answer and ignore
+   * aborts, like a request iOS lost while the PWA was in the background (JCB-71), until `release()`
+   * lets them through. Then they run as usual: the server did get them, the app just never heard back.
+   */
+  hangNext(n: number, which?: (method: string, path: string) => boolean): void;
+  /** Let every held request through. */
+  release(): void;
   /** Delay every answer by `ms`, so requests can overlap and land out of order. */
   setLatency(ms: number | ((method: string, table: string) => number)): void;
   close(): Promise<void>;
@@ -248,6 +257,9 @@ export async function createFakeBackend(options: { start?: string; seed?: boolea
   const userId = options.userId ?? SEED.user;
   const log: RequestLog[] = [];
   let failures = 0;
+  let hangs = 0;
+  let hangWhich: (method: string, path: string) => boolean = () => true;
+  const held: (() => void)[] = [];
   let latency: (method: string, table: string) => number = () => 0;
 
   async function asUser<T>(work: (tx: Pick<PGlite, 'query' | 'exec'>) => Promise<T>): Promise<T> {
@@ -315,6 +327,14 @@ export async function createFakeBackend(options: { start?: string; seed?: boolea
     if (url.origin !== FAKE_URL) throw new TypeError(`fake backend: refusing to call ${url.origin}`);
     const match = /^\/rest\/v1\/([a-z_]+)$/.exec(url.pathname);
     const table = match?.[1] ?? url.pathname;
+    if (hangs > 0 && hangWhich(request.method, table)) {
+      hangs--;
+      await new Promise<void>((resolve) => held.push(resolve));
+    }
+    if (url.pathname === '/auth/v1/token' && request.method === 'POST') {
+      log.push({ method: request.method, table, status: 200, query: url.search });
+      return new Response(JSON.stringify(fakeSession(userId, 3600)), { status: 200, headers: { 'Content-Type': 'application/json' } });
+    }
     const delay = latency(request.method, table);
     if (delay) await new Promise((r) => setTimeout(r, delay));
     if (failures > 0) {
@@ -347,9 +367,32 @@ export async function createFakeBackend(options: { start?: string; seed?: boolea
     failNext: (n) => {
       failures = n;
     },
+    hangNext: (n, which = () => true) => {
+      hangs = n;
+      hangWhich = which;
+    },
+    release: () => held.splice(0).forEach((go) => go()),
     setLatency: (ms) => {
       latency = typeof ms === 'number' ? () => ms : ms;
     },
     close: () => db.close(),
+  };
+}
+
+/**
+ * A signed-in session for `userId`, as supabase-js stores it, expiring in `expiresIn` seconds.
+ * The tokens are fake (unsigned); the fake backend never checks them.
+ */
+export function fakeSession(userId: string = SEED.user, expiresIn = 3600) {
+  const b64 = (o: object) => btoa(JSON.stringify(o)).replace(/=+$/, '').replace(/\+/g, '-').replace(/\//g, '_');
+  const expiresAt = Math.floor(Date.now() / 1000) + expiresIn;
+  const accessToken = `${b64({ alg: 'none', typ: 'JWT' })}.${b64({ sub: userId, role: 'authenticated', exp: expiresAt })}.fake`;
+  return {
+    access_token: accessToken,
+    refresh_token: `fake-refresh-${crypto.randomUUID()}`,
+    token_type: 'bearer',
+    expires_in: expiresIn,
+    expires_at: expiresAt,
+    user: { id: userId, aud: 'authenticated', role: 'authenticated', email: 'one@example.test', app_metadata: {}, user_metadata: {}, created_at: '2026-01-01T00:00:00Z' },
   };
 }
