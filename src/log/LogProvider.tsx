@@ -96,7 +96,14 @@ interface LogApi {
 }
 
 const Context = createContext<LogApi | null>(null);
-const TOAST_MS = 5000;
+/** A plain toast stays this long; one with Undo stays longer. */
+export const TOAST_MS = 5000;
+export const TOAST_UNDO_MS = 8000;
+/**
+ * How long a toast stays. The Undo window ends with the toast: its deferred work (the `commit`, e.g. deleting
+ * a photo file after a delete) runs in `settle` when this time is up, so it can never differ from the window.
+ */
+export const toastMs = (hasUndo: boolean): number => (hasUndo ? TOAST_UNDO_MS : TOAST_MS);
 
 /** A failed load is tried again after this long, and whenever the app comes back to the foreground or online. */
 const RETRY_MS = 4000;
@@ -214,7 +221,7 @@ export function LogProvider({ repository, children }: { repository: Repository; 
       timer.current = setTimeout(() => {
         settle(id);
         setToast((x) => (x?.id === id ? null : x));
-      }, TOAST_MS);
+      }, toastMs(!!undo));
     },
     [settle],
   );

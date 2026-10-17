@@ -1,9 +1,10 @@
 // Logging, editing and the usual day in the app (JCB-39), against the demo repository.
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { App } from '../src/App';
 import { DemoRepository } from '../src/data';
 import { I18nProvider } from '../src/i18n';
+import { TOAST_MS, TOAST_UNDO_MS, toastMs } from '../src/log/LogProvider';
 
 /** The demo date is frozen at 15 Oct; the clock is set per test. */
 const repoAt = (hh: number, mm = 0) => new DemoRepository(null, () => new Date(2026, 9, 15, hh, mm));
@@ -24,6 +25,30 @@ beforeEach(() => localStorage.clear());
 afterEach(() => {
   cleanup();
   window.history.replaceState(null, '', '/');
+});
+
+describe('toast duration', () => {
+  it('keeps a toast with Undo longer than a plain one', () => {
+    expect(toastMs(false)).toBe(TOAST_MS);
+    expect(toastMs(true)).toBe(TOAST_UNDO_MS);
+    expect(TOAST_UNDO_MS).toBe(8000);
+    expect(TOAST_MS).toBe(5000);
+  });
+
+  it('a toast with Undo is timed with the Undo duration, which also ends the deferred work', async () => {
+    const spy = vi.spyOn(globalThis, 'setTimeout');
+    try {
+      const repo = repoAt(16, 30);
+      for (const e of await repo.listEntries({ from: '2026-10-15', to: '2026-10-15' })) if (e.dayPart === 2) await repo.deleteEntry(e.id);
+      at('/demo/day/2026-10-15', repo);
+      fireEvent.click(await screen.findByRole('button', { name: 'Mark Bellavet as given' }));
+      await screen.findByText('1 logged as given');
+      expect(spy.mock.calls.some((c) => c[1] === TOAST_UNDO_MS)).toBe(true);
+      expect(spy.mock.calls.some((c) => c[1] === TOAST_MS)).toBe(false);
+    } finally {
+      spy.mockRestore();
+    }
+  });
 });
 
 describe('fill and Given', () => {
