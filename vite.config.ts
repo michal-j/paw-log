@@ -59,7 +59,15 @@ export default defineConfig({
   ],
   // PGlite (WASM Postgres) backs the dev-only harness (harness.html, tests/harness); it must not be pre-bundled.
   optimizeDeps: { exclude: ['@electric-sql/pglite'] },
-  // Tests on PGlite build a fresh database per test (about 1 s alone); with several such files running
-  // in parallel the first test of a file can pass 5 s, so the timeout is longer than vitest's default.
-  test: { environment: 'jsdom', include: ['tests/**/*.test.{ts,tsx}'], testTimeout: 20000 },
+  // Tests on PGlite build a fresh database per test (about 1 s alone). With many such files running at once
+  // (CI runners, laptops) the first test of a file can pass 5 s or time out in findBy*, so: a longer test
+  // timeout, a longer Testing Library async timeout (tests/setup.ts), and at most 3 files in parallel.
+  test: {
+    environment: 'jsdom',
+    include: ['tests/**/*.test.{ts,tsx}'],
+    setupFiles: ['tests/setup.ts'],
+    testTimeout: 20000,
+    hookTimeout: 30000,
+    maxWorkers: 3,
+  },
 });

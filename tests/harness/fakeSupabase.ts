@@ -21,13 +21,17 @@ interface ClientOptions {
   requestTimeoutMs?: number;
 }
 
+let clientCount = 0;
+
 /** The app's own client (createSupabaseClient, with its resilient fetch) on the fake backend. */
 export function fakeClient(backend: FakeBackend, options: ClientOptions = {}): SupabaseClient {
   return createSupabaseClient(
     { url: FAKE_URL, anonKey: FAKE_ANON_KEY },
     {
       fetch: backend.fetch,
-      auth: { persistSession: false, autoRefreshToken: false, ...options.auth },
+      // A distinct storageKey per client: tests make many clients in one file, and supabase-js warns
+      // ("Multiple GoTrueClient instances") when two share a key.
+      auth: { persistSession: false, autoRefreshToken: false, storageKey: `pawlog-test-auth-${clientCount++}`, ...options.auth },
       requestTimeoutMs: options.requestTimeoutMs,
     },
   );
