@@ -5,6 +5,7 @@ Format: [Keep a Changelog](https://keepachangelog.com). "Unreleased" means not y
 ## Unreleased
 
 ### Fixed
+- iPhone PWA: no more empty space above the navbar at the end of the Day view and the Usual day. Their scrolling body added the home-indicator safe area although the navbar under it already does; only the navbar keeps it now.
 - iPhone PWA: no more empty space under the day-parts bar on the Timeline (JCB-61). The bar added the home-indicator safe area although the navbar under it already does; only the navbar keeps it now.
 - Real-data blockers from the first use on the iPhone PWA and desktop (JCB-43), reproduced on the real data path (SupabaseRepository and supabase-js against a PostgREST-like fake on Postgres), not only `/demo`:
   - Editing an entry (or logging a planned row) as another item or part kept the row but dropped its usual-day slot, so the slot came back as "not logged" and looked like a new entry: the entry now keeps the slot it filled or was opened from (same date), unless its new item has its own open slot.
