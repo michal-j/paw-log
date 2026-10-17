@@ -77,14 +77,10 @@ function Shell({ repository, onSignOut }: { repository: Repository; onSignOut?: 
   const backFrom = useRef<PlainDate | null>(null);
   useEffect(() => {
     const onPop = () => {
-<<<<<<< HEAD
+      setOverlay(null); // Back leaves the photo viewer along with the screen it was opened on
       const focusDate = backFrom.current ?? undefined;
       backFrom.current = null;
       setLoc({ ...readLocation(), focusDate });
-=======
-      setOverlay(null); // Back leaves the photo viewer along with the screen it was opened on
-      setLoc(readLocation());
->>>>>>> origin/main
     };
     window.addEventListener('popstate', onPop);
     return () => window.removeEventListener('popstate', onPop);
