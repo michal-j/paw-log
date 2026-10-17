@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import type { DayPart, DayPartTimes, DogSettings, Entry, HealthEvent, Item, PlainDate, RemovedSlot, Repository, ScheduleSlot } from '../data';
+import type { DayPart, DayPartTimes, DogSettings, Entry, HealthEvent, Item, PinnedNote, PlainDate, RemovedSlot, Repository, ScheduleSlot } from '../data';
 import { useI18n } from '../i18n';
 import { logStartOf } from '../timeline/model';
 import type { KindGroup } from './amount';
@@ -15,6 +15,8 @@ export interface Records {
   /** Usual-day items removed for a day. */
   removed: RemovedSlot[];
   events: HealthEvent[];
+  /** Pinned notes in list order. */
+  pinned: PinnedNote[];
   times: DayPartTimes;
   settings: DogSettings;
   /** The first day offered ("Log starts on", set or derived): the Timeline and Day view reach back to it. */
@@ -44,6 +46,8 @@ export type SheetState =
   | { kind: 'slot'; date: PlainDate; part: DayPart; slot?: ScheduleSlot; group?: KindGroup }
   /** After a usual-day change from a past date: log it on the past days where it is open? */
   | { kind: 'backfill'; slot: ScheduleSlot }
+  /** A pinned note: a new one, or `note` to edit. */
+  | { kind: 'pinned'; note?: PinnedNote }
   | { kind: 'menu' };
 
 interface Toast {
@@ -86,13 +90,14 @@ const RETRY_MS = 4000;
  */
 async function loadRecords(repository: Repository, version: number, shown: Map<string, string>): Promise<Records> {
   const today = repository.today();
-  const [dog, items, slots, entries, removed, events, times, settings] = await Promise.all([
+  const [dog, items, slots, entries, removed, events, pinned, times, settings] = await Promise.all([
     repository.getDog(),
     repository.listItems(),
     repository.listScheduleSlots(),
     repository.listEntries({ to: today }),
     repository.listRemovedSlots({ to: today }),
     repository.listEvents({ to: today }),
+    repository.listPinnedNotes(),
     repository.getDayPartTimes(),
     repository.getSettings(),
   ]);
@@ -102,7 +107,7 @@ async function loadRecords(repository: Repository, version: number, shown: Map<s
   const shownItems = withItemColours(items, shown);
   shown.clear();
   items.forEach((raw, i) => !isItemColour(raw.colour) && shown.set(raw.id, shownItems[i]!.colour));
-  return { dogId: dog.id, items: shownItems, slots, entries, removed, events, times, settings, logStart, today, version };
+  return { dogId: dog.id, items: shownItems, slots, entries, removed, events, pinned, times, settings, logStart, today, version };
 }
 
 export function LogProvider({ repository, children }: { repository: Repository; children: ReactNode }) {

@@ -16,6 +16,7 @@ import type {
   Intensity,
   Item,
   ItemKind,
+  PinnedNote,
   PlainDate,
   RemovedSlot,
   ScheduleSlot,
@@ -78,6 +79,16 @@ interface EntryRow {
   created_by: string | null;
   updated_by: string | null;
 }
+interface PinnedNoteRow {
+  id: string;
+  dog_id: string;
+  title: string;
+  body: string;
+  position: number;
+  created_by: string | null;
+  updated_by: string | null;
+  updated_at: string;
+}
 interface EventRow {
   id: string;
   dog_id: string;
@@ -98,6 +109,7 @@ const SLOT_COLUMNS = 'id, dog_id, item_id, day_part, flavour, amount, unit, acti
 const ENTRY_COLUMNS =
   'id, dog_id, date, day_part, item_id, schedule_slot_id, amount, unit, flavour, dose_text, state, note, created_by, updated_by';
 const EVENT_COLUMNS = 'id, dog_id, date, type, title, detail, intensity, props, also_done, issue_id';
+const PINNED_COLUMNS = 'id, dog_id, title, body, position, created_by, updated_by, updated_at';
 /** entry.state of a usual-day item removed for a day (migration 20261017120000). */
 const REMOVED = 'removed';
 /** Postgres unique_violation: on entry, the one-entry-per-slot-per-day index. */
@@ -211,6 +223,26 @@ export const toEntry = (r: EntryRow): Entry => ({
   note: r.note,
   createdBy: r.created_by ?? '',
   updatedBy: r.updated_by ?? '',
+});
+
+export const toPinnedNote = (r: PinnedNoteRow): PinnedNote => ({
+  id: r.id,
+  dogId: r.dog_id,
+  title: r.title ?? '',
+  body: r.body,
+  position: r.position ?? 0,
+  updatedOn: localDate(new Date(r.updated_at)),
+  createdBy: r.created_by ?? '',
+  updatedBy: r.updated_by ?? '',
+});
+
+/** created_by, updated_by and the timestamps are set by the database, never by the client. */
+export const fromPinnedNote = (n: PinnedNote) => ({
+  id: n.id,
+  dog_id: n.dogId,
+  title: n.title,
+  body: n.body,
+  position: n.position,
 });
 
 export const toEvent = (r: EventRow): HealthEvent => ({
@@ -449,6 +481,31 @@ export class SupabaseRepository implements Repository {
 
   async deleteEvent(id: string): Promise<void> {
     unwrap('deleteEvent', await this.client.from('event').delete().eq('id', id));
+  }
+
+  async listPinnedNotes(): Promise<PinnedNote[]> {
+    const dog = await this.getDog();
+    const rows = unwrap<PinnedNoteRow[]>(
+      'listPinnedNotes',
+      await this.client.from('pinned_note').select(PINNED_COLUMNS).eq('dog_id', dog.id).order('position').order('created_at').order('id'),
+    );
+    return rows.map(toPinnedNote);
+  }
+
+  async savePinnedNote(note: PinnedNote): Promise<void> {
+    requireUuid('savePinnedNote', note.id);
+    unwrap('savePinnedNote', await this.client.from('pinned_note').upsert(fromPinnedNote(note), { onConflict: 'id' }));
+  }
+
+  async deletePinnedNote(id: string): Promise<void> {
+    unwrap('deletePinnedNote', await this.client.from('pinned_note').delete().eq('id', id));
+  }
+
+  /** One update per note, in order; the database does not count a move as an edit. */
+  async reorderPinnedNotes(ids: string[]): Promise<void> {
+    for (const [position, id] of ids.entries()) {
+      unwrap('reorderPinnedNotes', await this.client.from('pinned_note').update({ position }).eq('id', id));
+    }
   }
 
   private async loadDog(): Promise<Dog> {

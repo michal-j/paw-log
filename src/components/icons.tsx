@@ -26,9 +26,10 @@ export const CheckIcon = ({ size = 14 }: { size?: number }) => (
     <path d="M5 12.5l4.5 4.5L19 7.5" />
   </svg>
 );
-export const ChevronIcon = ({ dir = 'right', size = 14 }: { dir?: 'left' | 'right'; size?: number }) => (
+const CHEVRON = { left: 'M15 6l-6 6 6 6', right: 'M9 6l6 6-6 6', up: 'M6 15l6-6 6 6', down: 'M6 9l6 6 6-6' };
+export const ChevronIcon = ({ dir = 'right', size = 14 }: { dir?: keyof typeof CHEVRON; size?: number }) => (
   <svg {...stroke(size, 2.4)}>
-    <path d={dir === 'left' ? 'M15 6l-6 6 6 6' : 'M9 6l6 6-6 6'} />
+    <path d={CHEVRON[dir]} />
   </svg>
 );
 /** The usual day: a clock with a return arrow. */
@@ -75,5 +76,20 @@ export const TimelineIcon = ({ active }: { active: boolean }) => (
     <circle cx="4.8" cy="6.5" r="1.1" />
     <circle cx="4.8" cy="12" r="1.1" />
     <circle cx="4.8" cy="17.5" r="1.1" />
+  </svg>
+);
+/** Pinned: a map pin (NavBar tab, empty state). */
+export const PinIcon = ({ active = false, size = 22 }: { active?: boolean; size?: number }) => (
+  <svg {...stroke(size, active ? 2.1 : 1.8)}>
+    <path d="M9 3.5h6l-1 5.5 3.5 3.5v2h-11v-2L10 9z" />
+    <path d="M12 14.5V21" />
+  </svg>
+);
+/** Tracked: a target (NavBar tab, empty state). */
+export const TrackedIcon = ({ active = false, size = 22 }: { active?: boolean; size?: number }) => (
+  <svg {...stroke(size, active ? 2.1 : 1.8)}>
+    <circle cx="12" cy="12" r="8.5" />
+    <circle cx="12" cy="12" r="3.5" />
+    <path d="M12 1.5v3M12 19.5v3M1.5 12h3M19.5 12h3" />
   </svg>
 );

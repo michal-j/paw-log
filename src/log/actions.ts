@@ -1,5 +1,5 @@
 // Writes through the repository, each returning how to undo it. The UI shows the Undo toast.
-import type { Entry, HealthEvent, RemovedSlot, Repository, ScheduleSlot } from '../data';
+import type { Entry, HealthEvent, PinnedNote, RemovedSlot, Repository, ScheduleSlot } from '../data';
 import { DuplicateSlotEntryError } from '../data/errors';
 import type { SlotChange } from './plan';
 
@@ -90,6 +90,17 @@ export async function saveEvent(repo: Repository, next: HealthEvent, prev: Healt
 export async function deleteEvent(repo: Repository, event: HealthEvent): Promise<Undo> {
   await repo.deleteEvent(event.id);
   return () => repo.saveEvent(event);
+}
+
+/** Save a pinned note (new or edited). Undo puts back the previous text, or deletes the new note. */
+export async function savePinnedNote(repo: Repository, next: PinnedNote, prev: PinnedNote | null): Promise<Undo> {
+  await repo.savePinnedNote(next);
+  return prev ? () => repo.savePinnedNote(prev) : () => repo.deletePinnedNote(next.id);
+}
+
+export async function deletePinnedNote(repo: Repository, note: PinnedNote): Promise<Undo> {
+  await repo.deletePinnedNote(note.id);
+  return () => repo.savePinnedNote(note);
 }
 
 /** Apply a usual-day change; `before` is the slot list it was computed from, to restore on undo. */

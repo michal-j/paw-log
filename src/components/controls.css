@@ -255,7 +255,8 @@ select.input { padding: 0 var(--space-2); }
   z-index: 7;
   flex: none;
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  /* Timeline, Pinned, + Add (column 3), Tracked. When Search comes back this becomes 5 columns and + Add is centred again. */
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   padding: 6px var(--space-2) calc(6px + env(safe-area-inset-bottom));
   border-top: 1px solid var(--color-line);
   background: linear-gradient(180deg, var(--color-surface), var(--color-surface-tint));
