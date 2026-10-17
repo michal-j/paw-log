@@ -11,6 +11,7 @@ import {
   markState,
   railFraction,
   railScrollTop,
+  railTarget,
   focusOffset,
   scrollForFocus,
   rowIndexAt,
@@ -246,6 +247,24 @@ describe('scroll maths', () => {
     // A tiny list height where the oldest row can reach the top anyway: plain scroll positions.
     expect(focusOffset(250, 200, 300)).toBe(250);
     expect(scrollForFocus(150, 200, 300)).toBe(150);
+  });
+
+  it('lets the rail reach every day when the list cannot scroll far enough', async () => {
+    const tl = await demoTimeline();
+    for (const maxScroll of [0, 52, 200]) {
+      // The focus is the dragged offset itself: rail bottom = first record, every tick under the finger.
+      expect(topDayAt(tl.rows, railTarget(1, tl.span, maxScroll).focus)?.date).toBe('2026-09-01');
+      expect(topDayAt(tl.rows, railTarget(0, tl.span, maxScroll).focus)?.date).toBe('2026-10-15');
+      for (const k of tl.ticks) {
+        const t = railTarget(railFraction(k.offset, tl.span), tl.span, maxScroll);
+        expect(t.focus).toBeCloseTo(k.offset);
+        expect(t.scrollTop).toBeGreaterThanOrEqual(0);
+        expect(t.scrollTop).toBeLessThanOrEqual(maxScroll + 1e-9);
+      }
+      // Evenly spread: half-way down the rail is half-way through the days, not the end of the scroll.
+      expect(railTarget(0.5, tl.span, maxScroll).focus).toBeCloseTo(tl.span / 2);
+    }
+    expect(railTarget(1, tl.span, 0).scrollTop).toBe(0);
   });
 
   it('keeps only a small tail after the oldest day', () => {

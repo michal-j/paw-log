@@ -16,7 +16,7 @@ Format: [Keep a Changelog](https://keepachangelog.com). "Unreleased" means not y
   - Date and time inputs on iOS Safari: same 50px height and left-aligned value as the other fields.
   - After Fill, no blank space is reserved any more; the day parts keep their place on screen when they can.
   - QA round: changing only a usual-day item's "Starts on" now saves (and offers the past days); the Fill banner or quiet action is chosen when a day opens and kept while it is open (a removed item counts as worked on), so Given or a delete never makes it jump; Undo closes the past-days question; one-day wording; empty Timeline days read "nothing logged" to screen readers; the dev harness keeps its screen on reload.
-- Timeline: no more screen-high empty space below the first day (JCB-62). The list ends 16px after the log-start day; the Key, the rail and the scrub label move from the top row to that first day over the last screen of scrolling, so dragging the rail to the bottom still lands on the first day.
+- Timeline: no more screen-high empty space below the first day (JCB-62). The list ends 16px after the log-start day; the Key, the rail and the scrub label move from the top row to that first day over the last screen of scrolling, so dragging the rail to the bottom still lands on the first day. The rail moves the Key and its bubble across every day evenly, also when the log fits on one screen and the list cannot scroll.
 
 ### Added
 - Log starts on (Menu): every day from that date to today is on the Timeline, empty days too, so past days can be opened and filled. Default: the earliest record or usual-day start, else a year back. Long logs render only the rows near the screen. New table `dog_settings` (JCB-43).

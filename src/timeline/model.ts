@@ -352,10 +352,19 @@ export function scrollForFocus(offset: number, span: number, maxScroll: number):
   return start + ((p - start) * (maxScroll - start)) / (span - start);
 }
 
+/**
+ * A rail drag at `fraction` (0 = top, 1 = bottom): the focus is the dragged row offset itself, so the
+ * rail reaches every day even when the list cannot scroll (a log that fits on one screen); the list
+ * scrolls as close to it as its range allows.
+ */
+export function railTarget(fraction: number, span: number, maxScroll: number = span): { focus: number; scrollTop: number } {
+  const focus = Math.max(0, Math.min(1, fraction)) * span;
+  return { focus, scrollTop: scrollForFocus(focus, span, maxScroll) };
+}
+
 /** Map a pointer position on the rail (0 = top, 1 = bottom) to a list scroll position within the span. */
 export function railScrollTop(fraction: number, span: number, maxScroll: number = span): number {
-  const f = Math.max(0, Math.min(1, fraction));
-  return scrollForFocus(f * span, span, maxScroll);
+  return railTarget(fraction, span, maxScroll).scrollTop;
 }
 
 /** Where a row offset sits on the rail, 0 to 1 (inverse of railScrollTop). */

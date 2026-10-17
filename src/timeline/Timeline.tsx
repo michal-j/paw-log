@@ -12,7 +12,7 @@ import {
   buildTimeline,
   parseDate,
   railFraction,
-  railScrollTop,
+  railTarget,
   focusOffset,
   rowIndexAt,
   topDayAt,
@@ -92,6 +92,8 @@ export function Timeline({ initialScrollTop = 0, dayHref, onOpenDay }: Props) {
   const [scrubY, setScrubY] = useState<number | null>(null);
   const listRef = useRef<HTMLDivElement>(null);
   const dragging = useRef(false);
+  // The scroll position the rail last set while it holds the focus (null: the focus follows the scroll).
+  const railHold = useRef<number | null>(null);
   const [viewport, setViewport] = useState(0);
 
   // The list height drives windowing; the scroll range (and so the focus) is read from the element.
@@ -101,7 +103,7 @@ export function Timeline({ initialScrollTop = 0, dayHref, onOpenDay }: Props) {
     const measure = () => {
       setViewport(el.clientHeight);
       // A new height changes the scroll range, and with it which row the focus is on near the end.
-      if (data) setFocusIndex(rowIndexAt(data.timeline.rows, focusAt(el, data.timeline.span)));
+      if (data && railHold.current === null) setFocusIndex(rowIndexAt(data.timeline.rows, focusAt(el, data.timeline.span)));
     };
     measure();
     if (typeof ResizeObserver === 'undefined') return;
@@ -167,13 +169,22 @@ export function Timeline({ initialScrollTop = 0, dayHref, onOpenDay }: Props) {
   const keyDay = topDayAt(rows, focusRow?.top ?? 0);
   const activeTick = activeTickOffset(ticks, focusRow?.top ?? 0);
 
+  // Re-window once the list has moved a good part of the overscan.
+  const rewindow = (el: HTMLElement) => {
+    if (windowed && Math.abs(el.scrollTop - scrollTop) > OVERSCAN_PX / 3) setScrollTop(el.scrollTop);
+  };
+
   const onScroll = () => {
     const el = listRef.current;
     if (!el) return;
-    const i = rowIndexAt(rows, focusAt(el, span));
-    if (i !== focusIndex) setFocusIndex(i);
-    // Re-window once the list has moved a good part of the overscan.
-    if (windowed && Math.abs(el.scrollTop - scrollTop) > OVERSCAN_PX / 3) setScrollTop(el.scrollTop);
+    // The rail's own scrolling keeps the focus it set; any other scrolling hands it back to the list.
+    const held = railHold.current !== null && Math.abs(el.scrollTop - railHold.current) <= 1;
+    if (!held) {
+      railHold.current = null;
+      const i = rowIndexAt(rows, focusAt(el, span));
+      if (i !== focusIndex) setFocusIndex(i);
+    }
+    rewindow(el);
   };
 
   const scrubTo = (e: PointerEvent<HTMLDivElement>) => {
@@ -182,9 +193,12 @@ export function Timeline({ initialScrollTop = 0, dayHref, onOpenDay }: Props) {
     const rect = e.currentTarget.getBoundingClientRect();
     const y = e.clientY - rect.top;
     // Ticks sit at f * (height - TICK_H) (see the tick style below), so invert the same mapping.
-    list.scrollTop = railScrollTop(y / (rect.height - TICK_H), span, list.scrollHeight - list.clientHeight);
+    const target = railTarget(y / (rect.height - TICK_H), span, list.scrollHeight - list.clientHeight);
+    list.scrollTop = target.scrollTop;
+    railHold.current = list.scrollTop;
+    setFocusIndex(rowIndexAt(rows, target.focus));
     setScrubY(Math.max(0, Math.min(rect.height, y)));
-    onScroll();
+    rewindow(list);
   };
 
   const scrubLabel = !focusRow ? '' : focusRow.kind === 'day' ? fmt.full(focusRow.date) : fmt.month(focusRow.month);
