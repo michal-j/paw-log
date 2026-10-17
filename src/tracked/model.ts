@@ -1,7 +1,6 @@
 // Tracked conditions (JCB-6): pure derivations for the Tracked list, the condition page and the
 // condition picker. No React, no I/O: unit-tested in tests/tracked.test.ts.
 import type { Condition, HealthEvent, PlainDate } from '../data';
-import type { Lang } from '../i18n';
 import { EVENT_ORDER } from '../day/model';
 
 export const isOpen = (c: Pick<Condition, 'resolvedOn'>) => c.resolvedOn === null;
@@ -56,14 +55,6 @@ export function historyGroups(conditionId: string, events: HealthEvent[]): { dat
 /** "N events" on a condition card counts linked events other than photos (photos get their own count, JCB-7). */
 export function eventCount(conditionId: string, events: HealthEvent[]): number {
   return events.filter((e) => e.type !== 'photo' && e.conditionIds.includes(conditionId)).length;
-}
-
-/** Plural form: EN one / many; PL one / few (2-4, not 12-14) / many. */
-export function pluralForm(n: number, lang: Lang): 'one' | 'few' | 'many' {
-  if (n === 1) return 'one';
-  if (lang === 'en') return 'many';
-  const tens = n % 100;
-  return n % 10 >= 2 && n % 10 <= 4 && (tens < 12 || tens > 14) ? 'few' : 'many';
 }
 
 /**

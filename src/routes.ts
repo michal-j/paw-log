@@ -1,6 +1,6 @@
 // Tiny path router: the Timeline at `<base>/`, a day at `<base>/day/YYYY-MM-DD`, the usual day at
-// `<base>/usual` (as of today) or `<base>/usual/YYYY-MM-DD`, the Tracked list at `<base>/tracked` and a
-// tracked condition at `<base>/tracked/<id>`.
+// `<base>/usual` (as of today) or `<base>/usual/YYYY-MM-DD`, the Pinned notes at `<base>/pinned`, the Tracked list
+// at `<base>/tracked` and a tracked condition at `<base>/tracked/<id>`.
 // `base` is `/demo` in demo mode on the /demo path, otherwise empty. Pure, unit-tested in tests/day.test.ts.
 import type { PlainDate } from './data';
 import { isPlainDate } from './day/model';
@@ -9,6 +9,7 @@ export type Route =
   | { base: string; view: 'timeline' }
   | { base: string; view: 'day'; date: PlainDate }
   | { base: string; view: 'usual'; date?: PlainDate }
+  | { base: string; view: 'pinned' }
   | { base: string; view: 'tracked' }
   | { base: string; view: 'condition'; id: string };
 
@@ -25,6 +26,7 @@ export function parseRoute(pathname: string): Route {
   const base = baseOf(pathname);
   const rest = pathname.slice(base.length).replace(/\/+$/, '');
   if (rest === '/usual') return { base, view: 'usual' };
+  if (rest === '/pinned') return { base, view: 'pinned' };
   if (rest === '/tracked') return { base, view: 'tracked' };
   const cond = /^\/tracked\/([^/]+)$/.exec(rest);
   if (cond) return cond[1] && CONDITION_ID.test(cond[1]) ? { base, view: 'condition', id: cond[1] } : { base, view: 'tracked' };
@@ -37,7 +39,7 @@ export function parseRoute(pathname: string): Route {
 export const timelinePath = (base: string) => base || '/';
 export const dayPath = (base: string, date: PlainDate) => `${base}/day/${date}`;
 export const usualPath = (base: string, date?: PlainDate) => `${base}/usual${date ? `/${date}` : ''}`;
-export const trackedPath = (base: string) => `${base}/tracked`;
+export const tabPath = (base: string, view: 'pinned' | 'tracked') => `${base}/${view}`;
 export const conditionPath = (base: string, id: string) => `${base}/tracked/${id}`;
 export function routePath(r: Route): string {
   switch (r.view) {
@@ -45,8 +47,9 @@ export function routePath(r: Route): string {
       return dayPath(r.base, r.date);
     case 'usual':
       return usualPath(r.base, r.date);
+    case 'pinned':
     case 'tracked':
-      return trackedPath(r.base);
+      return tabPath(r.base, r.view);
     case 'condition':
       return conditionPath(r.base, r.id);
     default:

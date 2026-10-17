@@ -1,14 +1,7 @@
 /* Tracked conditions (JCB-6), after design/proposals/pinned-tracked. Tokens only. */
 
-/* ---------- List screen header (the Usual day header with a New button) ---------- */
-.list { display: flex; flex-direction: column; flex: 1; min-height: 0; background: var(--color-ground); }
-.list .usual__head { padding-top: var(--space-4); }
-.list__titlerow { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); }
-.list__titlerow .usual__title { min-width: 0; overflow-wrap: anywhere; }
-.list__new { flex: none; white-space: nowrap; }
-.list__new .btn__icon { color: var(--color-mint-deep); }
-.list .day__body { padding-bottom: var(--space-6); }
-.list .day__body > .day-empty:first-child { margin-top: var(--space-4); }
+/* List screen header: src/components/list.css (shared with Pinned). */
+.list__new { white-space: nowrap; }
 .list-empty__btn { margin-top: var(--space-3); }
 
 /* ---------- Condition card (Tracked list) ---------- */

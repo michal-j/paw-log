@@ -148,6 +148,24 @@ export interface Condition {
   position: number;
 }
 
+/**
+ * A standing fact both household members should always know (allergy, how to give a medication).
+ * Not tied to a day. `title` is empty when the note has none.
+ */
+export interface PinnedNote {
+  id: string;
+  dogId: string;
+  title: string;
+  body: string;
+  /** List order, smallest first. A new note takes (smallest - 1), so it goes on top. */
+  position: number;
+  /** The day of the last edit of the title or text (not of a move), set by the database; ignored on save. */
+  updatedOn?: PlainDate;
+  /** Set by the database; ignored on save. */
+  createdBy?: string;
+  updatedBy?: string;
+}
+
 export interface DateRange {
   from?: PlainDate;
   to?: PlainDate;

@@ -4,9 +4,10 @@ import scheduleJson from '../../data/demo/schedule.json';
 import entriesJson from '../../data/demo/entries.json';
 import eventsJson from '../../data/demo/events.json';
 import conditionsJson from '../../data/demo/conditions.json';
+import pinnedJson from '../../data/demo/pinned.json';
 import { DuplicateSlotEntryError } from './errors';
 import { DEFAULT_DAY_PART_TIMES, type Repository } from './repository';
-import type { Condition, DateRange, DayPart, DayPartTimes, Dog, DogSettings, Entry, EntryState, HealthEvent, Item, RemovedSlot, ScheduleSlot } from './types';
+import type { Condition, DateRange, DayPart, DayPartTimes, Dog, DogSettings, Entry, EntryState, HealthEvent, Item, PinnedNote, RemovedSlot, ScheduleSlot } from './types';
 
 /** v2: JCB-39 changed the shape (amounts, usual day). Changes saved under v1 are dropped. */
 export const DEMO_STORAGE_KEY = 'pawlog.demo.v2';
@@ -25,6 +26,8 @@ interface Persisted {
   slots: ScheduleSlot[];
   entries: StoredEntry[];
   events: StoredEvent[];
+  /** Absent in changes saved before JCB-5: seeded then. */
+  pinned?: PinnedNote[];
   times: DayPartTimes;
   /** Absent in changes saved before JCB-43. */
   settings?: DogSettings;
@@ -49,6 +52,7 @@ function seed(): Persisted {
     slots: copy(scheduleJson as ScheduleSlot[]),
     entries: copy(entriesJson as Entry[]),
     events: copy(eventsJson as StoredEvent[]),
+    pinned: copy(pinnedJson as PinnedNote[]),
     times: { ...DEFAULT_DAY_PART_TIMES },
     settings: { logStart: null },
     conditions: copy(conditionsJson.conditions as Condition[]),
@@ -206,6 +210,29 @@ export class DemoRepository implements Repository {
     }
     this.data.links = links;
     this.persist();
+  }
+
+  async listPinnedNotes() {
+    return copy(this.pinned().sort((a, b) => a.position - b.position));
+  }
+  async savePinnedNote(note: PinnedNote) {
+    const prev = this.pinned().find((n) => n.id === note.id);
+    const edited = !prev || prev.title !== note.title || prev.body !== note.body;
+    const next: PinnedNote = { ...copy(note), updatedOn: edited ? today : prev.updatedOn ?? today };
+    this.data.pinned = upsert(this.pinned(), next);
+    this.persist();
+  }
+  async deletePinnedNote(id: string) {
+    this.data.pinned = this.pinned().filter((n) => n.id !== id);
+    this.persist();
+  }
+  async reorderPinnedNotes(ids: string[]) {
+    this.data.pinned = this.pinned().map((n) => (ids.includes(n.id) ? { ...n, position: ids.indexOf(n.id) } : n));
+    this.persist();
+  }
+
+  private pinned(): PinnedNote[] {
+    return (this.data.pinned ??= copy(pinnedJson as PinnedNote[]));
   }
 
   /** Drop the visitor's changes and return to the frozen sample data. */

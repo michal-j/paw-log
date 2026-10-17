@@ -1,4 +1,4 @@
-import type { Condition, DateRange, DayPart, DayPartTimes, Dog, DogSettings, Entry, HealthEvent, Item, PlainDate, RemovedSlot, ScheduleSlot } from './types';
+import type { Condition, DateRange, DayPart, DayPartTimes, Dog, DogSettings, Entry, HealthEvent, Item, PinnedNote, PlainDate, RemovedSlot, ScheduleSlot } from './types';
 
 /** Usual times of the day parts until the household changes them (design proposal JCB-25). */
 export const DEFAULT_DAY_PART_TIMES: DayPartTimes = {
@@ -67,4 +67,14 @@ export interface Repository {
   deleteCondition(id: string): Promise<void>;
   /** Link events to a condition (links that exist already are kept); used to undo a delete. */
   linkEvents(conditionId: string, eventIds: string[]): Promise<void>;
+  /** Pinned notes in list order (position, then creation). */
+  listPinnedNotes(): Promise<PinnedNote[]>;
+  /**
+   * Insert or update by id. Changing the title or text counts as an edit ("Edited <day>");
+   * changing only `position` does not.
+   */
+  savePinnedNote(note: PinnedNote): Promise<void>;
+  deletePinnedNote(id: string): Promise<void>;
+  /** Set the order: the note with ids[0] first. Only `position` changes; ids that are gone are ignored. */
+  reorderPinnedNotes(ids: string[]): Promise<void>;
 }

@@ -4,7 +4,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(94);
+select plan(112);
 
 -- Fixtures (as the postgres role, which bypasses RLS, like the bootstrap SQL).
 -- Household A: users a1, a2, dog A. Household B: user b1, dog B. User c belongs to no household.
@@ -36,6 +36,9 @@ insert into public.day_part (dog_id, part, usual_time) values
   ('20000000-0000-4000-8000-00000000000b', 2, '08:00');
 insert into public.dog_settings (dog_id, log_start) values
   ('20000000-0000-4000-8000-00000000000b', '2026-01-01');
+insert into public.pinned_note (id, dog_id, title, body, position) values
+  ('70000000-0000-4000-8000-00000000000a', '20000000-0000-4000-8000-00000000000a', 'Note A', 'Body A', 1),
+  ('70000000-0000-4000-8000-00000000000b', '20000000-0000-4000-8000-00000000000b', 'Note B', 'Body B', 1);
 insert into public.event (id, dog_id, date, type, title) values
   ('50000000-0000-4000-8000-00000000000a', '20000000-0000-4000-8000-00000000000a', '2026-10-02', 'vet', 'Check-up A'),
   ('50000000-0000-4000-8000-00000000000b', '20000000-0000-4000-8000-00000000000b', '2026-10-02', 'vet', 'Check-up B');
@@ -58,6 +61,10 @@ select throws_ok('select * from public.schedule_slot', '42501', null, 'anon cann
 select throws_ok('select * from public.event', '42501', null, 'anon cannot read event');
 select throws_ok('select * from public.day_part', '42501', null, 'anon cannot read day_part');
 select throws_ok('select * from public.dog_settings', '42501', null, 'anon cannot read dog_settings');
+select throws_ok('select * from public.pinned_note', '42501', null, 'anon cannot read pinned_note');
+select throws_ok(
+  $$insert into public.pinned_note (dog_id, body) values ('20000000-0000-4000-8000-00000000000a', 'x')$$,
+  '42501', null, 'anon cannot write pinned_note');
 select throws_ok('select * from public.condition', '42501', null, 'anon cannot read condition');
 select throws_ok('select * from public.event_condition', '42501', null, 'anon cannot read event_condition');
 select throws_ok(
@@ -234,7 +241,36 @@ select throws_ok(
 update public.dog_settings set log_start = '2020-01-01' where dog_id = '20000000-0000-4000-8000-00000000000b';
 select is((select count(*)::int from public.dog_settings), 1, 'a1 sees only the settings of dog A');
 
--- 3e. JCB-6: tracked conditions and their links to events.
+-- 3e. JCB-5: pinned notes.
+select is((select count(*)::int from public.pinned_note), 1, 'a1 sees only the pinned notes of dog A');
+select lives_ok(
+  $$insert into public.pinned_note (id, dog_id, title, body, position, created_by)
+    values ('70000000-0000-4000-8000-0000000000a2', '20000000-0000-4000-8000-00000000000a', '', 'Second note', 0,
+            '00000000-0000-4000-8000-0000000000b1')$$,
+  'a1 can add a pinned note (no title) for dog A');
+select is((select created_by from public.pinned_note where id = '70000000-0000-4000-8000-0000000000a2'),
+  '00000000-0000-4000-8000-0000000000a1'::uuid, 'created_by of a note is the signed-in user, whatever the client sends');
+select is((select updated_by from public.pinned_note where id = '70000000-0000-4000-8000-0000000000a2'),
+  '00000000-0000-4000-8000-0000000000a1'::uuid, 'updated_by of a new note is the signed-in user');
+select throws_ok(
+  $$insert into public.pinned_note (dog_id, body) values ('20000000-0000-4000-8000-00000000000b', 'x')$$,
+  '42501', null, 'a1 cannot add a pinned note for dog B');
+select throws_ok(
+  $$insert into public.pinned_note (dog_id, body) values ('20000000-0000-4000-8000-00000000000a', '   ')$$,
+  '23514', null, 'a pinned note needs text');
+select throws_ok(
+  $$update public.pinned_note set dog_id = '20000000-0000-4000-8000-00000000000b'
+    where id = '70000000-0000-4000-8000-00000000000a'$$,
+  '42501', null, 'a1 cannot move a pinned note to dog B');
+update public.pinned_note set body = 'tampered' where id = '70000000-0000-4000-8000-00000000000b';
+delete from public.pinned_note where id = '70000000-0000-4000-8000-00000000000b';
+-- Moving a note is not an edit: updated_at and updated_by stay.
+update public.pinned_note set updated_at = '2026-09-01T10:00:00Z' where id = '70000000-0000-4000-8000-0000000000a2';
+select is((select updated_at from public.pinned_note where id = '70000000-0000-4000-8000-0000000000a2'),
+  now(), 'an update that changes neither title nor text keeps updated_at (the client cannot set it)');
+update public.pinned_note set position = 5 where id = '70000000-0000-4000-8000-0000000000a2';
+select is((select position from public.pinned_note where id = '70000000-0000-4000-8000-0000000000a2'), 5, 'a note can be moved');
+-- 3f. JCB-6: tracked conditions and their links to events.
 select is((select count(*)::int from public.condition), 1, 'a1 sees only the conditions of dog A');
 select is((select count(*)::int from public.event_condition), 1, 'a1 sees only the links of dog A');
 select throws_ok('select issue_id from public.event', '42703', null, 'event.issue_id is gone');
@@ -317,6 +353,16 @@ select is((select created_by from public.entry where id = '40000000-0000-4000-80
   '00000000-0000-4000-8000-0000000000a1'::uuid, 'editing keeps the original created_by');
 select is((select updated_by from public.entry where id = '40000000-0000-4000-8000-0000000000a2'),
   '00000000-0000-4000-8000-0000000000a2'::uuid, 'updated_by is the last editor');
+select is((select count(*)::int from public.pinned_note), 2, 'a2 sees the pinned notes of household A');
+update public.pinned_note set position = -1 where id = '70000000-0000-4000-8000-0000000000a2';
+select is((select updated_by from public.pinned_note where id = '70000000-0000-4000-8000-0000000000a2'),
+  '00000000-0000-4000-8000-0000000000a1'::uuid, 'moving a note does not make a2 its last editor');
+update public.pinned_note set body = 'Edited by a2' where id = '70000000-0000-4000-8000-0000000000a2';
+select is((select updated_by from public.pinned_note where id = '70000000-0000-4000-8000-0000000000a2'),
+  '00000000-0000-4000-8000-0000000000a2'::uuid, 'editing a note a1 added makes a2 its last editor');
+select is((select created_by from public.pinned_note where id = '70000000-0000-4000-8000-0000000000a2'),
+  '00000000-0000-4000-8000-0000000000a1'::uuid, 'and keeps its created_by');
+select lives_ok($$delete from public.pinned_note where id = '70000000-0000-4000-8000-0000000000a2'$$, 'a2 can delete a pinned note of household A');
 select lives_ok($$delete from public.entry where id = '40000000-0000-4000-8000-0000000000a2'$$, 'a2 can delete an entry of household A');
 select is((select count(*)::int from public.entry), 7, 'the deleted entry is gone');
 reset role;
@@ -335,6 +381,8 @@ select set_config('request.jwt.claims', '{"sub":"00000000-0000-4000-8000-0000000
 select is((select count(*)::int from public.entry), 1, 'b1 sees only the entry of dog B');
 select is((select note from public.entry where id = '40000000-0000-4000-8000-00000000000b'), '', 'a1 could not edit or delete B''s entry');
 select is((select title from public.event where id = '50000000-0000-4000-8000-00000000000b'), 'Check-up B', 'a1 could not edit or delete B''s event');
+select is((select count(*)::int from public.pinned_note), 1, 'b1 sees only the pinned note of dog B');
+select is((select body from public.pinned_note), 'Body B', 'a1 could not edit or delete B''s pinned note');
 select is((select count(*)::int from public.item), 1, 'b1 does not see the item a1 added');
 select is((select count(*)::int from public.schedule_slot), 1, 'b1 sees only the schedule slot of dog B');
 select is((select usual_time from public.day_part), '08:00'::time, 'b1 sees only dog B''s day-part time, which a1 could not change');

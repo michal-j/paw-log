@@ -1,0 +1,34 @@
+[
+ {
+  "id": "pin-001",
+  "dogId": "dog-demo",
+  "title": "Allergies",
+  "body": "None known. Watch for itching for two days after any new food.",
+  "position": 0,
+  "updatedOn": "2026-09-02"
+ },
+ {
+  "id": "pin-002",
+  "dogId": "dog-demo",
+  "title": "Bellavet dose",
+  "body": "Measured in bars on the syringe: 1 bar = 0,1 ml.\nUsual dose 1,5 bars with every meal.",
+  "position": 1,
+  "updatedOn": "2026-09-25"
+ },
+ {
+  "id": "pin-003",
+  "dogId": "dog-demo",
+  "title": "",
+  "body": "Gastrelle: mix the sachet into a spoon of wet food, not into the whole bowl.",
+  "position": 2,
+  "updatedOn": "2026-10-14"
+ },
+ {
+  "id": "pin-004",
+  "dogId": "dog-demo",
+  "title": "Next deworming",
+  "body": "Due in March (every 6 months).",
+  "position": 3,
+  "updatedOn": "2026-09-12"
+ }
+]

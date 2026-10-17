@@ -3,7 +3,7 @@ import { DemoRepository, type PlainDate, type Repository } from './data';
 import { DayView } from './day/DayView';
 import { useI18n } from './i18n';
 import { Brand } from './components/Brand';
-import { MenuIcon, PlusIcon, TimelineIcon, TrackedIcon } from './components/icons';
+import { MenuIcon, PinIcon, PlusIcon, TimelineIcon, TrackedIcon } from './components/icons';
 import { AddSheet } from './log/AddSheet';
 import { BackfillSheet } from './log/BackfillSheet';
 import { EntrySheet } from './log/EntrySheet';
@@ -11,7 +11,9 @@ import { EventSheet } from './log/EventSheet';
 import { LogProvider, useLog } from './log/LogProvider';
 import { MenuSheet } from './log/MenuSheet';
 import { SlotSheet } from './log/SlotSheet';
-import { conditionPath, dayPath, parseRoute, routePath, timelinePath, trackedPath, usualPath, type Route } from './routes';
+import { conditionPath, dayPath, parseRoute, routePath, tabPath, timelinePath, usualPath, type Route } from './routes';
+import { PinnedNotes } from './pinned/PinnedNotes';
+import { PinnedSheet } from './pinned/PinnedSheet';
 import { ConditionPage } from './tracked/ConditionPage';
 import { ConditionSheet, ResolveSheet } from './tracked/ConditionSheet';
 import { TrackedList } from './tracked/TrackedList';
@@ -138,11 +140,15 @@ function Shell({ repository, onSignOut }: { repository: Repository; onSignOut?: 
     setLoc({ route: date ? { base, view: 'day', date } : { base, view: 'timeline' }, scrollTop: 0 });
   }, [route, base]);
 
-  const openTracked = useCallback(() => {
-    if (route.view === 'tracked') return;
-    window.history.replaceState(null, '', trackedPath(base));
-    setLoc({ route: { base, view: 'tracked' }, scrollTop: 0 });
-  }, [route, base]);
+  /** The Pinned and Tracked tabs replace the current entry, like the Timeline tab does. */
+  const openTab = useCallback(
+    (view: 'pinned' | 'tracked') => {
+      close();
+      window.history.replaceState(null, '', tabPath(base, view));
+      setLoc({ route: { base, view }, scrollTop: 0 });
+    },
+    [base, close],
+  );
 
   /** A condition from the Tracked list, a tag in the Day view or another condition's page. */
   const openCondition = useCallback(
@@ -161,7 +167,7 @@ function Shell({ repository, onSignOut }: { repository: Repository; onSignOut?: 
       window.history.back();
       return;
     }
-    window.history.replaceState(null, '', trackedPath(base));
+    window.history.replaceState(null, '', tabPath(base, 'tracked'));
     setLoc({ route: { base, view: 'tracked' }, scrollTop: 0 });
   }, [base]);
 
@@ -200,6 +206,8 @@ function Shell({ repository, onSignOut }: { repository: Repository; onSignOut?: 
         />
       ) : route.view === 'usual' ? (
         <UsualDay date={route.date ?? today} onBack={leaveUsual} />
+      ) : route.view === 'pinned' ? (
+        <PinnedNotes />
       ) : route.view === 'tracked' ? (
         <TrackedList onOpen={openCondition} />
       ) : route.view === 'condition' ? (
@@ -217,6 +225,10 @@ function Shell({ repository, onSignOut }: { repository: Repository; onSignOut?: 
           <TimelineIcon active={route.view === 'timeline'} />
           {t('timeline')}
         </button>
+        <button type="button" className="nav__item" aria-current={route.view === 'pinned' ? 'page' : undefined} onClick={() => route.view !== 'pinned' && openTab('pinned')}>
+          <PinIcon active={route.view === 'pinned'} />
+          {t('copy.171')}
+        </button>
         <div className="nav__add-wrap">
           <button type="button" className="btn btn--primary nav__add" aria-haspopup="dialog" onClick={() => open({ kind: 'add', date: addDate })}>
             <PlusIcon />
@@ -225,9 +237,9 @@ function Shell({ repository, onSignOut }: { repository: Repository; onSignOut?: 
         </div>
         <button
           type="button"
-          className="nav__item nav__item--tracked"
+          className="nav__item"
           aria-current={route.view === 'tracked' || route.view === 'condition' ? 'page' : undefined}
-          onClick={openTracked}
+          onClick={() => route.view !== 'tracked' && openTab('tracked')}
         >
           <TrackedIcon active={route.view === 'tracked' || route.view === 'condition'} />
           {t('copy.173')}
@@ -281,6 +293,8 @@ function SheetHost({
       return <SlotSheet key={sheet.slot?.id ?? `new-${sheet.part}`} date={sheet.date} part={sheet.part} slot={sheet.slot} group={sheet.group} />;
     case 'backfill':
       return <BackfillSheet key={`backfill-${sheet.slot.id}`} slot={sheet.slot} />;
+    case 'pinned':
+      return <PinnedSheet key={sheet.note?.id ?? 'new'} note={sheet.note} />;
     case 'menu':
       return <MenuSheet onUsualDay={onUsualDay} onSignOut={onSignOut} onResetDemo={onResetDemo} />;
   }

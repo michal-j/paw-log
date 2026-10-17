@@ -12,7 +12,6 @@ import {
   normaliseDates,
   openConditions,
   orderConditions,
-  pluralForm,
   resolvedConditions,
 } from '../src/tracked/model';
 
@@ -48,11 +47,6 @@ describe('condition lists', () => {
     ]);
     expect(eventCount('stomach', events)).toBe(3); // photos are counted separately (JCB-7)
     expect(historyGroups('nothing', events)).toEqual([]);
-  });
-
-  it('plural forms: EN one/many, PL one/few/many', () => {
-    expect([1, 2, 5].map((n) => pluralForm(n, 'en'))).toEqual(['one', 'many', 'many']);
-    expect([1, 2, 4, 5, 12, 14, 22, 25].map((n) => pluralForm(n, 'pl'))).toEqual(['one', 'few', 'few', 'many', 'many', 'many', 'few', 'many']);
   });
 
   it('a resolved date before the start becomes the start', () => {

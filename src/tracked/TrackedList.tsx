@@ -3,8 +3,10 @@ import { ChevronIcon, PlusIcon, TrackedIcon } from '../components/icons';
 import { fill, useI18n, type MessageKey } from '../i18n';
 import { useFormat } from '../log/format';
 import { useLog } from '../log/LogProvider';
-import { eventCount, openConditions, pluralForm, resolvedConditions } from './model';
+import { pluralForm } from '../i18n/plural';
+import { eventCount, openConditions, resolvedConditions } from './model';
 import '../day/day.css';
+import '../components/list.css';
 import './tracked.css';
 
 const EVENTS: Record<'one' | 'few' | 'many', MessageKey> = { one: 'condEvents_one', few: 'condEvents_few', many: 'condEvents_many' };
@@ -23,7 +25,7 @@ export function TrackedList({ onOpen }: { onOpen: (id: string) => void }) {
   const meta = (c: Condition) => {
     const when = c.resolvedOn ? `${f.dayMonth(c.startedOn)} – ${f.dayMonth(c.resolvedOn)}` : fill(t('condSince'), { d: f.dayMonth(c.startedOn) });
     const n = records ? eventCount(c.id, records.events) : 0;
-    return [when, n ? fill(t(EVENTS[pluralForm(n, lang)]), { n }) : ''].filter(Boolean).join(' · ');
+    return [when, n ? fill(t(EVENTS[pluralForm(lang, n)]), { n }) : ''].filter(Boolean).join(' · ');
   };
   const card = (c: Condition) => (
     <button key={c.id} type="button" className={`day-card day-card--tap cond-card${c.resolvedOn ? ' cond-card--resolved' : ''}`} onClick={() => onOpen(c.id)}>

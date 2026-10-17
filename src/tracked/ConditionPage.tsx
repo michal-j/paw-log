@@ -11,6 +11,7 @@ import { useBusy } from '../log/useBusy';
 import { shiftDate } from '../timeline/model';
 import { conditionsOf, historyGroups } from './model';
 import '../day/day.css';
+import '../components/list.css';
 import './tracked.css';
 
 /**

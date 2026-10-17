@@ -255,7 +255,8 @@ select.input { padding: 0 var(--space-2); }
   z-index: 7;
   flex: none;
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  /* Timeline, Pinned, + Add (column 3), Tracked. When Search comes back this becomes 5 columns and + Add is centred again. */
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   padding: 6px var(--space-2) calc(6px + env(safe-area-inset-bottom));
   border-top: 1px solid var(--color-line);
   background: linear-gradient(180deg, var(--color-surface), var(--color-surface-tint));
@@ -282,7 +283,6 @@ select.input { padding: 0 var(--space-2); }
 .nav__item[aria-current='page'] { color: var(--color-mint-deep); font-weight: 700; }
 .nav__item[aria-current='page']::before { content: ''; position: absolute; top: -7px; width: 28px; height: 2px; background: var(--color-mint); }
 .nav__add-wrap { grid-column: 3; display: flex; align-items: center; justify-content: center; }
-.nav__item--tracked { grid-column: 4; }
 .nav__add { width: 100%; max-width: 76px; height: 40px; padding: 0 var(--space-2); border-radius: var(--radius-lg); font-weight: 700; }
 
 /* ---------- Header menu ---------- */
