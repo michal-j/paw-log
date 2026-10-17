@@ -1,0 +1,4 @@
+#,Where (code name),English,Polish,EN chars,PL chars,Fit note,Your notes
+D1,removedUsual,Removed from the usual day: {n},Usunięte ze zwykłego dnia: {n},31,30,"DRAFT pending CEO review; one quiet line at the bottom of the Day view, followed by "" · Restore""; {n} is a count, the colon avoids plural forms","JCB-60: deleted usual-day items are no longer shown as rows; replaces removedDay (B1) in the UI"
+D2,restore,Restore,Przywróć,7,8,"DRAFT pending CEO review; text button after removedUsual, puts the items back on the day as not logged",JCB-60
+D3,toastRestored,Back on the usual day: {n},Przywrócono do zwykłego dnia: {n},26,33,"DRAFT pending CEO review; toast with Undo; {n} is a count",JCB-60
