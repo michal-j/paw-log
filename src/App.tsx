@@ -3,7 +3,7 @@ import { DemoRepository, type PlainDate, type Repository } from './data';
 import { DayView } from './day/DayView';
 import { useI18n } from './i18n';
 import { Brand } from './components/Brand';
-import { MenuIcon, PlusIcon, TimelineIcon } from './components/icons';
+import { MenuIcon, PinIcon, PlusIcon, TimelineIcon, TrackedIcon } from './components/icons';
 import { AddSheet } from './log/AddSheet';
 import { BackfillSheet } from './log/BackfillSheet';
 import { EntrySheet } from './log/EntrySheet';
@@ -11,8 +11,11 @@ import { EventSheet } from './log/EventSheet';
 import { LogProvider, useLog } from './log/LogProvider';
 import { MenuSheet } from './log/MenuSheet';
 import { SlotSheet } from './log/SlotSheet';
-import { dayPath, parseRoute, routePath, timelinePath, usualPath, type Route } from './routes';
+import { dayPath, parseRoute, routePath, tabPath, timelinePath, usualPath, type Route } from './routes';
+import { PinnedNotes } from './pinned/PinnedNotes';
+import { PinnedSheet } from './pinned/PinnedSheet';
 import { Timeline } from './timeline/Timeline';
+import { TrackedPlaceholder } from './tracked/TrackedPlaceholder';
 import { UsualDay } from './usual/UsualDay';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import './components/controls.css';
@@ -135,6 +138,16 @@ function Shell({ repository, onSignOut }: { repository: Repository; onSignOut?: 
     setLoc({ route: date ? { base, view: 'day', date } : { base, view: 'timeline' }, scrollTop: 0 });
   }, [route, base]);
 
+  /** The Pinned and Tracked tabs replace the current entry, like the Timeline tab does. */
+  const openTab = useCallback(
+    (view: 'pinned' | 'tracked') => {
+      close();
+      window.history.replaceState(null, '', tabPath(base, view));
+      setLoc({ route: { base, view }, scrollTop: 0 });
+    },
+    [base, close],
+  );
+
   const resetDemo = useCallback(() => {
     if (repository instanceof DemoRepository) repository.reset();
     close();
@@ -163,6 +176,10 @@ function Shell({ repository, onSignOut }: { repository: Repository; onSignOut?: 
         <DayView date={route.date} onBack={toTimeline} onStep={stepDay} onInvalid={leaveInvalidDay} onUsualDay={openUsual} />
       ) : route.view === 'usual' ? (
         <UsualDay date={route.date ?? today} onBack={leaveUsual} />
+      ) : route.view === 'pinned' ? (
+        <PinnedNotes />
+      ) : route.view === 'tracked' ? (
+        <TrackedPlaceholder />
       ) : (
         <Timeline initialScrollTop={loc.scrollTop} dayHref={dayHref} onOpenDay={openDay} />
       )}
@@ -176,12 +193,20 @@ function Shell({ repository, onSignOut }: { repository: Repository; onSignOut?: 
           <TimelineIcon active={route.view === 'timeline'} />
           {t('timeline')}
         </button>
+        <button type="button" className="nav__item" aria-current={route.view === 'pinned' ? 'page' : undefined} onClick={() => route.view !== 'pinned' && openTab('pinned')}>
+          <PinIcon active={route.view === 'pinned'} />
+          {t('copy.171')}
+        </button>
         <div className="nav__add-wrap">
           <button type="button" className="btn btn--primary nav__add" aria-haspopup="dialog" onClick={() => open({ kind: 'add', date: addDate })}>
             <PlusIcon />
             {t('label.172')}
           </button>
         </div>
+        <button type="button" className="nav__item" aria-current={route.view === 'tracked' ? 'page' : undefined} onClick={() => route.view !== 'tracked' && openTab('tracked')}>
+          <TrackedIcon active={route.view === 'tracked'} />
+          {t('copy.173')}
+        </button>
       </nav>
       <SheetHost onShowDay={showDay} onUsualDay={() => openUsual(route.view === 'day' ? route.date : undefined)} onSignOut={onSignOut} onResetDemo={isDemo ? resetDemo : undefined} />
       <ToastHost />
@@ -213,6 +238,8 @@ function SheetHost({
       return <SlotSheet key={sheet.slot?.id ?? `new-${sheet.part}`} date={sheet.date} part={sheet.part} slot={sheet.slot} group={sheet.group} />;
     case 'backfill':
       return <BackfillSheet key={`backfill-${sheet.slot.id}`} slot={sheet.slot} />;
+    case 'pinned':
+      return <PinnedSheet key={sheet.note?.id ?? 'new'} note={sheet.note} />;
     case 'menu':
       return <MenuSheet onUsualDay={onUsualDay} onSignOut={onSignOut} onResetDemo={onResetDemo} />;
   }
