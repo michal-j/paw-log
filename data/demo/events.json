@@ -5,8 +5,7 @@
   "date": "2026-09-08",
   "type": "frontline",
   "title": "",
-  "detail": "Monthly flea and tick treatment given. Time of day not tracked.",
-  "issueId": null
+  "detail": "Monthly flea and tick treatment given. Time of day not tracked."
  },
  {
   "id": "event-002",
@@ -14,8 +13,7 @@
   "date": "2026-09-12",
   "type": "deworming",
   "title": "",
-  "detail": "Given every 6 months. Next one due in March.",
-  "issueId": null
+  "detail": "Given every 6 months. Next one due in March."
  },
  {
   "id": "event-003",
@@ -24,7 +22,6 @@
   "type": "symptom",
   "title": "Reflux",
   "detail": "",
-  "issueId": null,
   "intensity": "medium"
  },
  {
@@ -34,7 +31,6 @@
   "type": "symptom",
   "title": "Panting",
   "detail": "",
-  "issueId": null,
   "intensity": "small"
  },
  {
@@ -44,7 +40,6 @@
   "type": "symptom",
   "title": "Fear",
   "detail": "",
-  "issueId": null,
   "intensity": "large"
  },
  {
@@ -54,7 +49,6 @@
   "type": "symptom",
   "title": "Leakage",
   "detail": "",
-  "issueId": null,
   "props": {
    "quantity": "small"
   }
@@ -65,8 +59,7 @@
   "date": "2026-10-03",
   "type": "photo",
   "title": "Lump A photo",
-  "detail": "",
-  "issueId": "issue-lump-a"
+  "detail": ""
  },
  {
   "id": "event-008",
@@ -75,7 +68,6 @@
   "type": "symptom",
   "title": "Poo",
   "detail": "",
-  "issueId": null,
   "props": {
    "consistency": "diarrhea",
    "colour": "dark",
@@ -88,8 +80,7 @@
   "date": "2026-10-08",
   "type": "frontline",
   "title": "",
-  "detail": "Monthly flea and tick treatment given. Time of day not tracked.",
-  "issueId": null
+  "detail": "Monthly flea and tick treatment given. Time of day not tracked."
  },
  {
   "id": "event-010",
@@ -98,7 +89,6 @@
   "type": "symptom",
   "title": "Heartburn",
   "detail": "",
-  "issueId": null,
   "intensity": "medium"
  },
  {
@@ -107,8 +97,7 @@
   "date": "2026-10-10",
   "type": "photo",
   "title": "Lump A photo",
-  "detail": "",
-  "issueId": "issue-lump-a"
+  "detail": ""
  },
  {
   "id": "event-012",
@@ -117,7 +106,6 @@
   "type": "symptom",
   "title": "Stomach rumbling",
   "detail": "",
-  "issueId": null,
   "intensity": "small"
  },
  {
@@ -127,7 +115,6 @@
   "type": "symptom",
   "title": "Poo",
   "detail": "",
-  "issueId": null,
   "props": {
    "consistency": "soft",
    "colour": "normal",
@@ -141,7 +128,6 @@
   "type": "symptom",
   "title": "Restlessness",
   "detail": "Restless night and day. Refused breakfast. Weak and confused on walks, lay down a few times.",
-  "issueId": null,
   "intensity": "large"
  },
  {
@@ -151,7 +137,6 @@
   "type": "symptom",
   "title": "Vomit",
   "detail": "",
-  "issueId": null,
   "props": {
    "times": "1",
    "when": "morning"
@@ -163,8 +148,7 @@
   "date": "2026-10-14",
   "type": "vet",
   "title": "Maple Vet",
-  "detail": "Symptom consultation, stomach ultrasound, limb check (X-ray of front paws recommended). Gastrelle prescribed.",
-  "issueId": null
+  "detail": "Symptom consultation, stomach ultrasound, limb check (X-ray of front paws recommended). Gastrelle prescribed."
  },
  {
   "id": "event-017",
@@ -173,7 +157,6 @@
   "type": "vet",
   "title": "Riverside Vet",
   "detail": "Blood pressure check: high, 150–160. Further consultation.",
-  "issueId": null,
   "alsoDone": [
    "anal_glands",
    "nails"

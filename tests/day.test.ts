@@ -18,7 +18,7 @@ const entry = (id: string, date: string, dayPart: Entry['dayPart'], itemId: stri
   id, dogId: 'd', date, dayPart, itemId, amount: 1, unit: 'pill', flavour: '', state, note: '', createdBy: 'm',
 });
 const event = (id: string, date: string, type: HealthEvent['type']): HealthEvent => ({
-  id, dogId: 'd', date, type, title: id, detail: '', issueId: null,
+  id, dogId: 'd', date, type, title: id, detail: '', conditionIds: [],
 });
 
 describe('day dates and bounds', () => {

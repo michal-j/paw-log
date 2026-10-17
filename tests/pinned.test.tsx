@@ -217,12 +217,12 @@ describe('Pinned screen (demo)', () => {
     expect(within(dialog()).getByRole('heading', { name: 'Edytuj przypiętą notatkę' })).toBeTruthy();
   });
 
-  it('the Tracked tab shows a placeholder, and the tabs switch screens', async () => {
+  it('the Tracked tab shows the Tracked list (JCB-6), and the tabs switch screens', async () => {
     mount(new DemoRepository(null));
     await screen.findByText('4 notes');
     const nav = within(screen.getByRole('navigation'));
     fireEvent.click(nav.getByRole('button', { name: 'Tracked' }));
-    expect(await screen.findByRole('heading', { name: 'Tracked' })).toBeTruthy();
+    expect(await screen.findByRole('heading', { name: 'Tracked conditions' })).toBeTruthy();
     expect(window.location.pathname).toBe('/demo/tracked');
     fireEvent.click(nav.getByRole('button', { name: 'Timeline' }));
     expect(await screen.findByText('October 2026')).toBeTruthy();
