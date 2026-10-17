@@ -300,7 +300,9 @@ export class SupabaseRepository implements Repository {
         .select(ITEM_COLUMNS)
         .eq('dog_id', dog.id)
         .order('position')
-        .order('created_at'),
+        .order('created_at')
+        // Same order as the item-colour migration, ties included (JCB-59).
+        .order('id'),
     );
     return rows.map(toItem);
   }

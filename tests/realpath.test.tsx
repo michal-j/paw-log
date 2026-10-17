@@ -184,8 +184,8 @@ describe('real data path', () => {
     fireEvent.click(within(dialog()).getByRole('radio', { name: 'Other' }));
     fireEvent.change(within(dialog()).getByLabelText('Name of the medication'), { target: { value: 'Testamol' } });
     const colours = within(dialog()).getByRole('radiogroup', { name: 'Colour' });
-    // Seed uses food-cooked, food-farm, med-arvelin, med-bellavet and treat: food-ocean is the first free one.
-    expect(within(colours).getByRole('radio', { name: 'Colour 3' }).getAttribute('aria-checked')).toBe('true');
+    // Seed uses food-cooked, food-farm, med-arvelin, med-bellavet and treat: med-gastrelle is the first free medication one.
+    expect(within(colours).getByRole('radio', { name: 'Colour 6' }).getAttribute('aria-checked')).toBe('true');
     fireEvent.click(within(colours).getByRole('radio', { name: 'Colour 7' }));
     fireEvent.click(within(dialog()).getByRole('radio', { name: '1' }));
     click('Save');
@@ -379,10 +379,10 @@ describe('item colours and the item editor (JCB-59)', () => {
     await screen.findAllByText('Cooked meal');
     click('Add to Breakfast');
     fireEvent.click(within(dialog()).getByText('Food'));
-    // In lane order: Cooked meal (10) → food-cooked, Arvelin (30) → food-ocean, Treat (90) → med-arvelin
-    // (Farm Fresh and Bellavet keep food-farm and med-bellavet).
+    // In lane order, own kind first: Cooked meal (10) → food-cooked, Arvelin (30) → med-arvelin,
+    // Treat (90) → treat (Farm Fresh and Bellavet keep food-farm and med-bellavet).
     expect(markOf(within(dialog()).getByRole('radio', { name: 'Cooked meal' }))).toBe('var(--color-food-cooked)');
-    expect(markOf(within(dialog()).getByRole('radio', { name: 'Treat' }))).toBe('var(--color-med-arvelin)');
+    expect(markOf(within(dialog()).getByRole('radio', { name: 'Treat' }))).toBe('var(--color-treat)');
     expect(document.querySelector('.dose-mark[style*="mark-neutral"]')).toBeNull();
   });
 
@@ -425,7 +425,7 @@ describe('item colours and the item editor (JCB-59)', () => {
     expect(await screen.findByRole('heading', { name: 'Usual day item' })).toBeTruthy();
     click('Edit item');
     const colours = within(dialog()).getByRole('radiogroup', { name: 'Colour' });
-    expect(within(colours).getByRole('radio', { name: 'Colour 3' }).getAttribute('aria-checked')).toBe('true');
+    expect(within(colours).getByRole('radio', { name: 'Colour 4' }).getAttribute('aria-checked')).toBe('true');
     fireEvent.click(within(colours).getByRole('radio', { name: 'Colour 5' }));
     fireEvent.change(within(dialog()).getByLabelText('Name'), { target: { value: '  ' } });
     click('Save');
@@ -452,4 +452,46 @@ describe('item colours and the item editor (JCB-59)', () => {
     expect(await screen.findByText('Saved')).toBeTruthy();
     expect(await rows(`select colour from item where name = 'Test stew'`)).toEqual([{ colour: 'food-ocean' }]);
   });
+
+  it('saving one grey item never changes the colour shown for another', async () => {
+    await at('/usual/2026-10-15', '2026-10-01', GREY);
+    await screen.findByRole('heading', { name: 'Usual day' });
+    const cooked = () => markOf(screen.getAllByText('Cooked meal')[0]!.closest('.day-item'));
+    await waitFor(() => expect(cooked()).toBe('var(--color-food-cooked)'));
+    // Arvelin (grey, shown med-arvelin) is saved with food-cooked, the colour Cooked meal shows.
+    fireEvent.click((await screen.findAllByText(/Arvelin/))[0]!);
+    click('Edit item');
+    fireEvent.click(within(within(dialog()).getByRole('radiogroup', { name: 'Colour' })).getByRole('radio', { name: 'Colour 1' }));
+    click('Save');
+    expect(await screen.findByText('Item saved')).toBeTruthy();
+    expect(await rows(`select colour from item where id = '${SEED.items.arvelin}'`)).toEqual([{ colour: 'food-cooked' }]);
+    click('Close');
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+    expect(cooked()).toBe('var(--color-food-cooked)');
+  });
+
+  it('a second new item never gets the colour the first one just took', async () => {
+    await at('/day/2026-10-15');
+    await screen.findAllByText('Cooked meal');
+    for (const [name, swatch] of [
+      ['Testamol', 'Colour 6'],
+      ['Testex', 'Colour 7'],
+    ] as const) {
+      click('Add to Breakfast');
+      fireEvent.click(within(dialog()).getByText('Medication'));
+      fireEvent.click(within(dialog()).getAllByRole('radio', { name: 'Other' })[0]!);
+      fireEvent.change(within(dialog()).getByLabelText('Name of the medication'), { target: { value: name } });
+      const colours = within(dialog()).getByRole('radiogroup', { name: 'Colour' });
+      expect(within(colours).getByRole('radio', { name: swatch }).getAttribute('aria-checked')).toBe('true');
+      fireEvent.click(within(dialog()).getByRole('radio', { name: '1' }));
+      click('Save');
+      await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+      await screen.findByText(name);
+    }
+    expect(await rows(`select name, colour from item where name like 'Test%' order by name`)).toEqual([
+      { name: 'Testamol', colour: 'med-gastrelle' },
+      { name: 'Testex', colour: 'med-biomend' },
+    ]);
+  });
 });
+

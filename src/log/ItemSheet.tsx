@@ -35,7 +35,7 @@ export function ItemSheet({ item, onDone }: { item: Item; onDone: () => void }) 
   const group = groupOf(item.kind);
   const [name, setName] = useState(item.name);
   const [colour, setColour] = useState(() =>
-    isItemColour(item.colour) ? item.colour : nextColour(records?.items.filter((i) => i.id !== item.id) ?? []),
+    isItemColour(item.colour) ? item.colour : nextColour(records?.items.filter((i) => i.id !== item.id) ?? [], item.kind),
   );
   const [unit, setUnit] = useState<Unit>(item.defaultUnit ?? defaultUnitFor(group));
   const [flavours, setFlavours] = useState<string[]>(item.flavours ?? []);

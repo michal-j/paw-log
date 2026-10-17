@@ -7,7 +7,7 @@ import { markSize, shiftDate } from '../timeline/model';
 import * as act from './actions';
 import { defaultUnitFor, groupOf, type KindGroup } from './amount';
 import { AmountFields, ColourPicker, FlavourPicker, ItemPicker, OTHER, amountValue, type AmountValue } from './fields';
-import { nextColour, withFlavour } from './items';
+import { nextColourFor, withFlavour } from './items';
 import { ItemSheet } from './ItemSheet';
 import { useFormat } from './format';
 import { useBusy } from './useBusy';
@@ -21,8 +21,8 @@ interface Form {
   itemId: string | null;
   otherGroup: KindGroup;
   otherName: string;
-  /** A new item's colour (an existing item's is changed under Edit item). */
-  colour: string;
+  /** A new item's colour if picked; null: the next unused one, worked out when shown and saved (an existing item's is changed under Edit item). */
+  colour: string | null;
   flavour: string;
   amount: AmountValue;
   from: PlainDate;
@@ -53,7 +53,7 @@ export function SlotSheet({ date, part, slot, group: onlyGroup }: { date: PlainD
       itemId: slot?.itemId ?? null,
       otherGroup: onlyGroup ?? 'med',
       otherName: '',
-      colour: item ? item.colour : records ? nextColour(records.items) : 'mark-neutral',
+      colour: null,
       flavour: slot?.flavour ?? '',
       amount: amountValue(slot ? slot.amount : null, unit),
       from,
@@ -72,11 +72,13 @@ export function SlotSheet({ date, part, slot, group: onlyGroup }: { date: PlainD
 
   const item = records.items.find((i) => i.id === form.itemId) ?? null;
   const group: KindGroup = item ? groupOf(item.kind) : form.otherGroup;
+  // A new item's colour: the one picked, else the next unused one for the items as they are now (JCB-59).
+  const newColour = form.colour ?? nextColourFor(records.items, form.otherGroup);
   const pick = (id: string, g: KindGroup) => {
     if (id === OTHER) return set({ itemId: OTHER, otherGroup: g, flavour: '', err: null, amount: amountValue(1, defaultUnitFor(g)) });
     const it = records.items.find((i) => i.id === id);
     const unit = it?.defaultUnit ?? defaultUnitFor(g);
-    set({ itemId: id, otherName: '', colour: it?.colour ?? form.colour, flavour: it?.flavours?.[0] ?? '', amount: amountValue(unit === 'ml' || unit === 'g' ? null : 1, unit), err: null });
+    set({ itemId: id, otherName: '', flavour: it?.flavours?.[0] ?? '', amount: amountValue(unit === 'ml' || unit === 'g' ? null : 1, unit), err: null });
   };
   const groupItems = (g: KindGroup) => records.items.filter((i) => groupOf(i.kind) === g);
 
@@ -90,7 +92,7 @@ export function SlotSheet({ date, part, slot, group: onlyGroup }: { date: PlainD
           dogId: records.dogId,
           kind: form.otherGroup === 'food' ? 'food' : 'medication',
           name: form.otherName.trim(),
-          colour: form.colour,
+          colour: newColour,
           defaultDayPart: part,
           activeFrom: form.from,
           activeTo: null,
@@ -221,7 +223,7 @@ export function SlotSheet({ date, part, slot, group: onlyGroup }: { date: PlainD
       {form.itemId && (
         <>
           {form.itemId === OTHER && (
-            <ColourPicker value={form.colour} size={group === 'food' ? 'food' : 'small'} onPick={(c) => set({ colour: c })} />
+            <ColourPicker value={newColour} size={group === 'food' ? 'food' : 'small'} onPick={(c) => set({ colour: c })} />
           )}
           <FlavourPicker flavours={item?.flavours ?? []} value={form.flavour} canAdd={group === 'food'} onPick={(x) => set({ flavour: x })} />
           <AmountFields

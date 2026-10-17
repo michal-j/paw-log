@@ -6,7 +6,7 @@ import { markSize } from '../timeline/model';
 import * as act from './actions';
 import { defaultUnitFor, groupOf, sameAmount, type KindGroup } from './amount';
 import { AmountFields, ColourPicker, DateLine, FlavourPicker, ItemPicker, OTHER, StatePicker, amountValue, type AmountValue } from './fields';
-import { lastUsed, nextColour, withFlavour } from './items';
+import { lastUsed, nextColourFor, withFlavour } from './items';
 import { ItemSheet } from './ItemSheet';
 import { useFormat } from './format';
 import { useBusy } from './useBusy';
@@ -18,8 +18,8 @@ interface Form {
   part: DayPart;
   itemId: string | null;
   otherName: string;
-  /** Colour of a new item typed under Other. */
-  colour: string;
+  /** Colour picked for a new item typed under Other; null: the next unused one, worked out when shown and saved. */
+  colour: string | null;
   flavour: string;
   amount: AmountValue;
   state: EntryState;
@@ -107,8 +107,7 @@ export function EntrySheet({
         part: entry.dayPart,
         itemId: entry.itemId,
         otherName: '',
-        // Picking Other while editing makes a new item: it gets an unused colour too (JCB-59).
-        colour: records ? nextColour(records.items) : 'mark-neutral',
+        colour: null,
         flavour: entry.flavour,
         amount: amountValue(entry.amount, unit),
         state: entry.state,
@@ -123,7 +122,7 @@ export function EntrySheet({
       part,
       itemId: null,
       otherName: '',
-      colour: records ? nextColour(records.items) : 'mark-neutral',
+      colour: null,
       flavour: '',
       amount: amountValue(null, defaultUnitFor(group)),
       state: 'given',
@@ -150,6 +149,8 @@ export function EntrySheet({
   if (editing) return <ItemSheet item={editing} onDone={() => setEditing(null)} />;
 
   const item = records.items.find((i) => i.id === form.itemId) ?? null;
+  // A new item's colour: the one picked, else the next unused one for the items as they are now (JCB-59).
+  const newColour = form.colour ?? nextColourFor(records.items, group);
   const selfId = entry?.id ?? replaces?.id;
   // The slot this sheet was opened for: a planned or removed row's slot, or the one the edited entry fills.
   const anchorSlot = entry ? (matchDay(entry.date, records.slots, records.entries).slotOf.get(entry.id) ?? null) : (slot ?? null);
@@ -180,7 +181,7 @@ export function EntrySheet({
           dogId: dog.id,
           kind: group === 'food' ? 'food' : 'medication',
           name: form.otherName.trim(),
-          colour: form.colour,
+          colour: newColour,
           defaultDayPart: form.part,
           activeFrom: form.date,
           activeTo: null,
@@ -279,7 +280,7 @@ export function EntrySheet({
       {form.itemId && (
         <>
           {form.itemId === OTHER && (
-            <ColourPicker value={form.colour} size={group === 'food' ? 'food' : 'small'} onPick={(c) => set({ colour: c })} />
+            <ColourPicker value={newColour} size={group === 'food' ? 'food' : 'small'} onPick={(c) => set({ colour: c })} />
           )}
           <FlavourPicker flavours={item?.flavours ?? []} value={form.flavour} canAdd={group === 'food'} onPick={(x) => set({ flavour: x })} />
           <AmountFields
