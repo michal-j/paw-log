@@ -478,6 +478,23 @@ export async function createFakeBackend(options: { start?: string; seed?: boolea
       log.push({ method: request.method, table, status, query: url.pathname });
       return new Response(payload as BodyInit, { status, headers: { 'Content-Type': type ?? 'application/json' } });
     }
+    const rpc = /^\/rest\/v1\/rpc\/([a-z_]+)$/.exec(url.pathname);
+    if (rpc && request.method === 'POST') {
+      // Functions called as the user, with named arguments (PostgREST rpc); void results answer 204.
+      const args = (await request.json()) as Record<string, unknown>;
+      const keys = Object.keys(args);
+      let status = 204;
+      let payload = '';
+      try {
+        await asUser((tx) => tx.query(`select public.${q(rpc[1] as string)}(${keys.map((k, i) => `${q(k)} => $${i + 1}`).join(', ')})`, keys.map((k) => args[k])));
+      } catch (err) {
+        const e = err as { code?: string; message?: string };
+        status = statusOf(e.code);
+        payload = JSON.stringify({ code: e.code ?? '', message: e.message ?? String(err), details: null, hint: null });
+      }
+      log.push({ method: request.method, table: `rpc/${rpc[1]}`, status, query: url.search });
+      return new Response(payload || null, { status, headers: { 'Content-Type': 'application/json' } });
+    }
     if (!match) return new Response(JSON.stringify({ message: 'not found' }), { status: 404 });
     const text = request.method === 'GET' || request.method === 'DELETE' ? '' : await request.text();
     let status: number;

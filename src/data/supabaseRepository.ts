@@ -273,6 +273,7 @@ export const toPinnedNote = (r: PinnedNoteRow): PinnedNote => ({
   body: r.body,
   position: r.position ?? 0,
   updatedOn: localDate(new Date(r.updated_at)),
+  updatedAt: r.updated_at,
   createdBy: r.created_by ?? '',
   updatedBy: r.updated_by ?? '',
 });
@@ -763,6 +764,25 @@ export class SupabaseRepository implements Repository {
   async savePinnedNote(note: PinnedNote): Promise<void> {
     requireUuid('savePinnedNote', note.id);
     unwrap('savePinnedNote', await this.client.from('pinned_note').upsert(fromPinnedNote(note), { onConflict: 'id' }));
+  }
+
+  async restorePinnedNote(note: PinnedNote): Promise<void> {
+    requireUuid('restorePinnedNote', note.id);
+    // The exact time when known; else noon of the day it showed (a date shows the same day).
+    const at = note.updatedAt ?? (note.updatedOn ? new Date(`${note.updatedOn}T12:00:00`).toISOString() : new Date().toISOString());
+    unwrap(
+      'restorePinnedNote',
+      await this.client.rpc('restore_pinned_note', {
+        p_id: note.id,
+        p_dog_id: note.dogId,
+        p_title: note.title,
+        p_body: note.body,
+        p_position: note.position,
+        p_created_by: note.createdBy || null,
+        p_updated_by: note.updatedBy || null,
+        p_updated_at: at,
+      }),
+    );
   }
 
   async deletePinnedNote(id: string): Promise<void> {

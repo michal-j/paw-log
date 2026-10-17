@@ -90,6 +90,11 @@ export interface Repository {
    * changing only `position` does not.
    */
   savePinnedNote(note: PinnedNote): Promise<void>;
+  /**
+   * Undo of an edit or a delete: put the note back exactly as it was, keeping its `updatedOn` and
+   * `updatedBy` (and `createdBy`) instead of stamping the restore as a new edit.
+   */
+  restorePinnedNote(note: PinnedNote): Promise<void>;
   deletePinnedNote(id: string): Promise<void>;
   /** Set the order: the note with ids[0] first. Only `position` changes; ids that are gone are ignored. */
   reorderPinnedNotes(ids: string[]): Promise<void>;

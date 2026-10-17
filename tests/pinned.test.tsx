@@ -72,6 +72,28 @@ describe.each(subjects)('pinned notes on %s', (_name, make) => {
     expect(Object.fromEntries(moved.map((n) => [n.id, n.updatedOn]))).toEqual(before);
   });
 
+  it('restore puts a note back with its original edit stamp, not the day of the undo', async () => {
+    const { repo, note } = await setup();
+    const a = note({ title: 'Old', body: 'Original text' });
+    await repo.savePinnedNote(a);
+    const [saved] = await repo.listPinnedNotes();
+    // As the Undo of an edit sees it: the note as it was before, from an older day.
+    const before = { ...(saved as PinnedNote), updatedOn: '2026-09-01', updatedAt: '2026-09-01T10:00:00.000Z' };
+    await repo.savePinnedNote({ ...a, body: 'Edited text' });
+    await repo.restorePinnedNote(before);
+    const [back] = await repo.listPinnedNotes();
+    expect(back?.body).toBe('Original text');
+    expect(back?.updatedOn).toBe('2026-09-01');
+    // The same after an undone delete: a note that is gone comes back with its stamp.
+    await repo.deletePinnedNote(a.id);
+    await repo.restorePinnedNote(before);
+    const [again] = await repo.listPinnedNotes();
+    expect([again?.id, again?.body, again?.updatedOn]).toEqual([a.id, 'Original text', '2026-09-01']);
+    // A real edit afterwards is stamped as an edit again.
+    await repo.savePinnedNote({ ...(again as PinnedNote), body: 'Newer' });
+    expect((await repo.listPinnedNotes())[0]?.updatedOn).not.toBe('2026-09-01');
+  });
+
   it('reorder sets the order from the ids and ignores ids that are gone', async () => {
     const { repo, note } = await setup();
     const [a, b, c] = [note({ position: 5 }), note({ position: 6 }), note({ position: 7 })];
