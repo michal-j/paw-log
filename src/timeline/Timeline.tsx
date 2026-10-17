@@ -103,7 +103,7 @@ export function Timeline({ initialScrollTop = 0, dayHref, onOpenDay }: Props) {
     const measure = () => {
       setViewport(el.clientHeight);
       // A new height changes the scroll range, and with it which row the focus is on near the end.
-      if (data && railHold.current === null) setFocusIndex(rowIndexAt(data.timeline.rows, focusAt(el, data.timeline.span)));
+      if (data && railHold.current === null) setFocusIndex(rowIndexAt(data.timeline.rows, focusAt(el)));
     };
     measure();
     if (typeof ResizeObserver === 'undefined') return;
@@ -120,7 +120,7 @@ export function Timeline({ initialScrollTop = 0, dayHref, onOpenDay }: Props) {
     restored.current = true;
     if (initialScrollTop > 0) {
       el.scrollTop = initialScrollTop;
-      setFocusIndex(rowIndexAt(data.timeline.rows, focusAt(el, data.timeline.span)));
+      setFocusIndex(rowIndexAt(data.timeline.rows, focusAt(el)));
       setScrollTop(el.scrollTop);
     }
   }, [data, viewport, initialScrollTop]);
@@ -181,7 +181,7 @@ export function Timeline({ initialScrollTop = 0, dayHref, onOpenDay }: Props) {
     const held = railHold.current !== null && Math.abs(el.scrollTop - railHold.current) <= 1;
     if (!held) {
       railHold.current = null;
-      const i = rowIndexAt(rows, focusAt(el, span));
+      const i = rowIndexAt(rows, focusAt(el));
       if (i !== focusIndex) setFocusIndex(i);
     }
     rewindow(el);
@@ -199,6 +199,18 @@ export function Timeline({ initialScrollTop = 0, dayHref, onOpenDay }: Props) {
     setFocusIndex(rowIndexAt(rows, target.focus));
     setScrubY(Math.max(0, Math.min(rect.height, y)));
     rewindow(list);
+  };
+
+  // Letting go: a list that can scroll hands the focus back to its top row (the Key sits on the row
+  // below it); one that cannot (a short log) keeps the dragged day.
+  const endScrub = () => {
+    dragging.current = false;
+    setScrubY(null);
+    const el = listRef.current;
+    if (el && el.scrollHeight - el.clientHeight > 1) {
+      railHold.current = null;
+      setFocusIndex(rowIndexAt(rows, focusAt(el)));
+    }
   };
 
   const scrubLabel = !focusRow ? '' : focusRow.kind === 'day' ? fmt.full(focusRow.date) : fmt.month(focusRow.month);
@@ -354,14 +366,8 @@ export function Timeline({ initialScrollTop = 0, dayHref, onOpenDay }: Props) {
             scrubTo(e);
           }}
           onPointerMove={(e) => dragging.current && scrubTo(e)}
-          onPointerUp={() => {
-            dragging.current = false;
-            setScrubY(null);
-          }}
-          onPointerCancel={() => {
-            dragging.current = false;
-            setScrubY(null);
-          }}
+          onPointerUp={endScrub}
+          onPointerCancel={endScrub}
         >
           {ticks.map((k) => {
             const active = k.offset === activeTick;
@@ -399,8 +405,8 @@ export function Timeline({ initialScrollTop = 0, dayHref, onOpenDay }: Props) {
 }
 
 /** The row offset the Key and the rail describe for the list's current scroll position. */
-function focusAt(el: HTMLElement, span: number): number {
-  return focusOffset(el.scrollTop, span, el.scrollHeight - el.clientHeight);
+function focusAt(el: HTMLElement): number {
+  return focusOffset(el.scrollTop);
 }
 
 function ColumnBox({ col, hidden, children }: { col: Column; hidden?: boolean; children: ReactNode }) {
