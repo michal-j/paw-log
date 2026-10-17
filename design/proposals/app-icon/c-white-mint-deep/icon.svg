@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+<title>PawLog app icon, option C · White, mint-deep paw</title>
+<defs><linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+  <stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#e8faf2"/></linearGradient>
+<linearGradient id="gl" gradientUnits="userSpaceOnUse" x1="0" y1="4" x2="0" y2="19.3">
+  <stop offset="0" stop-color="#1fd38a"/><stop offset="1" stop-color="#0a7a52"/></linearGradient></defs>
+<rect width="1024" height="1024" fill="url(#bg)"/>
+<g ><g fill="url(#gl)" transform="translate(512.0 512.0) scale(36.215) translate(-12.4 -11.65)">
+<ellipse cx="6.2" cy="11" rx="2" ry="2.6"/>
+<ellipse cx="10.2" cy="6.6" rx="2" ry="2.6"/>
+<ellipse cx="15" cy="6.6" rx="2" ry="2.6"/>
+<ellipse cx="18.6" cy="11" rx="2" ry="2.6"/>
+<path d="M12.4 11.4c2.6 0 5.2 2.9 5.2 5.4 0 1.8-1.5 2.7-3 2.4-.8-.2-1.4-.5-2.2-.5s-1.4.3-2.2.5c-1.5.3-3-.6-3-2.4 0-2.5 2.6-5.4 5.2-5.4z"/>
+</g></g>
+</svg>

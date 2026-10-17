@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>PawLog app icon options</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@600&family=Onest:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+  /* Values copied from docs/design-system/tokens.json */
+  :root {
+    --ground: #f6f8f7; --surface: #ffffff; --surface-tint: #fafcfb;
+    --ink: #0e1512; --ink-2: #46504b; --ink-3: #6b756f;
+    --line: #e6ebe8; --line-strong: #d5dcd8;
+    --mint: #1fd38a; --mint-deep: #0a7a52; --mint-bg: #e8faf2; --mint-line: #bdebd6; --on-mint: #04251a;
+    --food-cooked: #bfe04a; --food-farm: #c99d6c; --food-ocean: #ff9585;
+    --med-arvelin: #86b1f7; --med-bellavet: #ffb85c; --med-gastrelle: #b59bf2; --med-biomend: #5dcfc8;
+    --med-calmora: #a8b3c0; --treat: #f486c3; --mark-neutral: #a3aea8;
+    --radius-md: 8px; --radius-lg: 12px;
+    --shadow-card: 0 1px 2px rgba(14,21,18,0.04), 0 4px 14px -6px rgba(14,21,18,0.10);
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--ground); color: var(--ink); font: 400 15px/1.45 Onest, system-ui, sans-serif; }
+  main { max-width: 1240px; margin: 0 auto; padding: 32px 16px 64px; }
+  h1 { font: 600 26px/1.2 "Instrument Sans", sans-serif; margin: 0 0 6px; }
+  h2 { font: 600 20px/1.25 "Instrument Sans", sans-serif; margin: 0 0 4px; }
+  h3 { font: 600 13px/1.3 Onest, sans-serif; color: var(--ink-2); margin: 0 0 8px; text-transform: uppercase; letter-spacing: .04em; }
+  p { margin: 0 0 8px; color: var(--ink-2); max-width: 72ch; }
+  .lead { margin-bottom: 28px; }
+  .rec { display: inline-block; font-size: 12px; font-weight: 600; color: var(--mint-deep); background: var(--mint-bg);
+         border: 1px solid var(--mint-line); border-radius: var(--radius-md); padding: 2px 8px; margin-left: 8px; vertical-align: 3px; }
+  section.option { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-lg);
+                   box-shadow: var(--shadow-card); padding: 24px; margin-bottom: 28px; }
+  .phones { display: flex; gap: 24px; flex-wrap: wrap; margin: 20px 0 24px; }
+  .assets { display: flex; gap: 24px; flex-wrap: wrap; align-items: flex-end; border-top: 1px solid var(--line); padding-top: 20px; }
+  .asset { display: flex; flex-direction: column; gap: 6px; font-size: 12px; color: var(--ink-3); }
+  .asset img { display: block; border: 1px solid var(--line); }
+  .asset a { color: var(--mint-deep); }
+  .masked { border-radius: 50%; border: 0 !important; }
+  .safe { position: relative; }
+  .safe::after { content: ""; position: absolute; left: 10%; top: 10%; width: 80%; height: 80%; border-radius: 50%;
+                 border: 1.5px dashed var(--ink); opacity: .45; pointer-events: none; }
+  .squircle { border-radius: 22.37%; border: 0 !important; }
+
+  /* iPhone 15 / 16 home screen, 390 x 844 pt. 1 CSS px = 1 pt, so at 100% browser zoom this is real size. */
+  .phone { width: 390px; height: 844px; border-radius: 48px; position: relative; overflow: hidden; flex: none;
+           box-shadow: 0 0 0 10px var(--ink), 0 0 0 11px var(--ink-2), 0 20px 40px -12px rgba(14,21,18,.35); margin: 11px; }
+  .phone.light { background: linear-gradient(160deg, var(--mint-bg) 0%, var(--surface-tint) 38%, var(--med-arvelin) 120%); color: var(--ink); }
+  .phone.dark  { background: linear-gradient(160deg, var(--on-mint) 0%, var(--ink) 55%, var(--ink-2) 140%); color: var(--surface); }
+  .status { height: 54px; display: flex; justify-content: space-between; align-items: center; padding: 14px 34px 0 50px;
+            font: 600 17px/1 -apple-system, "SF Pro Text", system-ui, sans-serif; }
+  .island { position: absolute; top: 11px; left: 50%; width: 126px; height: 37px; margin-left: -63px; border-radius: 20px; background: var(--ink); }
+  .bars { display: flex; gap: 2px; align-items: flex-end; }
+  .bars i { width: 3px; background: currentColor; border-radius: 1px; }
+  .grid { display: grid; grid-template-columns: repeat(4, 64px); justify-content: space-between; row-gap: 26px; padding: 24px 27px 0; }
+  .app { display: flex; flex-direction: column; align-items: center; gap: 6px; width: 64px; }
+  .tile { width: 64px; height: 64px; border-radius: 14.3px; display: block; }
+  .tile.ph { opacity: .9; }
+  .app span { font: 400 12px/1 -apple-system, "SF Pro Text", system-ui, sans-serif; white-space: nowrap; }
+  .phone.light .app span { color: var(--ink); }
+  .search { position: absolute; bottom: 124px; left: 50%; transform: translateX(-50%); padding: 7px 14px; border-radius: 16px;
+            font: 500 13px/1 -apple-system, system-ui, sans-serif; }
+  .phone.light .search { background: rgba(14,21,18,.10); color: var(--ink-2); }
+  .phone.dark .search { background: rgba(255,255,255,.16); color: var(--surface); }
+  .dock { position: absolute; left: 12px; right: 12px; bottom: 12px; height: 96px; border-radius: 34px;
+          display: flex; justify-content: space-around; align-items: center; padding: 0 14px; }
+  .phone.light .dock { background: rgba(255,255,255,.45); }
+  .phone.dark .dock { background: rgba(255,255,255,.14); }
+  .caption { font-size: 12px; color: var(--ink-3); text-align: center; margin-top: 14px; }
+  .phonewrap { display: flex; flex-direction: column; }
+  /* Narrow screens: shrink the phones to fit (no longer real size). */
+  @media (max-width: 460px) { .phonewrap { zoom: .8; } section.option { padding: 16px; } }
+</style>
+</head>
+<body>
+<main>
+  <h1>PawLog home-screen icon · JCB-63</h1>
+  <p class="lead">Three options for the iPhone home-screen icon, all built from the header brand mark's paw glyph
+    (<code>src/components/Brand.tsx</code>) and token colours only. Each phone below is 390 × 844 pt with 64 pt icons,
+    so at 100% browser zoom it is real size. The phones show the 180 px <code>apple-touch-icon.png</code>, which iOS masks itself.</p>
+  <div id="options"></div>
+</main>
+
+<template id="phone">
+  <div class="phonewrap">
+    <div class="phone">
+      <div class="island"></div>
+      <div class="status"><span>9:41</span><span class="bars"><i style="height:5px"></i><i style="height:7px"></i><i style="height:9px"></i><i style="height:11px"></i></span></div>
+      <div class="grid"></div>
+      <div class="search">Search</div>
+      <div class="dock"></div>
+    </div>
+    <div class="caption"></div>
+  </div>
+</template>
+
+<script>
+  const OPTIONS = [
+    { dir: 'a-mint-gradient', name: 'A · Mint gradient, white paw', rec: true,
+      text: 'mint-top → mint vertical gradient (the primary-button gradient), white paw with a soft mint-deep shadow. The most iOS-like: bright, simple, one colour, reads well on both wallpapers.' },
+    { dir: 'b-mint-ink', name: 'B · Mint gradient, on-mint paw',
+      text: 'Same background, paw in on-mint, exactly like the header mark (on-mint on mint is 9:1). Strongest contrast and a 1:1 match with the in-app brand, but the near-black paw reads heavier than typical iOS icons.' },
+    { dir: 'c-white-mint-deep', name: 'C · White, mint paw',
+      text: 'surface → mint-bg gradient, paw in mint → mint-deep. Calm and light, but on a light wallpaper the tile edge almost disappears and the icon looks small.' },
+  ];
+  // Neutral placeholder apps: pastel token tiles, generic labels, no real products.
+  const PH = [['--med-arvelin','Calendar'],['--food-ocean','Photos'],['--med-gastrelle','Notes'],
+              ['--food-cooked','Maps'],['--med-bellavet','Weather'],['--med-biomend','Clock'],['--treat','Music']];
+  const DOCK = ['--mark-neutral','--med-calmora','--food-farm','--med-arvelin'];
+
+  const root = document.getElementById('options');
+  const tpl = document.getElementById('phone');
+  for (const o of OPTIONS) {
+    const s = document.createElement('section');
+    s.className = 'option';
+    s.innerHTML = `<h2>${o.name}${o.rec ? '<span class="rec">Recommended</span>' : ''}</h2><p>${o.text}</p><div class="phones"></div>
+      <h3>Files</h3>
+      <div class="assets">
+        <div class="asset"><img src="${o.dir}/icon-1024.png" width="160" height="160" alt=""><a href="${o.dir}/icon-1024.png">icon-1024.png</a> master</div>
+        <div class="asset"><img src="${o.dir}/apple-touch-icon.png" width="90" height="90" alt=""><a href="${o.dir}/apple-touch-icon.png">apple-touch-icon.png</a> 180, full bleed</div>
+        <div class="asset"><img src="${o.dir}/icon-192.png" width="96" height="96" alt=""><a href="${o.dir}/icon-192.png">icon-192.png</a></div>
+        <div class="asset"><img src="${o.dir}/icon-512.png" width="128" height="128" alt=""><a href="${o.dir}/icon-512.png">icon-512.png</a></div>
+        <div class="asset"><span class="safe"><img src="${o.dir}/icon-512-maskable.png" width="128" height="128" alt=""></span><a href="${o.dir}/icon-512-maskable.png">icon-512-maskable.png</a> dashed = safe zone</div>
+        <div class="asset"><img class="masked" src="${o.dir}/icon-512-maskable.png" width="128" height="128" alt="">maskable in a circle mask</div>
+        <div class="asset"><img class="squircle" src="${o.dir}/icon-512.png" width="128" height="128" alt="">512 with the iOS mask</div>
+        <div class="asset"><a href="${o.dir}/icon.svg">icon.svg</a><a href="${o.dir}/icon-maskable.svg">icon-maskable.svg</a>sources</div>
+      </div>`;
+    const phones = s.querySelector('.phones');
+    for (const theme of ['light', 'dark']) {
+      const p = tpl.content.cloneNode(true);
+      p.querySelector('.phone').classList.add(theme);
+      p.querySelector('.caption').textContent = theme === 'light' ? 'Light wallpaper' : 'Dark wallpaper';
+      const grid = p.querySelector('.grid');
+      const apps = [...PH.slice(0, 5), null, ...PH.slice(5)];
+      for (const a of apps) {
+        const el = document.createElement('div');
+        el.className = 'app';
+        el.innerHTML = a
+          ? `<span class="tile ph" style="background:var(${a[0]})"></span><span>${a[1]}</span>`
+          : `<img class="tile" src="${o.dir}/apple-touch-icon.png" alt="PawLog icon"><span>PawLog</span>`;
+        grid.append(el);
+      }
+      const dock = p.querySelector('.dock');
+      for (const c of DOCK) {
+        const t = document.createElement('span');
+        t.className = 'tile ph'; t.style.background = `var(${c})`;
+        dock.append(t);
+      }
+      phones.append(p);
+    }
+    root.append(s);
+  }
+</script>
+</body>
+</html>
