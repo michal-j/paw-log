@@ -5,6 +5,7 @@ import { useI18n, type MessageKey } from '../i18n';
 import * as act from './actions';
 import { DateLine, OTHER } from './fields';
 import { useBusy } from './useBusy';
+import { useDraftIds } from './useDraftIds';
 import { useLog, type EventKind } from './LogProvider';
 import { SYMPTOMS, isIntensity, propsFor, symptomKey, symptomTitle } from './symptoms';
 import { ConditionPicker } from '../tracked/ConditionPicker';
@@ -85,6 +86,8 @@ export function EventSheet({
   const { t } = useI18n();
   const { records, repository, run, close } = useLog();
   const { busy, guard } = useBusy();
+  // A new event keeps its id across Save attempts, so a retry never adds a copy (JCB-71).
+  const draft = useDraftIds();
   const [form, setForm] = useState<Form>(() => initial(kind, date, event, ctxOpen, linkTo));
   if (!records) return null;
   const set = (patch: Partial<Form>) => setForm((x) => ({ ...x, ...patch }));
@@ -115,7 +118,7 @@ export function EventSheet({
     if (!fields) return set({ err: true });
     // New conditions named here start on the event's date; only those still picked are created.
     const created = form.pending.filter((c) => form.conditionIds.includes(c.id)).map((c) => ({ ...c, startedOn: form.date }));
-    const next: HealthEvent = { id: event?.id ?? act.newId(), dogId: records.dogId, date: form.date, conditionIds: form.conditionIds, ...fields };
+    const next: HealthEvent = { id: event?.id ?? draft.id('event'), dogId: records.dogId, date: form.date, conditionIds: form.conditionIds, ...fields };
     if (await run(() => act.saveEvent(repository, next, event ?? null, created), t('toastSaved'))) {
       close();
       if (!linkTo) onShowDay(next.date);

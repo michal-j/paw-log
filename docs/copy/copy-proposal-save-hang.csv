@@ -1,0 +1,2 @@
+#,Where (code name),English,Polish,EN chars,PL chars,Fit note,Your notes
+S1,errSave,Couldn't save · Try again,Nie udało się zapisać · Spróbuj ponownie,25,40,PL 60% longer; fits on one line in the toast at 390 and 768 (checked),"JCB-71: toast when a write fails or gets no answer in 15 s; the sheet stays open with what was typed, Save works again. Replaces ""Something went wrong. Try again."" after a failed write. DRAFT pending CEO review"

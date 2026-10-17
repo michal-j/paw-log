@@ -10,6 +10,7 @@ import { lastUsed, nextColourFor, withFlavour } from './items';
 import { ItemSheet } from './ItemSheet';
 import { useFormat } from './format';
 import { useBusy } from './useBusy';
+import { useDraftIds } from './useDraftIds';
 import { useLog, type Records } from './LogProvider';
 import { activeOn, changeFrom, matchDay, slotsOn } from './plan';
 
@@ -97,6 +98,7 @@ export function EntrySheet({
   const f = useFormat();
   const { records, repository, run, close } = useLog();
   const { busy, guard } = useBusy();
+  const draft = useDraftIds();
   const edit = !!entry;
 
   const [form, setForm] = useState<Form>(() => {
@@ -151,7 +153,8 @@ export function EntrySheet({
   const item = records.items.find((i) => i.id === form.itemId) ?? null;
   // A new item's colour: the one picked, else the next unused one for the items as they are now (JCB-59).
   const newColour = form.colour ?? nextColourFor(records.items, group);
-  const selfId = entry?.id ?? replaces?.id;
+  // A new entry's id is fixed when the sheet opens, so a retried Save updates the row it may have written.
+  const selfId = entry?.id ?? replaces?.id ?? draft.id('entry');
   // The slot this sheet was opened for: a planned or removed row's slot, or the one the edited entry fills.
   const anchorSlot = entry ? (matchDay(entry.date, records.slots, records.entries).slotOf.get(entry.id) ?? null) : (slot ?? null);
   const anchor = anchorSlot ? { slot: anchorSlot, date: entry?.date ?? date } : null;
@@ -177,7 +180,7 @@ export function EntrySheet({
     const unit = form.amount.unit;
     const newItem: Item | null = isOther
       ? {
-          id: act.newId(),
+          id: draft.id('item'),
           dogId: dog.id,
           kind: group === 'food' ? 'food' : 'medication',
           name: form.otherName.trim(),
@@ -197,13 +200,13 @@ export function EntrySheet({
     const flavoured = group === 'food' ? withFlavour(item, flavour) : null;
     const change =
       form.toUsual && offer
-        ? changeFrom(records.slots, null, { itemId, dayPart: form.part, flavour, amount: form.amount.amount, unit }, form.date, undefined, act.newId, dog.id)
+        ? changeFrom(records.slots, null, { itemId, dayPart: form.part, flavour, amount: form.amount.amount, unit }, form.date, undefined, draft.seq('slot'), dog.id)
         : null;
-    const slotId = change?.slot.id ?? slotOnSave(records, { date: form.date, part: form.part, itemId }, anchor, selfId ?? '')?.id ?? null;
+    const slotId = change?.slot.id ?? slotOnSave(records, { date: form.date, part: form.part, itemId }, anchor, selfId)?.id ?? null;
     // Logging a removed slot again takes the marker's row; anything else is a row of its own.
     const replacing = replaces && slotId === replaces.scheduleSlotId ? replaces : null;
     const next: Entry = {
-      id: entry?.id ?? replacing?.id ?? act.newId(),
+      id: entry?.id ?? replacing?.id ?? draft.id('entry'),
       dogId: dog.id,
       date: form.date,
       dayPart: form.part,

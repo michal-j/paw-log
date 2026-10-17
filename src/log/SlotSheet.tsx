@@ -11,6 +11,7 @@ import { nextColourFor, withFlavour } from './items';
 import { ItemSheet } from './ItemSheet';
 import { useFormat } from './format';
 import { useBusy } from './useBusy';
+import { useDraftIds } from './useDraftIds';
 import { useLog } from './LogProvider';
 import { backfillDays, changeFrom, removeFrom, sameValues, slotsAfter } from './plan';
 
@@ -47,6 +48,8 @@ export function SlotSheet({ date, part, slot, group: onlyGroup }: { date: PlainD
   const f = useFormat();
   const { records, repository, run, close, open } = useLog();
   const { busy, guard } = useBusy();
+  // New rows keep their ids across Save attempts, so a retry never adds copies (JCB-71).
+  const draft = useDraftIds();
   const [form, setForm] = useState<Form>(() => {
     const item = slot && records?.items.find((i) => i.id === slot.itemId);
     const group = item ? groupOf(item.kind) : (onlyGroup ?? 'med');
@@ -90,7 +93,7 @@ export function SlotSheet({ date, part, slot, group: onlyGroup }: { date: PlainD
     if (form.amount.amount === null) return set({ err: 'amount' });
     const newItem: Item | null = isOther
       ? {
-          id: act.newId(),
+          id: draft.id('item'),
           dogId: records.dogId,
           kind: form.otherGroup === 'food' ? 'food' : 'medication',
           name: form.otherName.trim(),
@@ -151,7 +154,7 @@ export function SlotSheet({ date, part, slot, group: onlyGroup }: { date: PlainD
               : [{ ...restart!, activeTo: end && end < restart!.activeFrom ? restart!.activeFrom : end, course: course && end !== null }],
           remove: [] as string[],
         }
-      : changeFrom(records.slots, restart ?? null, { ...values, course }, effective, end, act.newId, records.dogId);
+      : changeFrom(records.slots, restart ?? null, { ...values, course }, effective, end, draft.seq('slot'), records.dogId);
     const change = { ...base, save: [...trimmed, ...base.save.map(fitGap)], ...('slot' in base ? { slot: fitGap(base.slot) } : {}) } as Pick<typeof base, 'save' | 'remove'> & { slot?: ScheduleSlot };
     // A new flavour joins a food's list (the colour of an existing item is changed under Edit item).
     const itemChange = group === 'food' ? withFlavour(item, values.flavour) : null;

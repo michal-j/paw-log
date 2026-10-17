@@ -2,6 +2,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { DemoRepository } from './demoRepository';
 import { SupabaseRepository } from './supabaseRepository';
 import type { Repository } from './repository';
+import { withTimeout } from './timeout';
 
 /** Demo mode: the build flag, or the visitor is on the /demo path. No sign-in, no backend calls. */
 export function isDemoMode(
@@ -11,15 +12,19 @@ export function isDemoMode(
   return flag === 'true' || pathname === '/demo' || pathname.startsWith('/demo/');
 }
 
-/** Demo mode gets the fictional data; otherwise the signed-in session's Supabase client is required. */
+/**
+ * Demo mode gets the fictional data; otherwise the signed-in session's Supabase client is required.
+ * Real calls are limited in time (withTimeout), so a request that never answers cannot block the app.
+ */
 export function createRepository(demo: boolean, client?: SupabaseClient): Repository {
   if (demo) return new DemoRepository();
   if (!client) throw new Error('createRepository: a Supabase client is required outside demo mode.');
-  return new SupabaseRepository(client);
+  return withTimeout(new SupabaseRepository(client));
 }
 
 export { DemoRepository } from './demoRepository';
 export { SupabaseRepository } from './supabaseRepository';
 export { DuplicateSlotEntryError, NoDogError, RepositoryError } from './errors';
+export { OPERATION_TIMEOUT_MS, TIMEOUT_CODE, withTimeout } from './timeout';
 export type { Repository } from './repository';
 export * from './types';
