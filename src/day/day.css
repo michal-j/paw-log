@@ -64,7 +64,8 @@
   min-height: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
-  padding: 0 var(--space-3) calc(20px + env(safe-area-inset-bottom));
+  /* No safe-area inset here: the nav bar below already sits on the home indicator. */
+  padding: 0 var(--space-3) 20px;
   border-top: 1px solid var(--color-line);
 }
 .day__caption {
