@@ -9,6 +9,7 @@ Format: [Keep a Changelog](https://keepachangelog.com). "Unreleased" means not y
 
 ### Fixed
 - Food and medication items still grey with no way to change the colour (JCB-59): JCB-43 only coloured items when they were created, so older items (`mark-neutral`) stayed grey, and the colour could only be changed inside a Usual day item. Every item without an item colour now shows an unused one (lane order, own kind first: food-* for food, med-* for medication; never the greyish med-calmora), stable while you edit other items, and the new data migration `20261018120000_item_colours.sql` stores the same colours (per dog, idempotent). Editing an entry and picking Other no longer creates a grey item.
+- iPhone PWA: the last control of a sheet without a footer (Menu, Add) no longer sits under the home indicator. Their scrolling body now adds the home-indicator safe area; sheets with a footer already had it there.
 - iPhone PWA: no more empty space above the navbar at the end of the Day view and the Usual day. Their scrolling body added the home-indicator safe area although the navbar under it already does; only the navbar keeps it now.
 - iPhone PWA: no more empty space under the day-parts bar on the Timeline (JCB-61). The bar added the home-indicator safe area although the navbar under it already does; only the navbar keeps it now.
 - Real-data blockers from the first use on the iPhone PWA and desktop (JCB-43), reproduced on the real data path (SupabaseRepository and supabase-js against a PostgREST-like fake on Postgres), not only `/demo`:
