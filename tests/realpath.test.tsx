@@ -373,43 +373,113 @@ describe('real data path', () => {
     expect(await screen.findByText(/on 14 past days \(1 Oct – yesterday\)/)).toBeTruthy();
   });
 
-  // JCB-72: "Starts on" is saved together with a dose change, whichever way it moves.
+  // JCB-72: "Starts on" always moves the item's start; "New amount from" (a running item whose amount
+  // changes) is the day the new amount begins.
   const arvelinSlots = () => rows(`select amount::float as a, active_from::text as f, active_to::text as t from schedule_slot where item_id = '${SEED.items.arvelin}' order by active_from`);
-  const doseAndStart = async (from: string) => {
+  const NOT_STARTED = `update schedule_slot set active_from = '2026-10-20' where item_id = '${SEED.items.arvelin}'`;
+  const edit = async (o: { from?: string; dose?: boolean; doseFrom?: string }) => {
     fireEvent.click(await screen.findByText('Arvelin'));
-    fireEvent.click(within(dialog()).getByRole('radio', { name: '2' }));
-    fireEvent.change(within(dialog()).getByLabelText('Starts on'), { target: { value: from } });
+    if (o.dose) fireEvent.click(within(dialog()).getByRole('radio', { name: '2' }));
+    if (o.doseFrom) fireEvent.change(within(dialog()).getByLabelText('New amount from'), { target: { value: o.doseFrom } });
+    if (o.from) fireEvent.change(within(dialog()).getByLabelText('Starts on'), { target: { value: o.from } });
     click('Save');
   };
+  const offered = async () => expect(await screen.findByRole('heading', { name: 'Log past days?' })).toBeTruthy();
 
-  it('(JCB-72) an item that has not started: a later start with a new dose replaces it, no second slot', async () => {
-    await at('/usual/2026-10-15', '2026-10-06', `update schedule_slot set active_from = '2026-10-20' where item_id = '${SEED.items.arvelin}'`);
-    await doseAndStart('2026-10-25');
+  it('(JCB-72) "New amount from" shows only when a running item\'s amount changes, defaulting to the opened day', async () => {
+    await at('/usual/2026-10-15', '2026-10-06');
+    fireEvent.click(await screen.findByText('Arvelin'));
+    expect((within(dialog()).getByLabelText('Starts on') as HTMLInputElement).value).toBe('2026-10-06');
+    expect(within(dialog()).queryByLabelText('New amount from')).toBeNull();
+    fireEvent.click(within(dialog()).getByRole('radio', { name: '2' }));
+    expect((within(dialog()).getByLabelText('New amount from') as HTMLInputElement).value).toBe('2026-10-15');
+  });
+
+  it('(JCB-72) running item, start earlier only: the start is saved and the past days are offered', async () => {
+    await at('/usual/2026-10-15', '2026-10-06');
+    await edit({ from: '2026-10-01' });
+    await offered();
+    expect(await arvelinSlots()).toEqual([{ a: 1, f: '2026-10-01', t: null }]);
+  });
+
+  it('(JCB-72) running item, start earlier and a new amount: the start moves, the new amount begins today', async () => {
+    await at('/usual/2026-10-15', '2026-10-06');
+    await edit({ from: '2026-10-01', dose: true });
+    await offered();
+    expect(await arvelinSlots()).toEqual([
+      { a: 1, f: '2026-10-01', t: '2026-10-14' },
+      { a: 2, f: '2026-10-15', t: null },
+    ]);
+  });
+
+  it('(JCB-72) running item, start earlier and a new amount from another day', async () => {
+    await at('/usual/2026-10-15', '2026-10-06');
+    await edit({ from: '2026-10-01', dose: true, doseFrom: '2026-10-10' });
+    await offered();
+    expect(await arvelinSlots()).toEqual([
+      { a: 1, f: '2026-10-01', t: '2026-10-09' },
+      { a: 2, f: '2026-10-10', t: null },
+    ]);
+  });
+
+  it('(JCB-72) running item, start later and a new amount: one slot from the later start', async () => {
+    await at('/usual/2026-10-15', '2026-10-06');
+    await edit({ from: '2026-10-20', dose: true });
+    await screen.findByText('Usual day updated');
+    expect(await arvelinSlots()).toEqual([{ a: 2, f: '2026-10-20', t: null }]);
+  });
+
+  it('(JCB-72) running item, a new amount only: the start stays, the new amount begins on the chosen day', async () => {
+    await at('/usual/2026-10-15', '2026-10-06');
+    await edit({ dose: true, doseFrom: '2026-10-12' });
+    await screen.findByText('Usual day updated');
+    expect(await arvelinSlots()).toEqual([
+      { a: 1, f: '2026-10-06', t: '2026-10-11' },
+      { a: 2, f: '2026-10-12', t: null },
+    ]);
+  });
+
+  it('(JCB-72) an item that has not started: a later start with a new amount replaces it, no second slot', async () => {
+    await at('/usual/2026-10-15', '2026-10-06', NOT_STARTED);
+    fireEvent.click(await screen.findByText('Arvelin'));
+    fireEvent.click(within(dialog()).getByRole('radio', { name: '2' }));
+    expect(within(dialog()).queryByLabelText('New amount from')).toBeNull(); // nothing to keep: it has not started
+    fireEvent.change(within(dialog()).getByLabelText('Starts on'), { target: { value: '2026-10-25' } });
+    click('Save');
     await screen.findByText('Usual day updated');
     expect(await arvelinSlots()).toEqual([{ a: 2, f: '2026-10-25', t: null }]);
   });
 
-  it('(JCB-72) an item that has not started: an earlier start with a new dose, and the past days are offered', async () => {
-    await at('/usual/2026-10-15', '2026-10-06', `update schedule_slot set active_from = '2026-10-20' where item_id = '${SEED.items.arvelin}'`);
-    await doseAndStart('2026-10-10');
-    expect(await screen.findByRole('heading', { name: 'Log past days?' })).toBeTruthy();
+  it('(JCB-72) an item that has not started: an earlier start with a new amount, and the past days are offered', async () => {
+    await at('/usual/2026-10-15', '2026-10-06', NOT_STARTED);
+    await edit({ from: '2026-10-10', dose: true });
+    await offered();
     expect(await arvelinSlots()).toEqual([{ a: 2, f: '2026-10-10', t: null }]);
   });
 
-  it('(JCB-72) a running item: an earlier start with a new dose is saved and the past days are offered', async () => {
-    await at('/usual/2026-10-15', '2026-10-06');
-    await doseAndStart('2026-10-01');
-    expect(await screen.findByRole('heading', { name: 'Log past days?' })).toBeTruthy();
-    expect(await arvelinSlots()).toEqual([{ a: 2, f: '2026-10-01', t: null }]);
+  // An earlier slot of the same item and part (1 pill, 1 to 9 Oct), the running one starts on 10 Oct.
+  const WITH_EARLIER = `with earlier as (
+      insert into schedule_slot (dog_id, item_id, day_part, flavour, amount, unit, active_from, active_to, position)
+      select dog_id, item_id, day_part, flavour, 1, unit, '2026-10-01', '2026-10-09', position from schedule_slot where item_id = '${SEED.items.arvelin}'
+    ) update schedule_slot set active_from = '2026-10-10', amount = 2 where item_id = '${SEED.items.arvelin}'`;
+
+  it('(JCB-72) a start that reaches into an earlier slot of the item ends that slot the day before', async () => {
+    await at('/usual/2026-10-15', '2026-10-01', WITH_EARLIER);
+    await edit({ from: '2026-10-06' });
+    await offered();
+    expect(await arvelinSlots()).toEqual([
+      { a: 1, f: '2026-10-01', t: '2026-10-05' },
+      { a: 2, f: '2026-10-06', t: null },
+    ]);
   });
 
-  it('(JCB-72) a running item: a later start with a new dose changes the dose from that day', async () => {
-    await at('/usual/2026-10-15', '2026-10-06');
-    await doseAndStart('2026-10-20');
-    await screen.findByText('Usual day updated');
+  it('(JCB-72) a start that would swallow the earlier slot is refused with a message, and nothing is saved', async () => {
+    await at('/usual/2026-10-15', '2026-10-01', WITH_EARLIER);
+    await edit({ from: '2026-10-01' });
+    expect(await screen.findByText(/Pick a later start/)).toBeTruthy();
     expect(await arvelinSlots()).toEqual([
-      { a: 1, f: '2026-10-06', t: '2026-10-19' },
-      { a: 2, f: '2026-10-20', t: null },
+      { a: 1, f: '2026-10-01', t: '2026-10-09' },
+      { a: 2, f: '2026-10-10', t: null },
     ]);
   });
 

@@ -25,10 +25,13 @@ interface Form {
   colour: string | null;
   flavour: string;
   amount: AmountValue;
+  /** The item's start. */
   from: PlainDate;
+  /** A running item with a new amount: the day the new amount begins. */
+  doseFrom: PlainDate;
   length: Length;
   to: PlainDate | null;
-  err: 'item' | 'amount' | null;
+  err: 'item' | 'amount' | 'overlap' | null;
 }
 
 const endFor = (from: PlainDate, length: Length, to: PlainDate | null): PlainDate | null =>
@@ -48,7 +51,7 @@ export function SlotSheet({ date, part, slot, group: onlyGroup }: { date: PlainD
     const item = slot && records?.items.find((i) => i.id === slot.itemId);
     const group = item ? groupOf(item.kind) : (onlyGroup ?? 'med');
     const unit = slot?.unit ?? item?.defaultUnit ?? defaultUnitFor(group);
-    const from = slot && slot.activeFrom > date ? slot.activeFrom : date;
+    const from = slot ? slot.activeFrom : date;
     return {
       itemId: slot?.itemId ?? null,
       otherGroup: onlyGroup ?? 'med',
@@ -57,13 +60,12 @@ export function SlotSheet({ date, part, slot, group: onlyGroup }: { date: PlainD
       flavour: slot?.flavour ?? '',
       amount: amountValue(slot ? slot.amount : null, unit),
       from,
+      doseFrom: date,
       length: slot?.course && slot.activeTo ? 'date' : 'none',
       to: slot?.activeTo ?? null,
       err: null,
     };
   });
-  // The start the form opened with: moving it is a change of its own (JCB-43 QA).
-  const [openedFrom] = useState(form.from);
   // "Edit item": the item editor shows in place of this sheet, which keeps its form.
   const [editing, setEditing] = useState<Item | null>(null);
   if (!records) return null;
@@ -108,37 +110,37 @@ export function SlotSheet({ date, part, slot, group: onlyGroup }: { date: PlainD
       amount: form.amount.amount,
       unit: form.amount.unit,
     };
+    const same = !!slot && sameValues(slot, values);
     // "How long" set to a length or an end date makes a course ("day n of m"); No end does not.
     const course = form.length !== 'none';
-    // Same item and amount: only the course length changed. The slot keeps its start and
-    // "7 days" / "14 days" count from it, so a running course reads "day 2 of 14".
-    const same = !!slot && sameValues(slot, values);
-    const lengthOnly = same && form.from === openedFrom;
-    // Same values, only "Starts on" moved (earlier or later): the slot itself starts then.
-    const startOnly = same && !lengthOnly;
+    const startMoved = !!slot && form.from !== slot.activeFrom;
+    // The new amount begins on "New dose from" (a running item) or on the start (one that has not started).
+    const effective = slot && slot.activeFrom <= date ? (form.doseFrom > form.from ? form.doseFrom : form.from) : form.from;
+    // Same item and amount: the course length and/or the start changed. The slot keeps its start
+    // and "7 days" / "14 days" count from it, so a running course reads "day 2 of 14".
+    const lengthOnly = same && !startMoved;
     // A slot that ended because of an earlier change (not a course) keeps that end under "No end".
-    const end =
-      form.length === 'none' && slot && !slot.course && slot.activeTo
-        ? slot.activeTo
-        : endFor(lengthOnly && slot ? slot.activeFrom : form.from, form.length, form.to);
-    // A slot that has not started yet has no past to keep: the new values and the new start replace it
-    // (changeFrom would end it the day before and open a second slot, leaving the old values running, JCB-72).
-    const notStarted = !!slot && !same && slot.activeFrom > date;
-    const moved: ScheduleSlot | null =
-      (startOnly || notStarted) && slot
-        ? { ...slot, ...values, activeFrom: form.from, activeTo: end && end < form.from ? form.from : end, course: course && end !== null }
-        : null;
-    const change = moved
-      ? { save: [moved], remove: [], slot: moved }
-      : lengthOnly && slot
-        ? {
-            save:
-              end === slot.activeTo && course === !!slot.course
-                ? []
-                : [{ ...slot, activeTo: end && end < slot.activeFrom ? slot.activeFrom : end, course: course && end !== null }],
-            remove: [],
-          }
-        : changeFrom(records.slots, slot ?? null, { ...values, course }, form.from, end, act.newId, records.dogId);
+    const keepEnd = form.length === 'none' && !!slot && !slot.course && slot.activeTo;
+    const end = keepEnd && slot ? slot.activeTo : endFor(lengthOnly && slot ? slot.activeFrom : same ? form.from : effective, form.length, form.to);
+    // "Starts on" always moves the item's start: the slot itself starts then (JCB-72).
+    const restart = slot && startMoved ? { ...slot, activeFrom: form.from, activeTo: slot.activeTo && slot.activeTo < form.from ? form.from : slot.activeTo } : slot;
+    // An earlier slot of the same item and part must not overlap the new start: it ends the day before.
+    const before =
+      slot && form.from < slot.activeFrom
+        ? records.slots.filter((x) => x.id !== slot.id && x.itemId === slot.itemId && x.dayPart === slot.dayPart && x.activeFrom < slot.activeFrom && (x.activeTo === null || x.activeTo >= form.from))
+        : [];
+    if (before.some((x) => x.activeFrom >= form.from)) return set({ err: 'overlap' });
+    const trimmed = before.map((x) => ({ ...x, activeTo: shiftDate(form.from, -1), course: false }));
+    const base = same
+      ? {
+          save:
+            lengthOnly && end === slot!.activeTo && course === !!slot!.course
+              ? []
+              : [{ ...restart!, activeTo: end && end < restart!.activeFrom ? restart!.activeFrom : end, course: course && end !== null }],
+          remove: [] as string[],
+        }
+      : changeFrom(records.slots, restart ?? null, { ...values, course }, effective, end, act.newId, records.dogId);
+    const change = { ...base, save: [...trimmed, ...base.save], ...('slot' in base ? { slot: base.slot } : {}) } as Pick<typeof base, 'save' | 'remove'> & { slot?: ScheduleSlot };
     // A new flavour joins a food's list (the colour of an existing item is changed under Edit item).
     const itemChange = group === 'food' ? withFlavour(item, values.flavour) : null;
     if (!change.save.length && !newItem && !itemChange) return close();
@@ -155,7 +157,8 @@ export function SlotSheet({ date, part, slot, group: onlyGroup }: { date: PlainD
       }, t('toastUsual'))
     ) {
       // Added or changed from a past date: offer once to log it on the past days where it is open.
-      const saved = 'slot' in change ? change.slot : null;
+      // Moved earlier: the slot that now starts there; else the slot the change leaves holding the values.
+      const saved = (startMoved && slot && form.from < slot.activeFrom ? change.save.find((x) => x.id === slot.id) : change.slot) ?? null;
       const past = saved && !lengthOnly && saved.activeFrom < records.today;
       const pastDays = past ? backfillDays(saved, slotsAfter(records.slots, change), records.entries, records.removed, records.today) : null;
       if (saved && pastDays?.days.length) open({ kind: 'backfill', slot: saved });
@@ -165,7 +168,7 @@ export function SlotSheet({ date, part, slot, group: onlyGroup }: { date: PlainD
 
   const remove = async () => {
     if (!slot) return;
-    const change = removeFrom(slot, form.from);
+    const change = removeFrom(slot, slot.activeFrom > date ? slot.activeFrom : date);
     if (await run(() => act.applySlotChange(repository, change, records.slots), t('toastUsual'))) close();
   };
 
@@ -237,8 +240,13 @@ export function SlotSheet({ date, part, slot, group: onlyGroup }: { date: PlainD
             onChange={(v) => set({ amount: v, err: null })}
             error={form.err === 'amount' ? t('pickAmount') : undefined}
           />
-          <Field label={t('startsOn')} htmlFor="slot-from">
-            <input id="slot-from" className="input" type="date" value={form.from} onChange={(e) => e.target.value && set({ from: e.target.value })} />
+          {slot && slot.activeFrom <= date && form.amount.amount !== null && !sameValues(slot, { itemId: slot.itemId, dayPart: part, flavour: form.flavour.trim(), amount: form.amount.amount, unit: form.amount.unit }) && (
+            <Field label={t('newDoseFrom')} htmlFor="slot-dose-from">
+              <input id="slot-dose-from" className="input" type="date" value={form.doseFrom} onChange={(e) => e.target.value && set({ doseFrom: e.target.value })} />
+            </Field>
+          )}
+          <Field label={t('startsOn')} htmlFor="slot-from" error={form.err === 'overlap' ? t('startsOverlap') : undefined}>
+            <input id="slot-from" className="input" type="date" value={form.from} onChange={(e) => e.target.value && set({ from: e.target.value, err: null })} />
           </Field>
           <Field label={t('howLong')}>
             <Chips label={t('howLong')}>
