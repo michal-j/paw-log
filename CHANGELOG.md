@@ -4,6 +4,23 @@ Format: [Keep a Changelog](https://keepachangelog.com). "Unreleased" means not y
 
 ## Unreleased
 
+## 2026-10-17 to 2026-10-18 (merged to main)
+
+### Added
+- Pinned notes tab: add, edit, reorder, delete with Undo; four-tab navbar (JCB-5).
+- Tracked conditions: Tracked tab with open and resolved conditions, condition page with linked events, create/edit/delete, resolve/reopen with Undo, link events to several conditions, condition tags in the Day view (JCB-6).
+- Photos on events and tracked conditions: take or pick, resized on the phone, stored privately; photo strip, viewer and Compare on the condition page; uploads only give up when they stop making progress (JCB-7).
+
+### Fixed
+- Save could stay stuck after the iPhone app came back from the background; requests now time out and recover, a failed save says "Couldn't save · Try again" and retries never duplicate (JCB-71).
+- Changing the start date of a usual-day item is saved; a dose change on a running item gets its own "New amount from" date; starts that would overlap another period are refused (JCB-72).
+- The Key always shows the row directly below it while scrolling (JCB-67).
+- Add button hit area, page language on load, toast no longer covers the Restore line, type tokens (JCB-42).
+- Day heading takes focus; Back after Previous/Next lands on the last day viewed (JCB-41).
+
+### Changed
+- Tests are more reliable on CI (longer async timeout, 3 workers) (JCB-70).
+
 ## 2026-10-16 to 2026-10-17 (merged to main)
 
 ### Changed
