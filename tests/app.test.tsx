@@ -36,6 +36,26 @@ describe('timeline home', () => {
     expect(localStorage.getItem('pawlog.lang')).toBe('pl');
   });
 
+  it('scrubs the rail to the first day when the list cannot scroll (log fits on one screen)', async () => {
+    mount();
+    await screen.findByText('October 2026');
+    // jsdom has no layout: the list's scroll range is 0, as for a short log on a tall screen.
+    const rail = screen.getByRole('scrollbar');
+    rail.getBoundingClientRect = () => ({ top: 0, left: 0, right: 20, bottom: 502, width: 20, height: 502, x: 0, y: 0, toJSON: () => ({}) });
+    const keyDay = () => document.querySelector('.tl-key__day')?.textContent;
+    expect(keyDay()).toBe('15 Oct');
+    fireEvent.pointerDown(rail, { clientY: 500, pointerId: 1 });
+    expect(keyDay()).toBe('1 Sept');
+    expect(rail.getAttribute('aria-valuenow')).toBe('100');
+    fireEvent.pointerMove(rail, { clientY: 250, pointerId: 1 });
+    expect(keyDay()).not.toBe('1 Sept');
+    expect(keyDay()).not.toBe('15 Oct');
+    fireEvent.pointerUp(rail, { pointerId: 1 });
+    // The focus stays where the rail left it, and the rows still open.
+    expect(keyDay()).not.toBe('15 Oct');
+    expect(screen.getByText(/Wednesday 14 October: Vet visit ×2/).closest('a')?.getAttribute('href')).toContain('2026-10-14');
+  });
+
   it('opens the Key legend', async () => {
     mount();
     const key = await screen.findByRole('button', { name: /Key for the day below/ });

@@ -6,14 +6,14 @@ import { symptomLabel } from './labels';
 import { DoseMark, colourVar } from '../components/DoseMark';
 import { EventBadge } from '../components/EventBadge';
 import { MealIcon } from '../components/MealIcon';
-import { DATE_COL_W, EVENTS_MIN_W, PART_TICK_INSET, PART_TICK_MAX, RAIL_W, ROW_INSET, SCRUB_GAP, SCRUB_LIFT, TICK, TICK_H } from './geometry';
+import { DATE_COL_W, EVENTS_MIN_W, LIST_TAIL_H, PART_TICK_INSET, PART_TICK_MAX, RAIL_W, ROW_INSET, SCRUB_GAP, SCRUB_LIFT, TICK, TICK_H } from './geometry';
 import {
   activeTickOffset,
   buildTimeline,
   parseDate,
   railFraction,
-  railScrollTop,
-  tailHeight,
+  railTarget,
+  focusOffset,
   rowIndexAt,
   topDayAt,
   type BadgeKind,
@@ -87,18 +87,24 @@ export function Timeline({ initialScrollTop = 0, dayHref, onOpenDay }: Props) {
     [records],
   );
   const [scrollTop, setScrollTop] = useState(0);
-  const [topIndex, setTopIndex] = useState(0);
+  const [focusIndex, setFocusIndex] = useState(0);
   const [keyOpen, setKeyOpen] = useState(false);
   const [scrubY, setScrubY] = useState<number | null>(null);
   const listRef = useRef<HTMLDivElement>(null);
   const dragging = useRef(false);
+  // The scroll position the rail last set while it holds the focus (null: the focus follows the scroll).
+  const railHold = useRef<number | null>(null);
   const [viewport, setViewport] = useState(0);
 
-  // The tail must let the oldest day reach the top, so it depends on the list's visible height.
+  // The list height drives windowing; the scroll range (and so the focus) is read from the element.
   useEffect(() => {
     const el = listRef.current;
     if (!el) return;
-    const measure = () => setViewport(el.clientHeight);
+    const measure = () => {
+      setViewport(el.clientHeight);
+      // A new height changes the scroll range, and with it which row the focus is on near the end.
+      if (data && railHold.current === null) setFocusIndex(rowIndexAt(data.timeline.rows, focusAt(el, data.timeline.span)));
+    };
     measure();
     if (typeof ResizeObserver === 'undefined') return;
     const ro = new ResizeObserver(measure);
@@ -106,7 +112,7 @@ export function Timeline({ initialScrollTop = 0, dayHref, onOpenDay }: Props) {
     return () => ro.disconnect();
   }, [data]);
 
-  // Restore the scroll position once, after the rows and the tail (which needs the list height) exist.
+  // Restore the scroll position once, after the rows exist and the list has its height.
   const restored = useRef(false);
   useLayoutEffect(() => {
     const el = listRef.current;
@@ -114,7 +120,7 @@ export function Timeline({ initialScrollTop = 0, dayHref, onOpenDay }: Props) {
     restored.current = true;
     if (initialScrollTop > 0) {
       el.scrollTop = initialScrollTop;
-      setTopIndex(rowIndexAt(data.timeline.rows, el.scrollTop));
+      setFocusIndex(rowIndexAt(data.timeline.rows, focusAt(el, data.timeline.span)));
       setScrollTop(el.scrollTop);
     }
   }, [data, viewport, initialScrollTop]);
@@ -159,17 +165,26 @@ export function Timeline({ initialScrollTop = 0, dayHref, onOpenDay }: Props) {
   const lastShown = shownRows.at(-1);
   const padTop = shownRows[0]?.top ?? 0;
   const padBottom = lastShown ? timeline.contentHeight - lastShown.top - lastShown.height : 0;
-  const topRow: Row | undefined = rows[topIndex];
-  const keyDay = topDayAt(rows, topRow?.top ?? 0);
-  const activeTick = activeTickOffset(ticks, topRow?.top ?? 0);
+  const focusRow: Row | undefined = rows[focusIndex];
+  const keyDay = topDayAt(rows, focusRow?.top ?? 0);
+  const activeTick = activeTickOffset(ticks, focusRow?.top ?? 0);
+
+  // Re-window once the list has moved a good part of the overscan.
+  const rewindow = (el: HTMLElement) => {
+    if (windowed && Math.abs(el.scrollTop - scrollTop) > OVERSCAN_PX / 3) setScrollTop(el.scrollTop);
+  };
 
   const onScroll = () => {
     const el = listRef.current;
     if (!el) return;
-    const i = rowIndexAt(rows, el.scrollTop);
-    if (i !== topIndex) setTopIndex(i);
-    // Re-window once the list has moved a good part of the overscan.
-    if (windowed && Math.abs(el.scrollTop - scrollTop) > OVERSCAN_PX / 3) setScrollTop(el.scrollTop);
+    // The rail's own scrolling keeps the focus it set; any other scrolling hands it back to the list.
+    const held = railHold.current !== null && Math.abs(el.scrollTop - railHold.current) <= 1;
+    if (!held) {
+      railHold.current = null;
+      const i = rowIndexAt(rows, focusAt(el, span));
+      if (i !== focusIndex) setFocusIndex(i);
+    }
+    rewindow(el);
   };
 
   const scrubTo = (e: PointerEvent<HTMLDivElement>) => {
@@ -178,12 +193,15 @@ export function Timeline({ initialScrollTop = 0, dayHref, onOpenDay }: Props) {
     const rect = e.currentTarget.getBoundingClientRect();
     const y = e.clientY - rect.top;
     // Ticks sit at f * (height - TICK_H) (see the tick style below), so invert the same mapping.
-    list.scrollTop = railScrollTop(y / (rect.height - TICK_H), span, list.scrollHeight - list.clientHeight);
+    const target = railTarget(y / (rect.height - TICK_H), span, list.scrollHeight - list.clientHeight);
+    list.scrollTop = target.scrollTop;
+    railHold.current = list.scrollTop;
+    setFocusIndex(rowIndexAt(rows, target.focus));
     setScrubY(Math.max(0, Math.min(rect.height, y)));
-    onScroll();
+    rewindow(list);
   };
 
-  const scrubLabel = !topRow ? '' : topRow.kind === 'day' ? fmt.full(topRow.date) : fmt.month(topRow.month);
+  const scrubLabel = !focusRow ? '' : focusRow.kind === 'day' ? fmt.full(focusRow.date) : fmt.month(focusRow.month);
 
   const summary = (row: DayRow) => {
     const flags = flagsFor(row.events, row.anySkipped, t);
@@ -313,7 +331,7 @@ export function Timeline({ initialScrollTop = 0, dayHref, onOpenDay }: Props) {
             )}
             {padBottom > 0 && <li className="tl-pad" style={{ height: padBottom }} aria-hidden="true" />}
           </ul>
-          <div className="tl-tail" style={{ height: tailHeight(viewport) }} />
+          <div className="tl-tail" style={{ height: LIST_TAIL_H }} />
         </div>
 
         <div
@@ -324,7 +342,7 @@ export function Timeline({ initialScrollTop = 0, dayHref, onOpenDay }: Props) {
           aria-orientation="vertical"
           aria-valuemin={0}
           aria-valuemax={100}
-          aria-valuenow={Math.round(railFraction(topRow?.top ?? 0, span) * 100)}
+          aria-valuenow={Math.round(railFraction(focusRow?.top ?? 0, span) * 100)}
           aria-label={t('railAria')}
           onPointerDown={(e) => {
             try {
@@ -378,6 +396,11 @@ export function Timeline({ initialScrollTop = 0, dayHref, onOpenDay }: Props) {
       </div>
     </div>
   );
+}
+
+/** The row offset the Key and the rail describe for the list's current scroll position. */
+function focusAt(el: HTMLElement, span: number): number {
+  return focusOffset(el.scrollTop, span, el.scrollHeight - el.clientHeight);
 }
 
 function ColumnBox({ col, hidden, children }: { col: Column; hidden?: boolean; children: ReactNode }) {
