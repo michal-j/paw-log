@@ -59,6 +59,8 @@ const OVERSCAN_PX = 900;
 interface Props {
   /** List scroll position to restore once the rows are laid out (coming back from a day). */
   initialScrollTop?: number;
+  /** A day to keep in view on return (the day the visitor ended on): wins over the saved position if that is off screen. */
+  focusDate?: PlainDate;
   /** Path of a day, so each row is a real link (open in new tab, long-press preview). */
   dayHref?: (date: PlainDate) => string;
   /** A row was tapped; `scrollTop` is the list position to come back to. */
@@ -70,7 +72,7 @@ interface Props {
  * day can be opened and filled), Key bar, tick rail. Rows open the Day view. It renders from the
  * records LogProvider already holds, so coming back to it shows at once, without a new load.
  */
-export function Timeline({ initialScrollTop = 0, dayHref, onOpenDay }: Props) {
+export function Timeline({ initialScrollTop = 0, focusDate, dayHref, onOpenDay }: Props) {
   const { lang, t } = useI18n();
   const { records, loadFailed, reload } = useLog();
   const data = useMemo<Loaded | null>(
@@ -120,12 +122,17 @@ export function Timeline({ initialScrollTop = 0, dayHref, onOpenDay }: Props) {
     const el = listRef.current;
     if (restored.current || !data || !el || !viewport) return;
     restored.current = true;
-    if (initialScrollTop > 0) {
-      el.scrollTop = initialScrollTop;
+    let target = initialScrollTop;
+    const row = focusDate ? data.timeline.rows.find((r) => r.kind === 'day' && r.date === focusDate) : undefined;
+    if (row && (row.top < target || row.top + row.height > target + viewport)) {
+      target = Math.max(0, row.top + row.height / 2 - viewport / 2);
+    }
+    if (target > 0) {
+      el.scrollTop = target;
       setFocusIndex(rowIndexAt(data.timeline.rows, focusAt(el)));
       setScrollTop(el.scrollTop);
     }
-  }, [data, viewport, initialScrollTop]);
+  }, [data, viewport, initialScrollTop, focusDate]);
 
   const fmt = useMemo(() => {
     const make = (o: Intl.DateTimeFormatOptions) => new Intl.DateTimeFormat(LOCALE[lang], { timeZone: 'UTC', ...o });

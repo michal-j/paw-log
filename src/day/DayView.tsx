@@ -92,6 +92,12 @@ export function DayView({ date, onBack, onStep, onInvalid, onUsualDay, onOpenCon
   const quietFill = quietFor?.date === date ? quietFor.quiet : anyLogged;
   const itemGroup = (itemId: string) => groupOf(records?.items.find((i) => i.id === itemId)?.kind ?? 'medication');
 
+  // Screen readers and keyboard users land on the day heading when the view opens and on Previous/Next.
+  const titleRef = useRef<HTMLHeadingElement>(null);
+  useEffect(() => {
+    titleRef.current?.focus({ preventScroll: true });
+  }, [date]);
+
   const { busy, guard } = useBusy();
   // Keep the day parts where they are on screen while a fill turns planned rows into logged ones.
   const bodyRef = useRef<HTMLDivElement>(null);
@@ -164,7 +170,7 @@ export function DayView({ date, onBack, onStep, onInvalid, onUsualDay, onOpenCon
       <div className="day__head">
         <StepButton dir="prev" target={day ? day.prev : null} label={t('prevDay')} onStep={onStep} />
         <div className="day__titles" aria-live="polite">
-          <h2 id="day-title" className="day__title">
+          <h2 id="day-title" className="day__title" ref={titleRef} tabIndex={-1}>
             {title}
           </h2>
           {sub && <p className="day__sub">{sub}</p>}

@@ -135,6 +135,15 @@ describe('day view', () => {
     expect(screen.getByRole('button', { name: 'Next day' }).getAttribute('aria-disabled')).toBeNull();
   });
 
+  it('moves focus to the day heading when the day opens and on Previous/Next', async () => {
+    at('/demo/day/2026-10-15');
+    const heading = await screen.findByRole('heading', { name: /Thu,? 15 October 2026/ });
+    expect(document.activeElement).toBe(heading);
+    fireEvent.click(screen.getByRole('button', { name: 'Previous day' }));
+    const prev = await screen.findByRole('heading', { name: /Wed,? 14 October 2026/ });
+    expect(document.activeElement).toBe(prev);
+  });
+
   it('falls back to the Timeline for invalid or out-of-range dates', async () => {
     at('/demo/day/2026-02-30');
     expect(window.location.pathname).toBe('/demo');

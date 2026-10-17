@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { DemoRepository, type PlainDate, type Repository } from './data';
 import { DayView } from './day/DayView';
 import { useI18n } from './i18n';
@@ -38,6 +38,8 @@ const historyState = (): HistoryState => (window.history.state as HistoryState |
 interface Location {
   route: Route;
   scrollTop: number;
+  /** Timeline only: the day the visitor ended on after Previous/Next, to scroll into view. */
+  focusDate?: PlainDate;
 }
 
 /** Read the address bar; anything that is not a valid route is rewritten to the Timeline. */
@@ -71,10 +73,14 @@ function Shell({ repository, onSignOut }: { repository: Repository; onSignOut?: 
   const { route } = loc;
   const base = route.base;
 
+  // The day the visitor leaves by Back: the Timeline they return to scrolls to it.
+  const backFrom = useRef<PlainDate | null>(null);
   useEffect(() => {
     const onPop = () => {
       setOverlay(null); // Back leaves the photo viewer along with the screen it was opened on
-      setLoc(readLocation());
+      const focusDate = backFrom.current ?? undefined;
+      backFrom.current = null;
+      setLoc({ ...readLocation(), focusDate });
     };
     window.addEventListener('popstate', onPop);
     return () => window.removeEventListener('popstate', onPop);
@@ -90,13 +96,15 @@ function Shell({ repository, onSignOut }: { repository: Repository; onSignOut?: 
   );
 
   const toTimeline = useCallback(() => {
+    const leaving = route.view === 'day' ? route.date : undefined;
     if (historyState().fromTimeline) {
+      backFrom.current = leaving ?? null;
       window.history.back(); // popstate restores the Timeline entry and its scroll position
       return;
     }
     window.history.replaceState(null, '', timelinePath(base));
-    setLoc({ route: { base, view: 'timeline' }, scrollTop: 0 });
-  }, [base]);
+    setLoc({ route: { base, view: 'timeline' }, scrollTop: 0, focusDate: leaving });
+  }, [base, route]);
 
   const leaveInvalidDay = useCallback(() => {
     window.history.replaceState(null, '', timelinePath(base));
@@ -218,7 +226,7 @@ function Shell({ repository, onSignOut }: { repository: Repository; onSignOut?: 
       ) : route.view === 'condition' ? (
         <ConditionPage key={route.id} id={route.id} onBack={leaveCondition} onMissing={leaveCondition} onOpenCondition={openCondition} />
       ) : (
-        <Timeline initialScrollTop={loc.scrollTop} dayHref={dayHref} onOpenDay={openDay} />
+        <Timeline initialScrollTop={loc.scrollTop} focusDate={loc.focusDate} dayHref={dayHref} onOpenDay={openDay} />
       )}
       <nav className="nav" aria-label={t('menu')}>
         <button

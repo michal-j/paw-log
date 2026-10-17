@@ -305,3 +305,6 @@
 .usual__hint { margin: 6px 0 0; color: var(--color-ink-3); font: var(--type-body-weight) 13px / 18px var(--type-body-family); }
 .usual__parts { margin-top: var(--space-3); }
 
+
+/* The heading takes focus when the day opens or changes; it is not a control, so no ring. */
+.day__title:focus { outline: none; }
