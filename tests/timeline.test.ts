@@ -11,7 +11,8 @@ import {
   markState,
   railFraction,
   railScrollTop,
-  tailHeight,
+  focusOffset,
+  scrollForFocus,
   rowIndexAt,
   shiftDate,
   topDayAt,
@@ -196,22 +197,59 @@ describe('scroll maths', () => {
   it('maps the whole rail onto today..first record, with ticks under the finger (390x844 list)', async () => {
     const tl = await demoTimeline();
     const viewport = 560; // list height at 390x844 with banner, header, Key and parts bar
-    const maxScroll = tl.contentHeight + tailHeight(viewport) - viewport;
-    expect(maxScroll).toBeGreaterThanOrEqual(tl.span); // the tail lets 1 Sep reach the top
-    expect(topDayAt(tl.rows, railScrollTop(1, tl.span, maxScroll))?.date).toBe('2026-09-01');
-    expect(topDayAt(tl.rows, railScrollTop(0, tl.span, maxScroll))?.date).toBe('2026-10-15');
+    const maxScroll = tl.contentHeight + LIST_TAIL_H - viewport;
+    expect(maxScroll).toBeLessThan(tl.span); // a short tail: 1 Sep cannot be scrolled to the top
+    // Rail bottom = end of the list, where the focus is the first record (1 Sep, the bottom row).
+    expect(railScrollTop(1, tl.span, maxScroll)).toBeCloseTo(maxScroll);
+    expect(focusOffset(maxScroll, tl.span, maxScroll)).toBeCloseTo(tl.span);
+    expect(topDayAt(tl.rows, focusOffset(railScrollTop(1, tl.span, maxScroll), tl.span, maxScroll))?.date).toBe('2026-09-01');
+    expect(topDayAt(tl.rows, focusOffset(railScrollTop(0, tl.span, maxScroll), tl.span, maxScroll))?.date).toBe('2026-10-15');
     for (const k of tl.ticks) {
-      // dragging to a tick's position scrolls exactly to that tick's row
-      expect(railScrollTop(railFraction(k.offset, tl.span), tl.span, maxScroll)).toBeCloseTo(k.offset);
+      // dragging to a tick's position puts the focus exactly on that tick's row, within the scroll range
+      const s = railScrollTop(railFraction(k.offset, tl.span), tl.span, maxScroll);
+      expect(s).toBeLessThanOrEqual(maxScroll + 1e-9);
+      expect(focusOffset(s, tl.span, maxScroll)).toBeCloseTo(k.offset);
     }
     const sepBand = tl.rows.find((r) => r.kind === 'band' && r.month === '2026-09')!;
     expect(railFraction(sepBand.top, tl.span)).toBeGreaterThan(0.25);
     expect(railFraction(sepBand.top, tl.span)).toBeLessThan(0.4);
   });
 
-  it('keeps a minimum tail', () => {
-    expect(tailHeight(0)).toBe(LIST_TAIL_H);
-    expect(tailHeight(600)).toBe(600 - DAY_ROW_H);
+  it('keeps the focus on the top row until the last stretch, then slides it to the oldest row', () => {
+    // A long log: span 10 000, list 600 tall, so the end of the list is 516 short of the oldest row at the top.
+    const span = 10_000;
+    const maxScroll = span + DAY_ROW_H + LIST_TAIL_H - 600;
+    const start = maxScroll - (span - maxScroll);
+    expect(focusOffset(0, span, maxScroll)).toBe(0);
+    expect(focusOffset(5000, span, maxScroll)).toBe(5000); // the top row, as before
+    expect(focusOffset(start, span, maxScroll)).toBe(start);
+    expect(focusOffset(maxScroll, span, maxScroll)).toBe(span);
+    expect(focusOffset(maxScroll + 50, span, maxScroll)).toBe(span); // iOS overscroll
+    let prev = -1;
+    for (let s = 0; s <= maxScroll; s += 37) {
+      const f = focusOffset(s, span, maxScroll);
+      expect(f).toBeGreaterThanOrEqual(prev); // monotonic, no jumps back
+      expect(scrollForFocus(f, span, maxScroll)).toBeCloseTo(s); // inverse
+      prev = f;
+    }
+    // At the end, the focus row is on screen: the oldest row sits at the bottom, above the tail.
+    expect(span - maxScroll).toBe(600 - DAY_ROW_H - LIST_TAIL_H);
+  });
+
+  it('handles short lists and lists that already reach the oldest row', () => {
+    // Everything fits: no scrolling, the focus stays on today.
+    expect(focusOffset(0, 300, 0)).toBe(0);
+    expect(scrollForFocus(300, 300, 0)).toBe(0);
+    // Shorter than two screens: the whole scroll range is stretched onto the span.
+    expect(focusOffset(100, 400, 200)).toBeCloseTo(200);
+    expect(scrollForFocus(400, 400, 200)).toBeCloseTo(200);
+    // A tiny list height where the oldest row can reach the top anyway: plain scroll positions.
+    expect(focusOffset(250, 200, 300)).toBe(250);
+    expect(scrollForFocus(150, 200, 300)).toBe(150);
+  });
+
+  it('keeps only a small tail after the oldest day', () => {
+    expect(LIST_TAIL_H).toBeLessThan(DAY_ROW_H);
   });
 });
 

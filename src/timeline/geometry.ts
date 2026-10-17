@@ -6,8 +6,8 @@
 export const DAY_ROW_H = 44;
 /** Height of a month band for a month that has data, px. */
 export const MONTH_BAND_H = 28;
-/** Minimum empty space after the last row, px; the real tail is list height minus one day row (model.ts tailHeight). */
-export const LIST_TAIL_H = 120;
+/** Empty space after the oldest day, px. The oldest day is reached by the focus, not by scrolling it to the top (model.ts focusOffset). */
+export const LIST_TAIL_H = 16;
 /** Width of the date column on the left of each row, px. */
 export const DATE_COL_W = 44;
 /** Left inset of each row before the date column, px. */
