@@ -8,6 +8,16 @@ The CEO (Michał) talks only to the PM session. The PM runs everything else: Lin
 - **Run the team.** The PM writes the Linear issues, starts the developer, QA and designer subagents, reviews their work, and keeps Linear, `docs/` and `CHANGELOG.md` current without being asked.
 - **One "go" per outcome.** When the CEO approves an outcome (for example "ship the day view"), that covers committing, opening the PR, having QA findings fixed and merging once checks pass. Anything outside that outcome, and everything under "Stops" below, still needs a separate yes.
 
+- **Frame before asking.** Before showing anything or asking for a decision, say in one line what it is, whether it is new and why now; leave one browser tab open; ask one question at a time.
+- **One issue per fix.** Split feedback into one Linear issue per item, ideally one PR per issue, so each can be tested, confirmed and rolled back on its own.
+
+## Lean way of working (agreed 17 Oct 2026)
+- QA in proportion to risk: a QA agent for data, saving and flow changes; layout/CSS/asset changes get the developer's self-check, CI and the CEO's phone check.
+- Developers follow `docs/DEV-CHECKLIST.md`; briefs point to it instead of repeating setup.
+- Developers don't edit `CHANGELOG.md` or `docs/TEST-CASES.md`; the PM adds their lines at merge.
+- Cheaper model for QA and small fixes; the strongest model for design and tricky data work. Reuse the same agent for related small fixes.
+- Short reports: agents at most 5 lines, the PM to the CEO briefly.
+
 ## Start of every PM session
 1. Read `CLAUDE.md`, `docs/AGENTS.md`, `docs/DECISIONS.md`, `docs/PRODUCT.md`.
 2. Read Linear (team JCBK, project "PawLog"): what is In Progress, In Review, Backlog. Check open PRs and `git log` on main.
