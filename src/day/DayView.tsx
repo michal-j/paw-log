@@ -42,7 +42,7 @@ interface Props {
 export function DayView({ date, onBack, onStep, onInvalid, onUsualDay, onOpenCondition }: Props) {
   const { lang, t } = useI18n();
   const f = useFormat();
-  const { records, repository, open, run, version } = useLog();
+  const { records, repository, open, run, version, toast } = useLog();
 
   // Re-render every minute so "up to now" and Later today follow the clock while the app stays open.
   const [, setTick] = useState(0);
@@ -122,6 +122,11 @@ export function DayView({ date, onBack, onStep, onInvalid, onUsualDay, onOpenCon
     const markers = removed.map((r) => r.marker);
     await run(() => act.restoreRemoved(repository, markers), fill(t('toastRestored'), { n: markers.length }));
   });
+  // A toast floats over the bottom of the body: bring the restore line clear of it.
+  const toastShown = !!toast;
+  useEffect(() => {
+    if (toastShown) bodyRef.current?.querySelector('.day-removed')?.scrollIntoView?.({ block: 'nearest' });
+  }, [toastShown, removed.length]);
   const fillHead = date === today ? `${fill(t('fillTodayH'), { n: due.length })} (${now})` : fill(t('fillPastH'), { n: due.length });
 
   const editEntry = (e: Entry) => open({ kind: 'entry', group: itemGroup(e.itemId), date: e.date, part: e.dayPart, entry: e });

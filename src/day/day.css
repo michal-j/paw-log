@@ -176,6 +176,7 @@
 /* ---------- Usual-day items removed for this day: one quiet line, never item rows (JCB-60) ---------- */
 .day-removed {
   margin: var(--space-2) 0 0;
+  scroll-margin-bottom: calc(48px + var(--space-4)); /* clear of the floating toast */
   text-align: center;
   color: var(--color-ink-3);
   font: var(--type-small-weight) var(--type-small-size) / var(--type-small-line) var(--type-small-family);
@@ -187,7 +188,7 @@
   background: transparent;
   color: var(--color-mint-deep);
   font: inherit;
-  font-weight: 600;
+  font-weight: var(--type-button-weight);
   cursor: pointer;
 }
 .day-removed__btn:disabled { opacity: 0.5; cursor: default; }
@@ -233,7 +234,7 @@
   letter-spacing: var(--type-caption-tracking);
   text-transform: uppercase;
 }
-.day-part__time { font-weight: 500; letter-spacing: 0; text-transform: none; }
+.day-part__time { font-weight: var(--type-small-weight); letter-spacing: 0; text-transform: none; }
 .day-part__items { margin: 0; padding: 0 0 0 36px; list-style: none; }
 .day-part__none { margin: 0 0 0 36px; min-height: 22px; color: var(--color-ink-3); font: var(--type-small-weight) var(--type-small-size) / 22px var(--type-small-family); }
 
@@ -279,7 +280,7 @@
 .day-item--planned .day-item__name { color: var(--color-ink-2); }
 /* Removed for this day: quiet, no Given; tapping it logs the item after all. */
 .day-item--all { justify-content: flex-start; }
-.day-give { flex: none; height: 28px; padding: 0 10px 0 var(--space-2); font-size: 13px; }
+.day-give { flex: none; height: 28px; padding: 0 10px 0 var(--space-2); font-size: var(--type-button-size); }
 .day-tag {
   flex: none;
   padding: 1px 7px;

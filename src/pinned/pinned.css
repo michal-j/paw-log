@@ -2,7 +2,7 @@
 .pin-list { margin: 0; padding: 0; list-style: none; }
 .pin-card { white-space: normal; }
 .pin-card .day-card__text { display: block; white-space: pre-line; overflow-wrap: anywhere; color: var(--color-ink); }
-.pin-card__meta { display: block; margin-top: var(--space-2); color: var(--color-ink-3); font: var(--type-small-weight) 12px / 16px var(--type-small-family); }
+.pin-card__meta { display: block; margin-top: var(--space-2); color: var(--color-ink-3); font: var(--type-small-weight) var(--type-small-size) / var(--type-small-line) var(--type-small-family); }
 .pin-card--untitled .day-card__text { margin-top: 0; }
 .pin-row { display: flex; align-items: stretch; gap: var(--space-2); margin-bottom: var(--space-2); }
 .pin-row .day-card { flex: 1; min-width: 0; margin: 0; }

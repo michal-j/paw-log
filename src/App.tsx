@@ -63,7 +63,7 @@ export function App({ repository, onSignOut }: { repository: Repository; onSignO
 function Shell({ repository, onSignOut }: { repository: Repository; onSignOut?: () => void }) {
   const { t } = useI18n();
   const log = useLog();
-  const { open, close, reload } = log;
+  const { open, close, reload, toast } = log;
   const isDemo = repository instanceof DemoRepository;
   const [loc, setLoc] = useState<Location>(readLocation);
   const { route } = loc;
@@ -182,7 +182,7 @@ function Shell({ repository, onSignOut }: { repository: Repository; onSignOut?: 
   const addDate = route.view === 'day' ? route.date : today;
 
   return (
-    <main className="app">
+    <main className={toast ? 'app app--toast' : 'app'}>
       {isDemo && <p className="banner">{t('demoBanner')}</p>}
       <header className="bar">
         <Brand />
