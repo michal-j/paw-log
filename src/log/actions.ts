@@ -171,12 +171,12 @@ export async function deletePhoto(repo: Repository, photo: Photo, event: HealthE
 /** Save a pinned note (new or edited). Undo puts back the previous text, or deletes the new note. */
 export async function savePinnedNote(repo: Repository, next: PinnedNote, prev: PinnedNote | null): Promise<Undo> {
   await repo.savePinnedNote(next);
-  return prev ? () => repo.savePinnedNote(prev) : () => repo.deletePinnedNote(next.id);
+  return prev ? () => repo.restorePinnedNote(prev) : () => repo.deletePinnedNote(next.id);
 }
 
 export async function deletePinnedNote(repo: Repository, note: PinnedNote): Promise<Undo> {
   await repo.deletePinnedNote(note.id);
-  return () => repo.savePinnedNote(note);
+  return () => repo.restorePinnedNote(note);
 }
 
 /** Apply a usual-day change; `before` is the slot list it was computed from, to restore on undo. */

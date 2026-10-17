@@ -4,7 +4,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(139);
+select plan(144);
 
 -- Fixtures (as the postgres role, which bypasses RLS, like the bootstrap SQL).
 -- Household A: users a1, a2, dog A. Household B: user b1, dog B. User c belongs to no household.
@@ -270,6 +270,25 @@ select is((select updated_at from public.pinned_note where id = '70000000-0000-4
   now(), 'an update that changes neither title nor text keeps updated_at (the client cannot set it)');
 update public.pinned_note set position = 5 where id = '70000000-0000-4000-8000-0000000000a2';
 select is((select position from public.pinned_note where id = '70000000-0000-4000-8000-0000000000a2'), 5, 'a note can be moved');
+-- Undo restores the original stamp through restore_pinned_note(); nothing else can set it.
+select lives_ok(
+  $$select public.restore_pinned_note('70000000-0000-4000-8000-0000000000a2', '20000000-0000-4000-8000-00000000000a',
+      '', 'Second note', 5, '00000000-0000-4000-8000-0000000000a1', '00000000-0000-4000-8000-0000000000a1', '2026-09-01T10:00:00Z')$$,
+  'a1 can restore a pinned note of dog A');
+select is((select updated_at from public.pinned_note where id = '70000000-0000-4000-8000-0000000000a2'),
+  '2026-09-01T10:00:00Z'::timestamptz, 'a restore keeps the original updated_at');
+select throws_ok(
+  $$select public.restore_pinned_note('70000000-0000-4000-8000-00000000000b', '20000000-0000-4000-8000-00000000000b',
+      '', 'x', 0, null, null, '2026-09-01T10:00:00Z')$$,
+  '42501', null, 'a1 cannot restore a pinned note of dog B');
+select throws_ok(
+  $$select public.restore_pinned_note('70000000-0000-4000-8000-0000000000a2', '20000000-0000-4000-8000-00000000000a',
+      '', 'x', 0, null, null, now() + interval '1 day')$$,
+  '22023', null, 'a restore cannot date a note in the future');
+select throws_ok(
+  $$select public.restore_pinned_note('70000000-0000-4000-8000-0000000000a2', '20000000-0000-4000-8000-00000000000a',
+      '', 'x', 0, null, '00000000-0000-4000-8000-0000000000b1', '2026-09-01T10:00:00Z')$$,
+  '22023', null, 'a restore cannot name someone outside the household');
 -- 3f. JCB-6: tracked conditions and their links to events.
 select is((select count(*)::int from public.condition), 1, 'a1 sees only the conditions of dog A');
 select is((select count(*)::int from public.event_condition), 1, 'a1 sees only the links of dog A');

@@ -161,6 +161,8 @@ export interface PinnedNote {
   position: number;
   /** The day of the last edit of the title or text (not of a move), set by the database; ignored on save. */
   updatedOn?: PlainDate;
+  /** Exact time of that edit (ISO), set by the database; ignored on save, used by restore. */
+  updatedAt?: string;
   /** Set by the database; ignored on save. */
   createdBy?: string;
   updatedBy?: string;

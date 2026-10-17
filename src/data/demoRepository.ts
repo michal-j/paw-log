@@ -270,6 +270,10 @@ export class DemoRepository implements Repository {
     this.data.pinned = upsert(this.pinned(), next);
     this.persist();
   }
+  async restorePinnedNote(note: PinnedNote) {
+    this.data.pinned = upsert(this.pinned(), { ...copy(note), updatedOn: note.updatedOn ?? today });
+    this.persist();
+  }
   async deletePinnedNote(id: string) {
     this.data.pinned = this.pinned().filter((n) => n.id !== id);
     this.persist();
