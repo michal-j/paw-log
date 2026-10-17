@@ -58,8 +58,8 @@
   "dogId": "dog-demo",
   "date": "2026-10-03",
   "type": "photo",
-  "title": "Lump A photo",
-  "detail": ""
+  "title": "",
+  "detail": "About 1 cm, soft, moves under the skin."
  },
  {
   "id": "event-008",
@@ -96,8 +96,8 @@
   "dogId": "dog-demo",
   "date": "2026-10-10",
   "type": "photo",
-  "title": "Lump A photo",
-  "detail": ""
+  "title": "",
+  "detail": "Same size as last week, measured with the ruler."
  },
  {
   "id": "event-012",

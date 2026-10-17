@@ -1,11 +1,17 @@
 // Writes through the repository, each returning how to undo it. The UI shows the Undo toast.
-import type { Condition, Entry, HealthEvent, PinnedNote, RemovedSlot, Repository, ScheduleSlot } from '../data';
+import type { Condition, Entry, HealthEvent, Photo, PhotoFiles, PinnedNote, RemovedSlot, Repository, ScheduleSlot } from '../data';
 import { DuplicateSlotEntryError } from '../data/errors';
 import type { SlotChange } from './plan';
 
-export type Undo = () => Promise<void>;
+/**
+ * Puts a write back. `commit`, when there is one, finishes the write once Undo is no longer offered
+ * (the toast went away without Undo): deleted photos' files are removed only then (JCB-7).
+ */
+export type Undo = (() => Promise<void>) & { commit?: () => Promise<void> };
 
 export const newId = () => crypto.randomUUID();
+
+const withCommit = (undo: () => Promise<void>, commit: () => Promise<void>): Undo => Object.assign(undo, { commit });
 
 /** Undo several steps, last first. */
 export const undoAll =
@@ -82,18 +88,46 @@ export async function addPlanned(repo: Repository, entries: Entry[]): Promise<{ 
   return { added: ids.length, undo: () => repo.deleteEntries(ids) };
 }
 
+/** Photo changes saved together with an event (JCB-7). */
+export interface PhotoChanges {
+  /** New photos and their files; their ids come from useDraftIds, so a retry uploads to the same paths. */
+  add?: { photo: Photo; files: PhotoFiles }[];
+  /** Photos changed in place (description). */
+  update?: { next: Photo; prev: Photo }[];
+  /** Photos taken off the event; their files are removed once Undo is no longer offered. */
+  remove?: Photo[];
+}
+
 /**
- * Save an event and its condition links. `created`: conditions made with "+ New" in the form, saved
- * first so the event can link to them; Undo removes them again after restoring the event.
+ * Save an event, its condition links and its photo changes. `created`: conditions made with "+ New"
+ * in the form, saved first so the event can link to them; Undo removes them again after restoring the
+ * event. New photos' files are uploaded before anything else, so a slow or failed upload leaves
+ * nothing half-saved, and a retry writes the same files and rows again.
  */
-export async function saveEvent(repo: Repository, next: HealthEvent, prev: HealthEvent | null, created: Condition[] = []): Promise<Undo> {
+export async function saveEvent(
+  repo: Repository,
+  next: HealthEvent,
+  prev: HealthEvent | null,
+  created: Condition[] = [],
+  photos: PhotoChanges = {},
+): Promise<Undo> {
+  const { add = [], update = [], remove = [] } = photos;
+  for (const a of add) await repo.uploadPhotoFiles(a.photo, a.files);
   for (const c of created) await repo.saveCondition(c);
   await repo.saveEvent(next);
-  return async () => {
+  for (const a of add) await repo.savePhoto(a.photo);
+  for (const u of update) await repo.savePhoto(u.next);
+  for (const r of remove) await repo.deletePhoto(r.id);
+  const undo = async () => {
     if (prev) await repo.saveEvent(prev);
-    else await repo.deleteEvent(next.id);
+    else await repo.deleteEvent(next.id); // its photo rows go with it
+    if (prev) for (const a of add) await repo.deletePhoto(a.photo.id);
+    for (const u of update) await repo.savePhoto(u.prev);
+    for (const r of remove) await repo.savePhoto(r);
     for (const c of created) await repo.deleteCondition(c.id);
+    if (add.length) await repo.purgePhotoFiles(add.map((a) => a.photo));
   };
+  return remove.length ? withCommit(undo, () => repo.purgePhotoFiles(remove)) : undo;
 }
 
 /** Create, edit, resolve or reopen a condition. Undo puts the previous version back (or deletes a new one). */
@@ -111,9 +145,27 @@ export async function deleteCondition(repo: Repository, condition: Condition, ev
   };
 }
 
-export async function deleteEvent(repo: Repository, event: HealthEvent): Promise<Undo> {
+/** Delete an event with its photos (`photos`: its rows, which go with it). Undo brings both back. */
+export async function deleteEvent(repo: Repository, event: HealthEvent, photos: Photo[] = []): Promise<Undo> {
   await repo.deleteEvent(event.id);
-  return () => repo.saveEvent(event);
+  const undo = async () => {
+    await repo.saveEvent(event);
+    for (const p of photos) await repo.savePhoto(p);
+  };
+  return photos.length ? withCommit(undo, () => repo.purgePhotoFiles(photos)) : undo;
+}
+
+/**
+ * Delete one photo. A standalone photo event without other photos goes with it (an empty photo event
+ * would mean nothing); a photo on a vet visit, symptom or note leaves the event as it is.
+ */
+export async function deletePhoto(repo: Repository, photo: Photo, event: HealthEvent, eventPhotos: Photo[]): Promise<Undo> {
+  if (event.type === 'photo' && eventPhotos.every((p) => p.id === photo.id)) return deleteEvent(repo, event, [photo]);
+  await repo.deletePhoto(photo.id);
+  return withCommit(
+    () => repo.savePhoto(photo),
+    () => repo.purgePhotoFiles([photo]),
+  );
 }
 
 /** Save a pinned note (new or edited). Undo puts back the previous text, or deletes the new note. */

@@ -18,9 +18,12 @@ export function DateLine({
   onOpen,
   onDate,
   onPart,
+  note,
 }: {
   date: PlainDate;
   part?: DayPart;
+  /** Said after the date while the field is closed ("date from the photo"). */
+  note?: string;
   open: boolean;
   today: PlainDate;
   onOpen: () => void;
@@ -34,7 +37,7 @@ export function DateLine({
   if (!open) {
     return (
       <div className="dateline">
-        <span>{`${t('copy.163')}${f.shortDate(date)}${part ? ` · ${f.part(part)}` : ''}`}</span>
+        <span>{`${t('copy.163')}${f.shortDate(date)}${part ? ` · ${f.part(part)}` : ''}${note ? ` · ${note}` : ''}`}</span>
         <button type="button" className="link-btn" onClick={onOpen}>
           {t('change')}
         </button>

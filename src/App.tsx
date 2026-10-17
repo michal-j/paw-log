@@ -14,6 +14,8 @@ import { SlotSheet } from './log/SlotSheet';
 import { conditionPath, dayPath, parseRoute, routePath, tabPath, timelinePath, usualPath, type Route } from './routes';
 import { PinnedNotes } from './pinned/PinnedNotes';
 import { PinnedSheet } from './pinned/PinnedSheet';
+import { PhotoSheet } from './photos/PhotoSheet';
+import { PhotoCompare, PhotoViewer } from './photos/PhotoViewer';
 import { ConditionPage } from './tracked/ConditionPage';
 import { ConditionSheet, ResolveSheet } from './tracked/ConditionSheet';
 import { TrackedList } from './tracked/TrackedList';
@@ -63,17 +65,20 @@ export function App({ repository, onSignOut }: { repository: Repository; onSignO
 function Shell({ repository, onSignOut }: { repository: Repository; onSignOut?: () => void }) {
   const { t } = useI18n();
   const log = useLog();
-  const { open, close, reload, toast } = log;
+  const { open, close, reload, toast, setOverlay } = log;
   const isDemo = repository instanceof DemoRepository;
   const [loc, setLoc] = useState<Location>(readLocation);
   const { route } = loc;
   const base = route.base;
 
   useEffect(() => {
-    const onPop = () => setLoc(readLocation());
+    const onPop = () => {
+      setOverlay(null); // Back leaves the photo viewer along with the screen it was opened on
+      setLoc(readLocation());
+    };
     window.addEventListener('popstate', onPop);
     return () => window.removeEventListener('popstate', onPop);
-  }, []);
+  }, [setOverlay]);
 
   const openDay = useCallback(
     (date: PlainDate, scrollTop: number) => {
@@ -245,6 +250,7 @@ function Shell({ repository, onSignOut }: { repository: Repository; onSignOut?: 
           {t('copy.173')}
         </button>
       </nav>
+      <OverlayHost onShowDay={showDay} onOpenCondition={openCondition} />
       <SheetHost onShowDay={showDay} onOpenCondition={openCondition} onUsualDay={() => openUsual(route.view === 'day' ? route.date : undefined)} onSignOut={onSignOut} onResetDemo={isDemo ? resetDemo : undefined} />
       <ToastHost />
     </main>
@@ -295,9 +301,31 @@ function SheetHost({
       return <BackfillSheet key={`backfill-${sheet.slot.id}`} slot={sheet.slot} />;
     case 'pinned':
       return <PinnedSheet key={sheet.note?.id ?? 'new'} note={sheet.note} />;
+    case 'photo':
+      return (
+        <PhotoSheet
+          key={sheet.photo?.id ?? 'new'}
+          date={sheet.date}
+          photo={sheet.photo}
+          ctxOpen={sheet.ctxOpen}
+          linkTo={sheet.linkTo}
+          onShowDay={onShowDay}
+        />
+      );
     case 'menu':
       return <MenuSheet onUsualDay={onUsualDay} onSignOut={onSignOut} onResetDemo={onResetDemo} />;
   }
+}
+
+/** The photo viewer and Compare, over the screen they were opened from. */
+function OverlayHost({ onShowDay, onOpenCondition }: { onShowDay: (date: PlainDate) => void; onOpenCondition: (id: string) => void }) {
+  const { overlay } = useLog();
+  if (!overlay) return null;
+  return overlay.kind === 'viewer' ? (
+    <PhotoViewer ids={overlay.ids} index={overlay.index} onShowDay={onShowDay} onOpenCondition={onOpenCondition} />
+  ) : (
+    <PhotoCompare condition={overlay.condition} />
+  );
 }
 
 function ToastHost() {

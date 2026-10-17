@@ -1,4 +1,4 @@
-import type { Condition, DateRange, DayPart, DayPartTimes, Dog, DogSettings, Entry, HealthEvent, Item, PinnedNote, PlainDate, RemovedSlot, ScheduleSlot } from './types';
+import type { Condition, DateRange, DayPart, DayPartTimes, Dog, DogSettings, Entry, HealthEvent, Item, Photo, PhotoFiles, PhotoSize, PinnedNote, PlainDate, RemovedSlot, ScheduleSlot } from './types';
 
 /** Usual times of the day parts until the household changes them (design proposal JCB-25). */
 export const DEFAULT_DAY_PART_TIMES: DayPartTimes = {
@@ -57,8 +57,24 @@ export interface Repository {
   listEvents(range?: DateRange): Promise<HealthEvent[]>;
   /** Insert or update by id; its condition links become exactly `event.conditionIds`. */
   saveEvent(event: HealthEvent): Promise<void>;
-  /** Delete an event; its condition links go with it, the conditions stay. */
+  /** Delete an event; its condition links and photo rows go with it, the conditions stay. */
   deleteEvent(id: string): Promise<void>;
+  /** Every photo row (the files are read through `photoUrls`). */
+  listPhotos(): Promise<Photo[]>;
+  /**
+   * Store a photo's files at its paths (they depend only on dog and id), replacing what is there, so a
+   * retry after a failed or timed-out attempt writes the same files again, never a second copy.
+   * Called before `savePhoto`, so a row never points at missing files.
+   */
+  uploadPhotoFiles(photo: Photo, files: PhotoFiles): Promise<void>;
+  /** Insert or update a photo row by id (its event must exist). */
+  savePhoto(photo: Photo): Promise<void>;
+  /** Delete a photo row; its files stay until `purgePhotoFiles`, so Undo can bring it back. */
+  deletePhoto(id: string): Promise<void>;
+  /** Remove the files of these photos whose row is gone; files of a photo that still has its row are kept. */
+  purgePhotoFiles(photos: Pick<Photo, 'id' | 'dogId'>[]): Promise<void>;
+  /** URLs to show photos at, by id: short-lived, so ask again rather than keep them. Missing files are left out. */
+  photoUrls(photos: Pick<Photo, 'id' | 'dogId'>[], size: PhotoSize): Promise<Record<string, string>>;
   /** Tracked conditions, open and resolved. */
   listConditions(): Promise<Condition[]>;
   /** Insert or update by id. */
