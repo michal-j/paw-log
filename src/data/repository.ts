@@ -1,4 +1,4 @@
-import type { DateRange, DayPart, DayPartTimes, Dog, DogSettings, Entry, HealthEvent, Item, PinnedNote, PlainDate, RemovedSlot, ScheduleSlot } from './types';
+import type { Condition, DateRange, DayPart, DayPartTimes, Dog, DogSettings, Entry, HealthEvent, Item, PinnedNote, PlainDate, RemovedSlot, ScheduleSlot } from './types';
 
 /** Usual times of the day parts until the household changes them (design proposal JCB-25). */
 export const DEFAULT_DAY_PART_TIMES: DayPartTimes = {
@@ -53,9 +53,20 @@ export interface Repository {
   deleteEntries(ids: string[]): Promise<void>;
   getSettings(): Promise<DogSettings>;
   saveSettings(settings: DogSettings): Promise<void>;
+  /** Events with their `conditionIds`. */
   listEvents(range?: DateRange): Promise<HealthEvent[]>;
+  /** Insert or update by id; its condition links become exactly `event.conditionIds`. */
   saveEvent(event: HealthEvent): Promise<void>;
+  /** Delete an event; its condition links go with it, the conditions stay. */
   deleteEvent(id: string): Promise<void>;
+  /** Tracked conditions, open and resolved. */
+  listConditions(): Promise<Condition[]>;
+  /** Insert or update by id. */
+  saveCondition(condition: Condition): Promise<void>;
+  /** Delete a condition; its links go with it, the linked events stay. */
+  deleteCondition(id: string): Promise<void>;
+  /** Link events to a condition (links that exist already are kept); used to undo a delete. */
+  linkEvents(conditionId: string, eventIds: string[]): Promise<void>;
   /** Pinned notes in list order (position, then creation). */
   listPinnedNotes(): Promise<PinnedNote[]>;
   /**

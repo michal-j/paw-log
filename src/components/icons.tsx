@@ -93,3 +93,10 @@ export const TrackedIcon = ({ active = false, size = 22 }: { active?: boolean; s
     <path d="M12 1.5v3M12 19.5v3M1.5 12h3M19.5 12h3" />
   </svg>
 );
+/** The small target glyph of a ConditionTag. */
+export const TargetIcon = ({ size = 11 }: { size?: number }) => (
+  <svg {...stroke(size, 2.6)}>
+    <circle cx="12" cy="12" r="8.5" />
+    <circle cx="12" cy="12" r="2.5" fill="currentColor" />
+  </svg>
+);

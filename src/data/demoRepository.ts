@@ -3,27 +3,37 @@ import itemsJson from '../../data/demo/items.json';
 import scheduleJson from '../../data/demo/schedule.json';
 import entriesJson from '../../data/demo/entries.json';
 import eventsJson from '../../data/demo/events.json';
+import conditionsJson from '../../data/demo/conditions.json';
 import pinnedJson from '../../data/demo/pinned.json';
 import { DuplicateSlotEntryError } from './errors';
 import { DEFAULT_DAY_PART_TIMES, type Repository } from './repository';
-import type { DateRange, DayPart, DayPartTimes, Dog, DogSettings, Entry, EntryState, HealthEvent, Item, PinnedNote, RemovedSlot, ScheduleSlot } from './types';
+import type { Condition, DateRange, DayPart, DayPartTimes, Dog, DogSettings, Entry, EntryState, HealthEvent, Item, PinnedNote, RemovedSlot, ScheduleSlot } from './types';
 
 /** v2: JCB-39 changed the shape (amounts, usual day). Changes saved under v1 are dropped. */
 export const DEMO_STORAGE_KEY = 'pawlog.demo.v2';
 
 /** Entries as stored: a usual-day item removed for a day is a row with state `removed` (as in the database). */
 type StoredEntry = Omit<Entry, 'state'> & { state: EntryState | 'removed' };
+/** Events as stored: their condition links are kept in `links`, as in the database. */
+type StoredEvent = Omit<HealthEvent, 'conditionIds'>;
+interface Link {
+  eventId: string;
+  conditionId: string;
+}
 
 interface Persisted {
   items: Item[];
   slots: ScheduleSlot[];
   entries: StoredEntry[];
-  events: HealthEvent[];
+  events: StoredEvent[];
   /** Absent in changes saved before JCB-5: seeded then. */
   pinned?: PinnedNote[];
   times: DayPartTimes;
   /** Absent in changes saved before JCB-43. */
   settings?: DogSettings;
+  /** Absent in changes saved before JCB-6: the sample conditions are added then. */
+  conditions?: Condition[];
+  links?: Link[];
 }
 
 const isEntry = (e: StoredEntry): e is Entry => e.state !== 'removed';
@@ -41,12 +51,20 @@ function seed(): Persisted {
     items: copy(itemsJson as Item[]),
     slots: copy(scheduleJson as ScheduleSlot[]),
     entries: copy(entriesJson as Entry[]),
-    events: copy(eventsJson as HealthEvent[]),
+    events: copy(eventsJson as StoredEvent[]),
     pinned: copy(pinnedJson as PinnedNote[]),
     times: { ...DEFAULT_DAY_PART_TIMES },
     settings: { logStart: null },
+    conditions: copy(conditionsJson.conditions as Condition[]),
+    links: copy(conditionsJson.links),
   };
 }
+
+const stored = (event: HealthEvent): StoredEvent => {
+  const rest: Partial<HealthEvent> = copy(event);
+  delete rest.conditionIds;
+  return rest as StoredEvent;
+};
 
 const hhmm = (d: Date) => `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
 
@@ -142,15 +160,56 @@ export class DemoRepository implements Repository {
     this.data.entries = this.data.entries.filter((e) => !drop.has(e.id));
     this.persist();
   }
-  async listEvents(range?: DateRange) {
-    return copy(this.data.events.filter((e) => inRange(e.date, range)).sort(byDate));
+  async listEvents(range?: DateRange): Promise<HealthEvent[]> {
+    const links = this.links();
+    // Changes saved before JCB-6 may still carry the old `issueId`; it is dropped here.
+    return copy(this.data.events.filter((e) => inRange(e.date, range)).sort(byDate)).map((stored: StoredEvent & { issueId?: unknown }) => {
+      const e = { ...stored };
+      delete e.issueId;
+      return { ...e, conditionIds: links.filter((l) => l.eventId === e.id).map((l) => l.conditionId) };
+    });
   }
   async saveEvent(event: HealthEvent) {
-    this.data.events = upsert(this.data.events, copy(event));
+    // Same rule as the foreign keys: a link needs an existing condition.
+    const known = new Set(this.conditions().map((c) => c.id));
+    const missing = event.conditionIds.find((id) => !known.has(id));
+    if (missing) throw new Error(`saveEvent: no condition ${missing}`);
+    this.data.events = upsert(this.data.events, stored(event));
+    this.data.links = [
+      ...this.links().filter((l) => l.eventId !== event.id),
+      ...[...new Set(event.conditionIds)].map((conditionId) => ({ eventId: event.id, conditionId })),
+    ];
     this.persist();
   }
   async deleteEvent(id: string) {
     this.data.events = this.data.events.filter((e) => e.id !== id);
+    this.data.links = this.links().filter((l) => l.eventId !== id);
+    this.persist();
+  }
+  async listConditions(): Promise<Condition[]> {
+    return copy(this.conditions()).sort((a, b) => b.startedOn.localeCompare(a.startedOn) || a.position - b.position || a.id.localeCompare(b.id));
+  }
+  async saveCondition(condition: Condition) {
+    if (condition.resolvedOn && condition.resolvedOn < condition.startedOn) throw new Error('saveCondition: resolved before it started');
+    if (!condition.name.trim()) throw new Error('saveCondition: no name');
+    if (condition.name.length > 60 || condition.description.length > 500) throw new Error('saveCondition: too long');
+    this.data.conditions = upsert(this.conditions(), copy(condition));
+    this.persist();
+  }
+  async deleteCondition(id: string) {
+    this.data.conditions = this.conditions().filter((c) => c.id !== id);
+    this.data.links = this.links().filter((l) => l.conditionId !== id);
+    this.persist();
+  }
+  async linkEvents(conditionId: string, eventIds: string[]) {
+    if (!this.conditions().some((c) => c.id === conditionId)) throw new Error(`linkEvents: no condition ${conditionId}`);
+    const events = new Set(this.data.events.map((e) => e.id));
+    const links = this.links();
+    for (const eventId of eventIds) {
+      if (!events.has(eventId)) throw new Error(`linkEvents: no event ${eventId}`);
+      if (!links.some((l) => l.eventId === eventId && l.conditionId === conditionId)) links.push({ eventId, conditionId });
+    }
+    this.data.links = links;
     this.persist();
   }
 
@@ -185,6 +244,22 @@ export class DemoRepository implements Repository {
       /* storage unavailable */
     }
     this.data = seed();
+  }
+
+  /** Changes saved before JCB-6 have no conditions: they get the sample ones, linked to the events still there. */
+  private conditions(): Condition[] {
+    if (!this.data.conditions) this.adoptSampleConditions();
+    return this.data.conditions as Condition[];
+  }
+  private links(): Link[] {
+    if (!this.data.links) this.adoptSampleConditions();
+    return [...(this.data.links as Link[])];
+  }
+  private adoptSampleConditions() {
+    const events = new Set(this.data.events.map((e) => e.id));
+    this.data.conditions ??= copy(conditionsJson.conditions as Condition[]);
+    const conditions = new Set(this.data.conditions.map((c) => c.id));
+    this.data.links ??= copy(conditionsJson.links).filter((l) => events.has(l.eventId) && conditions.has(l.conditionId));
   }
 
   /** Same rule as the database: one entry (or removal marker) per schedule slot per date. */

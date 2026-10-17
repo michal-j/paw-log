@@ -144,7 +144,7 @@ describe('symptoms', () => {
   it('recognises stored titles and shows their properties', () => {
     expect(symptomKey('poo')).toBe('sx_poo');
     expect(symptomKey('Itching')).toBeUndefined();
-    const base = { id: 'x', dogId: 'd', date: '2026-10-01', issueId: null, type: 'symptom' as const };
+    const base = { id: 'x', dogId: 'd', date: '2026-10-01', conditionIds: [], type: 'symptom' as const };
     expect(symptomDetail({ ...base, title: 'Poo', detail: '', props: { consistency: 'diarrhea', colour: 'dark', quantity: 'medium' } }, en)).toBe(
       'diarrhea · dark · medium amount',
     );
