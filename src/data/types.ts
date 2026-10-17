@@ -170,3 +170,35 @@ export interface DateRange {
   from?: PlainDate;
   to?: PlainDate;
 }
+
+/**
+ * A photo on an event (an `attachment` row of kind photo). A standalone photo is an event of type
+ * `photo` with one Photo; vet visits, symptoms and notes can carry photos too. The files live in
+ * private storage at `photoPath(photo)` (and a small copy at `photoPath(photo, 'thumb')`).
+ */
+export interface Photo {
+  id: string;
+  dogId: string;
+  eventId: string;
+  /** Size of the stored (resized) picture, px. */
+  width: number;
+  height: number;
+  /** When it was taken, from the photo itself: local wall-clock `YYYY-MM-DDTHH:MM:SS`; null when unknown. */
+  takenAt: string | null;
+  /** Description of a photo on another event; a standalone photo's description is its event's `detail`. */
+  caption: string;
+  /** Order within the event. */
+  position: number;
+}
+
+/** The two JPEG files of a photo, made on the device (src/photos/resize.ts). */
+export interface PhotoFiles {
+  full: Blob;
+  thumb: Blob;
+}
+
+export type PhotoSize = 'full' | 'thumb';
+
+/** Storage path of a photo's file: `<dog>/<id>.jpg` or `<dog>/<id>.thumb.jpg` (the storage policies check it). */
+export const photoPath = (p: Pick<Photo, 'id' | 'dogId'>, size: PhotoSize = 'full') =>
+  `${p.dogId}/${p.id}${size === 'thumb' ? '.thumb' : ''}.jpg`;

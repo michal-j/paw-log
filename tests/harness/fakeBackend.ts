@@ -9,6 +9,8 @@
 // Postgres code (23505 unique violation → 409, 42501 → 403, other constraint errors → 400).
 // Auth: only the token refresh (POST /auth/v1/token), answering a new session for the seed user
 // (JCB-71); the harness signs in with a fake AuthService. Not covered: embedded resources, RPC.
+// Storage (JCB-7): upload (raw body, x-upsert; or a signed upload URL, then PUT with its token), batch signing, signed and public downloads, remove;
+// each runs as the user on storage.objects, so the migration's storage policies apply.
 //
 // Nothing here ever reaches a network: the fetch never calls the real one. All data is fictional.
 import { PGlite } from '@electric-sql/pglite';
@@ -52,6 +54,10 @@ export interface FakeBackend {
   log: RequestLog[];
   /** Run SQL as the postgres role (bypasses RLS), for fixtures and checks. */
   sql<T = Record<string, unknown>>(query: string, params?: unknown[]): Promise<T[]>;
+  /** Storage files held, as `<bucket>/<name>` (JCB-7). */
+  files(): string[];
+  /** Answer the next requests as another signed-in user (an outsider, in RLS tests). */
+  setUser(userId: string): void;
   /** Make the next `n` requests fail like a network error (offline). */
   failNext(n: number): void;
   /**
@@ -254,7 +260,7 @@ export async function createFakeBackend(options: { start?: string; seed?: boolea
   const db = new PGlite();
   await migrate(db);
   if (options.seed !== false) await seedHousehold(db, options.start ?? '2026-10-01');
-  const userId = options.userId ?? SEED.user;
+  let userId = options.userId ?? SEED.user;
   const log: RequestLog[] = [];
   let failures = 0;
   let hangs = 0;
@@ -321,12 +327,138 @@ export async function createFakeBackend(options: { start?: string; seed?: boolea
     throw new HttpError(405, 'PGRST000', `${method} not supported by the fake`);
   }
 
+  // ---------- Storage (JCB-7) ----------
+  // Like Supabase Storage: every object operation runs as the user on storage.objects, so the
+  // migration's storage policies decide (RLS); the bytes live in this map. Bucket limits (public,
+  // size, type) are checked as the storage server does.
+  const files = new Map<string, { bytes: Uint8Array; type: string }>();
+  const tokens = new Map<string, { key: string; until: number }>();
+  const storageError = (status: number, error: string, message: string): [number, string] => [
+    status,
+    JSON.stringify({ statusCode: String(status), error, message }),
+  ];
+  const pgStorageError = (err: unknown): [number, string] => {
+    const code = (err as { code?: string }).code;
+    if (code === '42501') return storageError(403, 'Unauthorized', 'new row violates row-level security policy');
+    if (code === '23505') return storageError(409, 'Duplicate', 'The resource already exists');
+    return storageError(400, 'Error', (err as Error).message);
+  };
+
+  const uploadTokens = new Map<string, { key: string; upsert: boolean; owner: string }>();
+  const insertObject = (upsert: boolean) =>
+    `insert into storage.objects (bucket_id, name, owner, owner_id, metadata) values ($1, $2, $3::uuid, $3::text, $4::jsonb)` +
+    (upsert ? ' on conflict (bucket_id, name) do update set updated_at = now(), metadata = excluded.metadata' : '');
+
+  /** Store an upload after the bucket's limits; `asOwner`: run the insert as the user (RLS) rather than as the server. */
+  async function putObject(request: Request, bucket: string, name: string, upsert: boolean, owner: string, asOwner: boolean): Promise<[number, string]> {
+    const bytes = new Uint8Array(await request.arrayBuffer());
+    const type = (request.headers.get('content-type') ?? '').split(';')[0] as string;
+    const [b] = (
+      await db.query<{ file_size_limit: string | null; allowed_mime_types: string[] | null }>(
+        'select file_size_limit, allowed_mime_types from storage.buckets where id = $1',
+        [bucket],
+      )
+    ).rows;
+    if (!b) return storageError(404, 'Bucket not found', 'Bucket not found');
+    if (b.file_size_limit !== null && bytes.length > Number(b.file_size_limit)) return storageError(413, 'Payload too large', 'The object exceeded the maximum allowed size');
+    if (b.allowed_mime_types && !b.allowed_mime_types.includes(type)) return storageError(415, 'invalid_mime_type', `mime type ${type} is not supported`);
+    const params = [bucket, name, owner, JSON.stringify({ mimetype: type, size: bytes.length })];
+    try {
+      if (asOwner) await asUser((tx) => tx.query(insertObject(upsert), params));
+      else await db.query(insertObject(upsert), params);
+    } catch (err) {
+      return pgStorageError(err);
+    }
+    files.set(`${bucket}/${name}`, { bytes, type });
+    return [200, JSON.stringify({ Id: crypto.randomUUID(), Key: `${bucket}/${name}` })];
+  }
+
+  async function storage(request: Request, url: URL): Promise<[number, string | Uint8Array, string?]> {
+    const path = decodeURIComponent(url.pathname.replace(/^\/storage\/v1/, ''));
+    const method = request.method;
+    let m = /^\/object\/sign\/([a-z0-9_-]+)$/.exec(path);
+    if (m && method === 'POST') {
+      const bucket = m[1] as string;
+      const { expiresIn, paths } = (await request.json()) as { expiresIn: number; paths: string[] };
+      const seen = await asUser((tx) =>
+        tx.query<{ name: string }>('select name from storage.objects where bucket_id = $1 and name = any($2::text[])', [bucket, paths]),
+      );
+      const visible = new Set(seen.rows.map((r) => r.name));
+      const out = paths.map((p) => {
+        if (!visible.has(p)) return { error: 'Either the object does not exist or you do not have access to it', path: p, signedURL: null };
+        const token = crypto.randomUUID();
+        tokens.set(token, { key: `${bucket}/${p}`, until: Date.now() + expiresIn * 1000 });
+        return { error: null, path: p, signedURL: `/object/sign/${bucket}/${p}?token=${token}` };
+      });
+      return [200, JSON.stringify(out)];
+    }
+    m = /^\/object\/sign\/([a-z0-9_-]+)\/(.+)$/.exec(path);
+    if (m && method === 'GET') {
+      const t = tokens.get(url.searchParams.get('token') ?? '');
+      const key = `${m[1]}/${m[2]}`;
+      const file = files.get(key);
+      if (!t || t.key !== key || t.until < Date.now()) return storageError(400, 'InvalidSignature', 'The signature is invalid or has expired');
+      if (!file) return storageError(404, 'not_found', 'Object not found');
+      return [200, file.bytes, file.type];
+    }
+    m = /^\/object\/public\/([a-z0-9_-]+)\/(.+)$/.exec(path);
+    if (m && method === 'GET') {
+      const [bucket] = (await db.query<{ public: boolean }>('select public from storage.buckets where id = $1', [m[1]])).rows;
+      if (!bucket?.public) return storageError(400, 'not_found', 'Bucket not found');
+      const file = files.get(`${m[1]}/${m[2]}`);
+      return file ? [200, file.bytes, file.type] : storageError(404, 'not_found', 'Object not found');
+    }
+    m = /^\/object\/([a-z0-9_-]+)$/.exec(path);
+    if (m && method === 'DELETE') {
+      const bucket = m[1] as string;
+      const { prefixes } = (await request.json()) as { prefixes: string[] };
+      const gone = await asUser((tx) =>
+        tx.query<{ name: string }>('delete from storage.objects where bucket_id = $1 and name = any($2::text[]) returning name', [bucket, prefixes]),
+      );
+      for (const r of gone.rows) files.delete(`${bucket}/${r.name}`);
+      return [200, JSON.stringify(gone.rows.map((r) => ({ name: r.name, bucket_id: bucket })))];
+    }
+    // Signed upload URL: the storage policies are checked now, as the user; the upload itself then
+    // only needs the token (as on Supabase).
+    m = /^\/object\/upload\/sign\/([a-z0-9_-]+)\/(.+)$/.exec(path);
+    if (m && method === 'POST') {
+      const bucket = m[1] as string;
+      const name = m[2] as string;
+      const upsert = request.headers.get('x-upsert') === 'true';
+      const ROLLBACK = new Error('rollback');
+      try {
+        await asUser(async (tx) => {
+          await tx.query(insertObject(upsert), [bucket, name, userId, '{}']);
+          throw ROLLBACK; // only a check: nothing is stored until the upload
+        });
+      } catch (err) {
+        if (err !== ROLLBACK) return pgStorageError(err);
+      }
+      const token = crypto.randomUUID();
+      uploadTokens.set(token, { key: `${bucket}/${name}`, upsert, owner: userId });
+      return [200, JSON.stringify({ url: `/object/upload/sign/${bucket}/${name}?token=${token}`, token })];
+    }
+    if (m && method === 'PUT') {
+      const bucket = m[1] as string;
+      const name = m[2] as string;
+      const t = uploadTokens.get(url.searchParams.get('token') ?? '');
+      if (!t || t.key !== `${bucket}/${name}`) return storageError(400, 'InvalidSignature', 'The signature is invalid or has expired');
+      return putObject(request, bucket, name, t.upsert || request.headers.get('x-upsert') === 'true', t.owner, false);
+    }
+    m = /^\/object\/([a-z0-9_-]+)\/(.+)$/.exec(path);
+    if (m && (method === 'POST' || method === 'PUT')) {
+      return putObject(request, m[1] as string, m[2] as string, method === 'PUT' || request.headers.get('x-upsert') === 'true', userId, true);
+    }
+    return storageError(404, 'not_found', `${method} ${path} is not supported by the fake`);
+  }
+
   const fakeFetch: typeof fetch = async (input, init) => {
     const request = new Request(input, init);
     const url = new URL(request.url);
     if (url.origin !== FAKE_URL) throw new TypeError(`fake backend: refusing to call ${url.origin}`);
     const match = /^\/rest\/v1\/([a-z_]+)$/.exec(url.pathname);
-    const table = match?.[1] ?? url.pathname;
+    const isStorage = url.pathname.startsWith('/storage/v1/');
+    const table = match?.[1] ?? (isStorage ? 'storage' : url.pathname);
     if (hangs > 0 && hangWhich(request.method, table)) {
       hangs--;
       await new Promise<void>((resolve) => held.push(resolve));
@@ -340,6 +472,11 @@ export async function createFakeBackend(options: { start?: string; seed?: boolea
     if (failures > 0) {
       failures--;
       throw new TypeError('Failed to fetch');
+    }
+    if (isStorage) {
+      const [status, payload, type] = await storage(request, url);
+      log.push({ method: request.method, table, status, query: url.pathname });
+      return new Response(payload as BodyInit, { status, headers: { 'Content-Type': type ?? 'application/json' } });
     }
     if (!match) return new Response(JSON.stringify({ message: 'not found' }), { status: 404 });
     const text = request.method === 'GET' || request.method === 'DELETE' ? '' : await request.text();
@@ -364,6 +501,10 @@ export async function createFakeBackend(options: { start?: string; seed?: boolea
     db,
     log,
     sql: async <T,>(query: string, params?: unknown[]) => (await db.query<T>(query, params)).rows,
+    files: () => [...files.keys()].sort(),
+    setUser: (id) => {
+      userId = id;
+    },
     failNext: (n) => {
       failures = n;
     },

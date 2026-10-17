@@ -1,8 +1,9 @@
 // The real supabase-js client and SupabaseRepository wired to the fake backend (tests/harness/fakeBackend.ts).
 import type { SupabaseClient, SupabaseClientOptions } from '@supabase/supabase-js';
 import { createSupabaseClient } from '../../src/auth/supabaseClient';
-import { SupabaseRepository } from '../../src/data/supabaseRepository';
+import { SupabaseRepository, type SupabaseRepositoryOptions } from '../../src/data/supabaseRepository';
 import { withTimeout } from '../../src/data/timeout';
+import { fetchUploader } from '../../src/data/upload';
 import { FAKE_ANON_KEY, FAKE_URL, createFakeBackend, type FakeBackend } from './fakeBackend';
 
 export interface FakeSupabase {
@@ -12,7 +13,7 @@ export interface FakeSupabase {
    * A fresh repository (as AuthGate creates one per signed-in user), with an optional fixed clock,
    * limited in time like the app's (withTimeout; `timeoutMs` to shorten it in tests).
    */
-  repository: (now?: () => Date, timeoutMs?: number) => SupabaseRepository;
+  repository: (now?: () => Date, timeoutMs?: number, options?: SupabaseRepositoryOptions) => SupabaseRepository;
 }
 
 interface ClientOptions {
@@ -38,14 +39,30 @@ export function fakeClient(backend: FakeBackend, options: ClientOptions = {}): S
 }
 
 /** The real-path repository the app uses: SupabaseRepository, limited in time. */
-export function timedRepository(client: SupabaseClient, now?: () => Date, timeoutMs?: number) {
-  return withTimeout(new SupabaseRepository(client, now), timeoutMs);
+export function timedRepository(client: SupabaseClient, now?: () => Date, timeoutMs?: number, options?: SupabaseRepositoryOptions) {
+  return withTimeout(new SupabaseRepository(client, now, options), timeoutMs);
 }
+
+/** File uploads through the fake backend (a browser's XMLHttpRequest would go to the network). */
+export const fakeUploader = (backend: FakeBackend, limitMs?: (bytes: number) => number) => fetchUploader(backend.fetch, limitMs);
+
+/**
+ * For the browser harness: the fake backend has no network address, so an <img> cannot load a
+ * signed URL itself. Load it through the fake and hand out a blob: URL instead.
+ */
+export const harnessDisplayUrl = (backend: FakeBackend) => async (signedUrl: string) => {
+  const res = await backend.fetch(signedUrl);
+  return URL.createObjectURL(await res.blob());
+};
 
 export async function createFakeSupabase(
   options: Parameters<typeof createFakeBackend>[0] & { client?: ClientOptions } = {},
 ): Promise<FakeSupabase> {
   const backend = await createFakeBackend(options);
   const client = fakeClient(backend, options.client);
-  return { backend, client, repository: (now, timeoutMs) => timedRepository(client, now, timeoutMs) };
+  return {
+    backend,
+    client,
+    repository: (now, timeoutMs, options) => timedRepository(client, now, timeoutMs, { upload: fakeUploader(backend), ...options }),
+  };
 }

@@ -28,3 +28,37 @@ $$;
 grant usage on schema public to anon, authenticated;
 alter default privileges in schema public grant all on tables to anon, authenticated;
 alter default privileges in schema public grant all on functions to anon, authenticated;
+
+-- Storage (JCB-7): the two tables of Supabase's `storage` schema the migrations use, with RLS on
+-- and the API roles' grants, as on a Supabase project. Files themselves are not stored here.
+create schema storage;
+grant usage on schema storage to anon, authenticated;
+
+create table storage.buckets (
+  id text primary key,
+  name text not null unique,
+  owner uuid,
+  public boolean default false,
+  file_size_limit bigint,
+  allowed_mime_types text[],
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+
+create table storage.objects (
+  id uuid primary key default gen_random_uuid(),
+  bucket_id text references storage.buckets (id),
+  name text,
+  owner uuid,
+  owner_id text,
+  metadata jsonb,
+  version text,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now(),
+  last_accessed_at timestamptz default now(),
+  unique (bucket_id, name)
+);
+
+alter table storage.buckets enable row level security;
+alter table storage.objects enable row level security;
+grant all on storage.buckets, storage.objects to anon, authenticated;

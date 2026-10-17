@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import type { Condition, DayPart, DayPartTimes, DogSettings, Entry, HealthEvent, Item, PinnedNote, PlainDate, RemovedSlot, Repository, ScheduleSlot } from '../data';
+import type { Condition, DayPart, DayPartTimes, DogSettings, Entry, HealthEvent, Item, Photo, PinnedNote, PlainDate, RemovedSlot, Repository, ScheduleSlot } from '../data';
 import { useI18n } from '../i18n';
 import { logStartOf } from '../timeline/model';
 import type { KindGroup } from './amount';
@@ -19,6 +19,8 @@ export interface Records {
   conditions: Condition[];
   /** Pinned notes in list order. */
   pinned: PinnedNote[];
+  /** Photos on events (JCB-7); `photosOf` and friends in src/photos/model.ts read them. */
+  photos: Photo[];
   times: DayPartTimes;
   settings: DogSettings;
   /** The first day offered ("Log starts on", set or derived): the Timeline and Day view reach back to it. */
@@ -56,7 +58,12 @@ export type SheetState =
   | { kind: 'backfill'; slot: ScheduleSlot }
   /** A pinned note: a new one, or `note` to edit. */
   | { kind: 'pinned'; note?: PinnedNote }
+  /** A photo (JCB-7): new (a photo event; `linkTo` from a condition page), or `photo` to edit or delete. */
+  | { kind: 'photo'; date: PlainDate; photo?: Photo; ctxOpen?: boolean; linkTo?: string }
   | { kind: 'menu' };
+
+/** Full-screen photo views over the app: the viewer (pages through `ids`) and Compare (a condition's photos). */
+export type Overlay = { kind: 'viewer'; ids: string[]; index: number } | { kind: 'compare'; condition: string };
 
 interface Toast {
   id: number;
@@ -74,6 +81,8 @@ interface LogApi {
   sheet: SheetState | null;
   open: (sheet: SheetState) => void;
   close: () => void;
+  overlay: Overlay | null;
+  setOverlay: (overlay: Overlay | null) => void;
   /**
    * Run a write, then reload and show `message` with Undo (when the write returns one).
    * On failure or time-out: reload and show "Couldn't save". Resolves true on success, false otherwise.
@@ -98,7 +107,7 @@ const RETRY_MS = 4000;
  */
 async function loadRecords(repository: Repository, version: number, shown: Map<string, string>): Promise<Records> {
   const today = repository.today();
-  const [dog, items, slots, entries, removed, events, conditions, pinned, times, settings] = await Promise.all([
+  const [dog, items, slots, entries, removed, events, conditions, pinned, times, settings, photos] = await Promise.all([
     repository.getDog(),
     repository.listItems(),
     repository.listScheduleSlots(),
@@ -109,6 +118,7 @@ async function loadRecords(repository: Repository, version: number, shown: Map<s
     repository.listPinnedNotes(),
     repository.getDayPartTimes(),
     repository.getSettings(),
+    repository.listPhotos(),
   ]);
   const logStart = logStartOf({ today, setting: settings.logStart, entries, events, slotStarts: slots.map((x) => x.activeFrom) });
   // Items still grey (no item colour yet) show the colour the data migration gives them, and keep
@@ -116,7 +126,7 @@ async function loadRecords(repository: Repository, version: number, shown: Map<s
   const shownItems = withItemColours(items, shown);
   shown.clear();
   items.forEach((raw, i) => !isItemColour(raw.colour) && shown.set(raw.id, shownItems[i]!.colour));
-  return { dogId: dog.id, items: shownItems, slots, entries, removed, events, conditions, pinned, times, settings, logStart, today, version };
+  return { dogId: dog.id, items: shownItems, slots, entries, removed, events, conditions, pinned, photos, times, settings, logStart, today, version };
 }
 
 export function LogProvider({ repository, children }: { repository: Repository; children: ReactNode }) {
@@ -125,6 +135,7 @@ export function LogProvider({ repository, children }: { repository: Repository; 
   const [records, setRecords] = useState<Records | null>(null);
   const [loadFailed, setLoadFailed] = useState(false);
   const [sheet, setSheet] = useState<SheetState | null>(null);
+  const [overlay, setOverlay] = useState<Overlay | null>(null);
   const [toast, setToast] = useState<Toast | null>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const seq = useRef(0);
@@ -171,19 +182,50 @@ export function LogProvider({ repository, children }: { repository: Repository; 
     if (timer.current) clearTimeout(timer.current);
   }, []);
 
-  const show = useCallback((text: string, undo?: Undo) => {
-    if (timer.current) clearTimeout(timer.current);
-    const id = ++seq.current;
-    setToast({ id, text, undo });
-    timer.current = setTimeout(() => setToast((x) => (x?.id === id ? null : x)), TOAST_MS);
-  }, []);
-
   /** Queue `work` after every write already asked for. */
   const enqueue = useCallback(<T,>(work: () => Promise<T>): Promise<T> => {
     const next = queue.current.then(work, work);
     queue.current = next.catch(() => undefined);
     return next;
   }, []);
+
+  // The toast on screen, and whether its Undo was used: when it goes away (time-out, replaced,
+  // dismissed) without Undo, its write is finished (`Undo.commit`, e.g. a deleted photo's files).
+  const current = useRef<Toast | null>(null);
+  const settle = useCallback(
+    (toastId: number) => {
+      const was = current.current;
+      if (!was || was.id !== toastId) return;
+      current.current = null;
+      const commit = was.undo?.commit;
+      if (commit) void enqueue(commit).catch(() => undefined); // best effort: files left behind are harmless
+    },
+    [enqueue],
+  );
+
+  const show = useCallback(
+    (text: string, undo?: Undo) => {
+      if (timer.current) clearTimeout(timer.current);
+      if (current.current) settle(current.current.id);
+      const id = ++seq.current;
+      const next = { id, text, undo };
+      current.current = next;
+      setToast(next);
+      timer.current = setTimeout(() => {
+        settle(id);
+        setToast((x) => (x?.id === id ? null : x));
+      }, TOAST_MS);
+    },
+    [settle],
+  );
+
+  // Leaving the app (sign-out) finishes what the toast still held.
+  useEffect(
+    () => () => {
+      if (current.current) settle(current.current.id);
+    },
+    [settle],
+  );
 
   const run = useCallback(
     async (work: () => Promise<Undo | null>, message: string | (() => string | null)) => {
@@ -206,6 +248,7 @@ export function LogProvider({ repository, children }: { repository: Repository; 
 
   const undoToast = useCallback(() => {
     const undo = toast?.undo;
+    if (current.current?.id === toast?.id) current.current = null; // undone: nothing to finish
     setToast(null);
     if (!undo) return;
     // The past-days question belongs to the change being undone.
@@ -225,13 +268,18 @@ export function LogProvider({ repository, children }: { repository: Repository; 
       sheet,
       open: setSheet,
       close: () => setSheet(null),
+      overlay,
+      setOverlay,
       run,
       reload,
       toast,
       undoToast,
-      dismissToast: () => setToast(null),
+      dismissToast: () => {
+        if (toast) settle(toast.id);
+        setToast(null);
+      },
     }),
-    [repository, version, records, loadFailed, sheet, run, reload, toast, undoToast],
+    [repository, version, records, loadFailed, sheet, overlay, run, reload, toast, undoToast, settle],
   );
   return <Context.Provider value={value}>{children}</Context.Provider>;
 }
