@@ -197,8 +197,9 @@
   flex: none;
   display: flex;
   align-items: flex-end;
+  /* No safe-area inset here: the nav bar below already sits on the home indicator. */
   padding-top: var(--space-1);
-  padding-bottom: max(var(--space-1), env(safe-area-inset-bottom));
+  padding-bottom: var(--space-1);
   border-top: 1px solid var(--color-line);
   background: linear-gradient(180deg, var(--color-ground), var(--color-surface-tint));
   box-shadow: var(--shadow-bar-bottom);
