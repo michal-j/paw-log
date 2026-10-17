@@ -11,8 +11,9 @@ import { createFakeSupabase, type FakeSupabase } from './harness/fakeSupabase';
 const NOW = () => new Date(2026, 9, 15, 16, 30); // Thu 15 Oct 2026, 16:30
 let fake: FakeSupabase | null = null;
 
-async function at(path: string, start = '2026-10-01') {
+async function at(path: string, start = '2026-10-01', prep?: string) {
   fake = await createFakeSupabase({ start });
+  if (prep) await fake.backend.sql(prep);
   const repository = fake.repository(NOW);
   window.history.replaceState(null, '', path);
   render(
@@ -228,8 +229,8 @@ describe('real data path', () => {
     fireEvent.click(within(dialog()).getByRole('radio', { name: 'Other' }));
     fireEvent.change(within(dialog()).getByLabelText('Name of the medication'), { target: { value: 'Testamol' } });
     const colours = within(dialog()).getByRole('radiogroup', { name: 'Colour' });
-    // Seed uses food-cooked, food-farm, med-arvelin, med-bellavet and treat: food-ocean is the first free one.
-    expect(within(colours).getByRole('radio', { name: 'Colour 3' }).getAttribute('aria-checked')).toBe('true');
+    // Seed uses food-cooked, food-farm, med-arvelin, med-bellavet and treat: med-gastrelle is the first free medication one.
+    expect(within(colours).getByRole('radio', { name: 'Colour 6' }).getAttribute('aria-checked')).toBe('true');
     fireEvent.click(within(colours).getByRole('radio', { name: 'Colour 7' }));
     fireEvent.click(within(dialog()).getByRole('radio', { name: '1' }));
     click('Save');
@@ -409,6 +410,133 @@ describe('real data path', () => {
     expect(await screen.findByText('Removed from the usual day: 1')).toBeTruthy();
     expect(document.querySelector('.day-fill')).toBeNull();
     expect((await screen.findByRole('button', { name: 'Fill with your usual day: 3' })).closest('.day-fill-quiet')).not.toBeNull();
+  });
+});
+
+describe('item colours and the item editor (JCB-59)', () => {
+  // Items from before JCB-43 were grey (mark-neutral); one has a colour that is not an item token.
+  const GREY = `update item set colour = case when id = '${SEED.items.treat}' then 'mint' else 'mark-neutral' end
+    where id in ('${SEED.items.cooked}', '${SEED.items.arvelin}', '${SEED.items.treat}')`;
+  const markOf = (el: Element | null) => (el?.querySelector('.dose-mark') as HTMLElement | null)?.style.getPropertyValue('--mark');
+
+  it('grey items show an unused item colour at once, the same the data migration gives them', async () => {
+    await at('/day/2026-10-15', '2026-10-01', GREY);
+    await screen.findAllByText('Cooked meal');
+    click('Add to Breakfast');
+    fireEvent.click(within(dialog()).getByText('Food'));
+    // In lane order, own kind first: Cooked meal (10) → food-cooked, Arvelin (30) → med-arvelin,
+    // Treat (90) → treat (Farm Fresh and Bellavet keep food-farm and med-bellavet).
+    expect(markOf(within(dialog()).getByRole('radio', { name: 'Cooked meal' }))).toBe('var(--color-food-cooked)');
+    expect(markOf(within(dialog()).getByRole('radio', { name: 'Treat' }))).toBe('var(--color-treat)');
+    expect(document.querySelector('.dose-mark[style*="mark-neutral"]')).toBeNull();
+  });
+
+  it('Edit item from the entry form changes name, colour, unit and flavours, returns to the form; Undo restores', async () => {
+    await at('/day/2026-10-15');
+    await screen.findAllByText('Cooked meal');
+    click('Add to Dinner');
+    fireEvent.click(within(dialog()).getByText('Food'));
+    fireEvent.click(within(dialog()).getByRole('radio', { name: 'Farm Fresh' }));
+    click('Edit item');
+    expect(await screen.findByRole('heading', { name: 'Edit item' })).toBeTruthy();
+    const colours = within(dialog()).getByRole('radiogroup', { name: 'Colour' });
+    expect(within(colours).getByRole('radio', { name: 'Colour 2' }).getAttribute('aria-checked')).toBe('true');
+    fireEvent.click(within(colours).getByRole('radio', { name: 'Colour 9' }));
+    fireEvent.change(within(dialog()).getByLabelText('Name'), { target: { value: 'Farm Fresh Plus' } });
+    fireEvent.click(within(dialog()).getByRole('radio', { name: 'tray' }));
+    fireEvent.click(within(dialog()).getByRole('button', { name: 'Remove salmon' }));
+    fireEvent.change(within(dialog()).getByLabelText('New flavour'), { target: { value: 'duck' } });
+    fireEvent.click(within(dialog()).getByRole('button', { name: 'Add' }));
+    click('Save');
+    expect(await screen.findByText('Item saved')).toBeTruthy();
+    // Back in the entry form, with the item still picked.
+    expect(await screen.findByRole('heading', { name: 'Add food' })).toBeTruthy();
+    await waitFor(() => expect(within(dialog()).getByRole('radio', { name: 'Farm Fresh Plus' }).getAttribute('aria-checked')).toBe('true'));
+    expect(await rows(`select name, colour, default_unit, flavours from item where id = '${SEED.items.farm}'`)).toEqual([
+      { name: 'Farm Fresh Plus', colour: 'treat', default_unit: 'tray', flavours: ['turkey', 'duck'] },
+    ]);
+    click('Undo');
+    await waitFor(async () =>
+      expect(await rows(`select name, colour, default_unit, flavours from item where id = '${SEED.items.farm}'`)).toEqual([
+        { name: 'Farm Fresh', colour: 'food-farm', default_unit: 'can', flavours: ['turkey', 'salmon'] },
+      ]),
+    );
+  });
+
+  it('a grey item can be given a colour from the Usual day (Edit item), and a name is required', async () => {
+    await at('/usual/2026-10-15', '2026-10-01', GREY);
+    await screen.findByRole('heading', { name: 'Usual day' });
+    fireEvent.click((await screen.findAllByText(/Arvelin/))[0]!);
+    expect(await screen.findByRole('heading', { name: 'Usual day item' })).toBeTruthy();
+    click('Edit item');
+    const colours = within(dialog()).getByRole('radiogroup', { name: 'Colour' });
+    expect(within(colours).getByRole('radio', { name: 'Colour 4' }).getAttribute('aria-checked')).toBe('true');
+    fireEvent.click(within(colours).getByRole('radio', { name: 'Colour 5' }));
+    fireEvent.change(within(dialog()).getByLabelText('Name'), { target: { value: '  ' } });
+    click('Save');
+    expect(await within(dialog()).findByText('Type a name')).toBeTruthy();
+    fireEvent.change(within(dialog()).getByLabelText('Name'), { target: { value: 'Arvelin' } });
+    click('Save');
+    expect(await screen.findByText('Item saved')).toBeTruthy();
+    expect(await screen.findByRole('heading', { name: 'Usual day item' })).toBeTruthy();
+    expect(await rows(`select colour from item where id = '${SEED.items.arvelin}'`)).toEqual([{ colour: 'med-bellavet' }]);
+  });
+
+  it('Other while editing an entry makes a new item with an unused colour, not grey', async () => {
+    await at('/day/2026-10-15');
+    fireEvent.click(await screen.findByRole('button', { name: 'Fill with your usual day: 4' }));
+    expect(await screen.findByText('4 logged as given')).toBeTruthy();
+    await waitFor(() => expect(screen.queryByText(/not logged/)).toBeNull());
+    fireEvent.click(await screen.findByText('Cooked meal'));
+    // The item picker's Other (the amount has one too).
+    fireEvent.click(within(dialog()).getAllByRole('radio', { name: 'Other' })[0]!);
+    fireEvent.change(within(dialog()).getByLabelText('Name of the food'), { target: { value: 'Test stew' } });
+    const colours = within(dialog()).getByRole('radiogroup', { name: 'Colour' });
+    expect(within(colours).getByRole('radio', { name: 'Colour 3' }).getAttribute('aria-checked')).toBe('true');
+    click('Save');
+    expect(await screen.findByText('Saved')).toBeTruthy();
+    expect(await rows(`select colour from item where name = 'Test stew'`)).toEqual([{ colour: 'food-ocean' }]);
+  });
+
+  it('saving one grey item never changes the colour shown for another', async () => {
+    await at('/usual/2026-10-15', '2026-10-01', GREY);
+    await screen.findByRole('heading', { name: 'Usual day' });
+    const cooked = () => markOf(screen.getAllByText('Cooked meal')[0]!.closest('.day-item'));
+    await waitFor(() => expect(cooked()).toBe('var(--color-food-cooked)'));
+    // Arvelin (grey, shown med-arvelin) is saved with food-cooked, the colour Cooked meal shows.
+    fireEvent.click((await screen.findAllByText(/Arvelin/))[0]!);
+    click('Edit item');
+    fireEvent.click(within(within(dialog()).getByRole('radiogroup', { name: 'Colour' })).getByRole('radio', { name: 'Colour 1' }));
+    click('Save');
+    expect(await screen.findByText('Item saved')).toBeTruthy();
+    expect(await rows(`select colour from item where id = '${SEED.items.arvelin}'`)).toEqual([{ colour: 'food-cooked' }]);
+    click('Close');
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+    expect(cooked()).toBe('var(--color-food-cooked)');
+  });
+
+  it('a second new item never gets the colour the first one just took', async () => {
+    await at('/day/2026-10-15');
+    await screen.findAllByText('Cooked meal');
+    for (const [name, swatch] of [
+      ['Testamol', 'Colour 6'],
+      ['Testex', 'Colour 7'],
+    ] as const) {
+      click('Add to Breakfast');
+      fireEvent.click(within(dialog()).getByText('Medication'));
+      fireEvent.click(within(dialog()).getAllByRole('radio', { name: 'Other' })[0]!);
+      fireEvent.change(within(dialog()).getByLabelText('Name of the medication'), { target: { value: name } });
+      const colours = within(dialog()).getByRole('radiogroup', { name: 'Colour' });
+      expect(within(colours).getByRole('radio', { name: swatch }).getAttribute('aria-checked')).toBe('true');
+      fireEvent.click(within(dialog()).getByRole('radio', { name: '1' }));
+      click('Save');
+      await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+      await screen.findByText(name);
+    }
+    expect(await rows(`select name, colour from item where name like 'Test%' order by name`)).toEqual([
+      { name: 'Testamol', colour: 'med-gastrelle' },
+      { name: 'Testex', colour: 'med-biomend' },
+    ]);
   });
 });
 

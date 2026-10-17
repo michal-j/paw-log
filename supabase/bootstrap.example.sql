@@ -47,7 +47,7 @@ begin
   -- kind:     food | medication | treat | supplement | procedure (treats are listed under Food)
   -- colour:   a colour token from docs/design-system/tokens.json:
   --           food-cooked, food-farm, food-ocean, med-arvelin, med-bellavet, med-gastrelle,
-  --           med-biomend, med-calmora, treat, mark-neutral
+  --           med-biomend, med-calmora, treat (one per item; not mark-neutral, which is grey)
   -- day part: 1 before breakfast, 2 breakfast, 3 between breakfast and dinner, 4 dinner,
   --           5 between dinner and supper, 6 supper, 7 after supper
   -- unit:     pill | capsule | sachet | ml | drop (medication); can | tray | g | piece (food)

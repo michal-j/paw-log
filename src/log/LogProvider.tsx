@@ -4,6 +4,7 @@ import { useI18n } from '../i18n';
 import { logStartOf } from '../timeline/model';
 import type { KindGroup } from './amount';
 import type { Undo } from './actions';
+import { isItemColour, withItemColours } from './items';
 
 /** Everything the Day view, the Usual day and the sheets read. Reloaded after every write. */
 export interface Records {
@@ -79,7 +80,11 @@ const TOAST_MS = 5000;
 /** A failed load is tried again after this long, and whenever the app comes back to the foreground or online. */
 const RETRY_MS = 4000;
 
-async function loadRecords(repository: Repository, version: number): Promise<Records> {
+/**
+ * `shown`: the colours shown so far for items that are still grey (no item colour saved yet), by id.
+ * Updated here, so a reload after saving one item keeps the colours shown for the others.
+ */
+async function loadRecords(repository: Repository, version: number, shown: Map<string, string>): Promise<Records> {
   const today = repository.today();
   const [dog, items, slots, entries, removed, events, times, settings] = await Promise.all([
     repository.getDog(),
@@ -92,7 +97,12 @@ async function loadRecords(repository: Repository, version: number): Promise<Rec
     repository.getSettings(),
   ]);
   const logStart = logStartOf({ today, setting: settings.logStart, entries, events, slotStarts: slots.map((x) => x.activeFrom) });
-  return { dogId: dog.id, items, slots, entries, removed, events, times, settings, logStart, today, version };
+  // Items still grey (no item colour yet) show the colour the data migration gives them, and keep
+  // it while they stay grey (JCB-59); the next save of the item stores it.
+  const shownItems = withItemColours(items, shown);
+  shown.clear();
+  items.forEach((raw, i) => !isItemColour(raw.colour) && shown.set(raw.id, shownItems[i]!.colour));
+  return { dogId: dog.id, items: shownItems, slots, entries, removed, events, times, settings, logStart, today, version };
 }
 
 export function LogProvider({ repository, children }: { repository: Repository; children: ReactNode }) {
@@ -107,12 +117,13 @@ export function LogProvider({ repository, children }: { repository: Repository; 
   // Writes run one after another, in the order they were asked for, so two quick changes cannot
   // reach the server out of order (the later one must win).
   const queue = useRef<Promise<unknown>>(Promise.resolve());
+  const shownColours = useRef(new Map<string, string>());
 
   const reload = useCallback(() => setVersion((v) => v + 1), []);
 
   useEffect(() => {
     let live = true;
-    loadRecords(repository, version).then(
+    loadRecords(repository, version, shownColours.current).then(
       (next) => {
         if (!live) return;
         setRecords(next);

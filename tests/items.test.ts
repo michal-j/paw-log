@@ -2,7 +2,8 @@
 import { describe, expect, it } from 'vitest';
 import tokens from '../docs/design-system/tokens.json';
 import type { Entry, Item } from '../src/data';
-import { ITEM_COLOURS, lastUsed, nextColour, withFlavour } from '../src/log/items';
+import { AUTO_COLOURS, AUTO_EXCLUDED, ITEM_COLOURS, isItemColour, lastUsed, nextColour, withFlavour, withItemColours } from '../src/log/items';
+import { editedItem } from '../src/log/ItemSheet';
 import type { Records } from '../src/log/LogProvider';
 
 const item = (id: string, kind: Item['kind'], colour: string, flavours: string[] = []): Item => ({
@@ -40,16 +41,96 @@ describe('item colours', () => {
     expect([...ITEM_COLOURS]).toEqual(names.filter((n) => ITEM_COLOURS.includes(n)));
   });
 
-  it('a new item takes the first unused colour (6)', () => {
-    expect(nextColour([])).toBe(ITEM_COLOURS[0]);
-    expect(nextColour([{ colour: ITEM_COLOURS[0]! }, { colour: ITEM_COLOURS[2]! }])).toBe(ITEM_COLOURS[1]);
-    expect(nextColour([{ colour: 'mark-neutral' }])).toBe(ITEM_COLOURS[0]);
+  it('a new item takes the first unused colour of its own kind, then of the rest (6)', () => {
+    expect(nextColour([], 'food')).toBe('food-cooked');
+    expect(nextColour([], 'medication')).toBe('med-arvelin');
+    expect(nextColour([], 'treat')).toBe('treat');
+    expect(nextColour([{ colour: 'food-cooked' }, { colour: 'food-ocean' }], 'food')).toBe('food-farm');
+    expect(nextColour([{ colour: 'mark-neutral' }], 'supplement')).toBe('med-arvelin');
+    // Own kind used up: the first unused colour of the rest, in tokens.json order.
+    expect(nextColour(['food-cooked', 'food-farm', 'food-ocean'].map((colour) => ({ colour })), 'food')).toBe('med-arvelin');
   });
 
-  it('cycles when every colour is used: the least used, earliest first', () => {
-    const all = ITEM_COLOURS.map((colour) => ({ colour }));
-    expect(nextColour(all)).toBe(ITEM_COLOURS[0]);
-    expect(nextColour([...all, { colour: ITEM_COLOURS[0]! }])).toBe(ITEM_COLOURS[1]);
+  it('never picks a colour that reads as grey (med-calmora), though it stays a valid item colour', () => {
+    expect(AUTO_EXCLUDED).toEqual(['med-calmora']);
+    expect(isItemColour('med-calmora')).toBe(true);
+    const meds = ['med-arvelin', 'med-bellavet', 'med-gastrelle', 'med-biomend'].map((colour) => ({ colour }));
+    expect(nextColour(meds, 'medication')).toBe('food-cooked');
+    // Every auto colour is clearly apart from mark-neutral; the excluded one is not.
+    const hex = (name: string) => tokens.color.tokens.find((t) => t.name === name)!.value;
+    const rgb = (h: string) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
+    const dist = (a: string, b: string) => Math.hypot(...rgb(hex(a)).map((v, i) => v - rgb(hex(b))[i]!));
+    for (const c of AUTO_COLOURS) expect(dist(c, 'mark-neutral')).toBeGreaterThan(40);
+    for (const c of AUTO_EXCLUDED) expect(dist(c, 'mark-neutral')).toBeLessThan(40);
+  });
+
+  it('cycles when every colour is used: the least used, own kind first, then tokens.json order', () => {
+    const all = AUTO_COLOURS.map((colour) => ({ colour }));
+    expect(nextColour(all, 'food')).toBe('food-cooked');
+    expect(nextColour(all, 'medication')).toBe('med-arvelin');
+    expect(nextColour([...all, { colour: 'food-cooked' }], 'food')).toBe('food-farm');
+  });
+});
+
+describe('items without an item colour (JCB-59)', () => {
+  const at = (id: string, colour: string, position: number, kind: Item['kind'] = 'food') => ({ ...item(id, kind, colour), position });
+
+  it('get an unused colour in lane order (position, then list order); unknown tokens count as none', () => {
+    const items = [
+      at('a', 'food-cooked', 10),
+      at('b', 'mark-neutral', 30, 'medication'),
+      at('c', 'mark-neutral', 5),
+      at('d', 'food-old', 30),
+      at('e', 'food-farm', 40),
+    ];
+    expect(withItemColours(items).map((i) => [i.id, i.colour])).toEqual([
+      ['a', 'food-cooked'],
+      ['b', 'med-arvelin'],
+      ['c', 'food-ocean'],
+      ['d', 'med-bellavet'],
+      ['e', 'food-farm'],
+    ]);
+  });
+
+  it('keep the colour they showed before, so saving one item never changes another', () => {
+    const items = [at('a', 'mark-neutral', 10), at('b', 'mark-neutral', 20), at('c', 'mark-neutral', 30)];
+    const first = withItemColours(items);
+    expect(first.map((i) => i.colour)).toEqual(['food-cooked', 'food-farm', 'food-ocean']);
+    const shown = new Map(first.map((i) => [i.id, i.colour]));
+    // a is saved with b's colour: b and c keep what they showed.
+    const after = withItemColours([{ ...items[0]!, colour: 'food-farm' }, items[1]!, items[2]!], shown);
+    expect(after.map((i) => i.colour)).toEqual(['food-farm', 'food-farm', 'food-ocean']);
+    // A new grey item takes a colour nobody shows.
+    const more = withItemColours([...items, at('d', 'mark-neutral', 5)], shown);
+    expect(more.map((i) => i.colour)).toEqual(['food-cooked', 'food-farm', 'food-ocean', 'med-arvelin']);
+  });
+
+  it('change nothing when every item has an item colour (same array)', () => {
+    const items = [at('a', 'food-cooked', 10), at('b', 'treat', 20)];
+    expect(withItemColours(items)).toBe(items);
+  });
+
+  it('only the item colour tokens count as item colours', () => {
+    expect(ITEM_COLOURS.every(isItemColour)).toBe(true);
+    for (const c of ['mark-neutral', 'mint', 'ink', 'badge-vet-top', 'food-old', 'med-', '']) expect(isItemColour(c)).toBe(false);
+  });
+});
+
+describe('item editor', () => {
+  const farm = { ...item('farm', 'food', 'food-farm', ['turkey', 'salmon']), defaultUnit: 'can' as const };
+
+  it('saves name, colour, default unit and flavours (trimmed, no blanks or doubles)', () => {
+    expect(editedItem(farm, { name: ' Farm Fresh Plus ', colour: 'treat', defaultUnit: 'tray', flavours: ['turkey', ' duck ', '', 'turkey'] })).toEqual({
+      ...farm,
+      name: 'Farm Fresh Plus',
+      colour: 'treat',
+      defaultUnit: 'tray',
+      flavours: ['turkey', 'duck'],
+    });
+  });
+
+  it('returns null when nothing changed', () => {
+    expect(editedItem(farm, { name: 'farm', colour: 'food-farm', defaultUnit: 'can', flavours: ['turkey', 'salmon'] })).toBeNull();
   });
 });
 
