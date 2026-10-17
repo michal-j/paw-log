@@ -321,35 +321,14 @@ export function activeTickOffset(ticks: Tick[], topRowOffset: number): number {
 }
 
 /**
- * The list keeps only LIST_TAIL_H of space after the oldest day, so it cannot scroll the oldest day
- * to the top. Instead the "focus" (the row the Key, the rail and the scrub label describe) is the top
- * row for most of the list and, over the last stretch of scrolling, slides down to the oldest row:
- * at the end of the list it is the oldest day, at the bottom of the screen.
- *
- * `focusOffset` maps a scroll position (0..maxScroll) to a row offset (0..span); `scrollForFocus`
- * is its inverse. Both are linear: identity up to `start`, then stretched so maxScroll meets span.
- * `span` is the oldest row's top; `maxScroll` the list's scrollHeight minus its clientHeight.
+ * The list keeps only LIST_TAIL_H of space after the oldest day, so it cannot scroll the oldest day to
+ * the top. That is fine: while scrolling, the "focus" (the row the Key, the rail and the scrub label
+ * describe) is always the top visible row, so the Key matches the row directly below it. The oldest
+ * rows are reached by the rail instead (railTarget), which focuses the dragged day even where the
+ * list cannot scroll that far.
  */
-function focusStart(span: number, maxScroll: number): number {
-  return Math.max(0, maxScroll - (span - maxScroll));
-}
-
-export function focusOffset(scrollTop: number, span: number, maxScroll: number): number {
-  const s = Math.max(0, scrollTop);
-  if (maxScroll >= span) return s; // the oldest day can reach the top on its own
-  if (maxScroll <= 0) return 0;
-  const start = focusStart(span, maxScroll);
-  if (s <= start) return s;
-  return Math.min(span, start + ((s - start) * (span - start)) / (maxScroll - start));
-}
-
-export function scrollForFocus(offset: number, span: number, maxScroll: number): number {
-  const p = Math.max(0, Math.min(offset, span));
-  if (maxScroll >= span) return p;
-  if (maxScroll <= 0) return 0;
-  const start = focusStart(span, maxScroll);
-  if (p <= start) return p;
-  return start + ((p - start) * (maxScroll - start)) / (span - start);
+export function focusOffset(scrollTop: number): number {
+  return Math.max(0, scrollTop);
 }
 
 /**
@@ -359,7 +338,7 @@ export function scrollForFocus(offset: number, span: number, maxScroll: number):
  */
 export function railTarget(fraction: number, span: number, maxScroll: number = span): { focus: number; scrollTop: number } {
   const focus = Math.max(0, Math.min(1, fraction)) * span;
-  return { focus, scrollTop: scrollForFocus(focus, span, maxScroll) };
+  return { focus, scrollTop: Math.max(0, Math.min(focus, maxScroll)) };
 }
 
 /** Map a pointer position on the rail (0 = top, 1 = bottom) to a list scroll position within the span. */
