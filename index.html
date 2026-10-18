@@ -24,13 +24,14 @@
         gap: 16px;
         padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
         background: linear-gradient(to bottom, %token:mint-top%, %token:mint%);
-        color: %token:on-mint%;
+        /* White on mint is 1.7-1.95:1, below 3:1. CEO look decision (JCB-97): accepted for a half-second brand splash, same white as the paw. */
+        color: %token:surface%;
         font: 700 22px/26px var(--type-title-family, system-ui, -apple-system, sans-serif);
         letter-spacing: -0.02em;
         opacity: 1;
         transition: opacity 200ms ease-out;
       }
-      #launch svg { width: 96px; height: 96px; fill: %token:surface%; }
+      #launch svg { width: 160px; height: 160px; fill: %token:surface%; }
       #launch.launch--out { opacity: 0; pointer-events: none; }
       @media (prefers-reduced-motion: reduce) { #launch { transition: none; } }
     </style>
