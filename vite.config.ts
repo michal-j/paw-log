@@ -7,8 +7,8 @@ import tokens from './docs/design-system/tokens.json' with { type: 'json' };
 const colour = (name: string) => tokens.color.tokens.find((t) => t.name === name)?.value;
 
 // Bump when the icon files change: a new URL makes iOS and Android fetch the icons again
-// instead of reusing a cached copy (the precache below ignores `v` when matching). Keep the
-// `?v=` on the apple-touch-icon and icon links in index.html in step.
+// instead of reusing a cached copy. Keep the `?v=` on the apple-touch-icon and icon links in
+// index.html in step.
 const ICON_VERSION = '2';
 
 export default defineConfig({
@@ -27,7 +27,13 @@ export default defineConfig({
         });
       },
     },
+    // Manifest only (Add to Home Screen). No service worker (JCB-71): a page it controls hands it every
+    // request, Supabase calls included, and in the installed iPhone app that stalled writes until a
+    // restart. `selfDestroying` ships an sw.js that unregisters itself and clears its caches, for
+    // phones that installed the old one; src/serviceWorker.ts unregisters it from the page too.
     VitePWA({
+      selfDestroying: true,
+      injectRegister: false,
       registerType: 'autoUpdate',
       includeAssets: ['icon.svg', 'apple-touch-icon.png'],
       manifest: {
@@ -49,11 +55,6 @@ export default defineConfig({
             purpose: 'maskable',
           },
         ],
-      },
-      workbox: {
-        globPatterns: ['**/*.{js,css,html,svg,png,woff2}'],
-        navigateFallback: '/index.html', // app shell also serves /demo
-        ignoreURLParametersMatching: [/^utm_/, /^fbclid$/, /^v$/], // icon URLs carry ?v=ICON_VERSION
       },
     }),
   ],

@@ -1,13 +1,14 @@
 import { StrictMode, Suspense, lazy } from 'react';
 import { createRoot } from 'react-dom/client';
-import { registerSW } from 'virtual:pwa-register';
 import './styles/tokens.css';
 import './styles/global.css';
 import { createRepository, isDemoMode } from './data';
 import { I18nProvider } from './i18n';
 import { App } from './App';
+import { removeServiceWorkers } from './serviceWorker';
 
-registerSW({ immediate: true });
+// No service worker: it stood between the app and Supabase and could stall every request (JCB-71).
+void removeServiceWorkers();
 
 // The real app (sign-in, Supabase) is a separate chunk: the demo never loads it.
 const RealApp = lazy(() => import('./auth/RealApp'));
