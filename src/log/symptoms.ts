@@ -43,6 +43,28 @@ const INTENSITY: PropDef = {
   ],
 };
 
+// Every symptom, typed ones included, can also say how many times and when (first stored for Vomit, same props keys).
+const TIMES: PropDef = {
+  name: 'times',
+  label: 'times',
+  options: [
+    { value: '1', label: null, text: '1×' },
+    { value: '2', label: null, text: '2×' },
+    { value: '3+', label: null, text: '3×+' },
+  ],
+};
+const WHEN: PropDef = {
+  name: 'when',
+  label: 'when',
+  options: [
+    { value: 'morning', label: 'w_morning' },
+    { value: 'midday', label: 'w_midday' },
+    { value: 'evening', label: 'w_evening' },
+    { value: 'night', label: 'w_night' },
+  ],
+};
+const OCCURRENCE: readonly PropDef[] = [TIMES, WHEN];
+
 const PROPS: Partial<Record<MessageKey, readonly PropDef[]>> = {
   sx_poo: [
     {
@@ -66,32 +88,12 @@ const PROPS: Partial<Record<MessageKey, readonly PropDef[]>> = {
     },
     QUANTITY,
   ],
-  sx_vomit: [
-    {
-      name: 'times',
-      label: 'times',
-      options: [
-        { value: '1', label: null, text: '1×' },
-        { value: '2', label: null, text: '2×' },
-        { value: '3+', label: null, text: '3×+' },
-      ],
-    },
-    {
-      name: 'when',
-      label: 'when',
-      options: [
-        { value: 'morning', label: 'w_morning' },
-        { value: 'midday', label: 'w_midday' },
-        { value: 'evening', label: 'w_evening' },
-        { value: 'night', label: 'w_night' },
-      ],
-    },
-  ],
+  sx_vomit: [],
   sx_leak: [QUANTITY],
 };
 
-/** Property rows for a symptom; every other symptom (including a typed one) has Intensity. */
-export const propsFor = (key: MessageKey | undefined): readonly PropDef[] => (key && PROPS[key]) || [INTENSITY];
+/** Property rows for a symptom: its own (Intensity unless it has others), then optional times and when. */
+export const propsFor = (key: MessageKey | undefined): readonly PropDef[] => [...((key && PROPS[key]) || [INTENSITY]), ...OCCURRENCE];
 
 const optionLabel = (def: PropDef, value: string, t: (k: MessageKey) => string) => {
   const o = def.options.find((x) => x.value === value);
@@ -105,9 +107,16 @@ export const propValue = (e: Pick<HealthEvent, 'props' | 'intensity'>, name: str
 /** The chosen properties only: "diarrhea · dark · medium amount", "1× in the morning", "a lot". */
 export function symptomAttrs(e: HealthEvent, t: (k: MessageKey) => string): string {
   const defs = propsFor(symptomKey(e.title));
-  const vals = defs.map((d) => [d, propValue(e, d.name)] as const).filter(([, v]) => v);
-  const labels = vals.map(([d, v]) => optionLabel(d, v, t));
-  return (symptomKey(e.title) === 'sx_vomit' ? [labels.join(' ')] : labels).filter(Boolean).join(' · ');
+  const labelsFor = (list: readonly PropDef[]) =>
+    list
+      .map((d) => [d, propValue(e, d.name)] as const)
+      .filter(([, v]) => v)
+      .map(([d, v]) => optionLabel(d, v, t))
+      .filter(Boolean);
+  // Times and when read as one phrase ("1× in the morning"), after the symptom's own properties.
+  const own = labelsFor(defs.filter((d) => !OCCURRENCE.includes(d)));
+  const occurrence = labelsFor(OCCURRENCE).join(' ');
+  return [...own, occurrence].filter(Boolean).join(' · ');
 }
 
 /** The properties, then the written details: "a lot · thunder". */

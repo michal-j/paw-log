@@ -263,6 +263,12 @@ describe('SupabaseRepository writes', () => {
     });
   });
 
+  it('stores times and when for any symptom in the same props object, no new column (JCB-88)', async () => {
+    const f = fake({});
+    await new SupabaseRepository(f.client).saveEvent({ ...event, title: 'Fear', props: { times: '2', when: 'evening' } });
+    expect(f.of('event')[0]?.has('upsert')?.[1]).toMatchObject({ title: 'Fear', props: { times: '2', when: 'evening' } });
+  });
+
   it("saves an event's condition links: adds the picked ones, then drops the rest", async () => {
     const f = fake({});
     const c1 = 'c0000000-0000-4000-8000-000000000001';

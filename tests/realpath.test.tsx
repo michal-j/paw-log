@@ -65,6 +65,21 @@ describe('real data path', () => {
     expect(window.location.pathname).toBe('/day/2026-10-03');
   });
 
+  it('(JCB-88) saves times and when on a non-vomit symptom and shows them in the day', async () => {
+    await at('/day/2026-10-15');
+    await screen.findAllByText('Cooked meal');
+    click(/^Add$/);
+    fireEvent.click(within(dialog()).getByText('Symptom'));
+    fireEvent.click(within(dialog()).getByRole('radio', { name: 'Poo' }));
+    fireEvent.click(within(dialog()).getByRole('button', { name: 'soft' }));
+    fireEvent.click(within(dialog()).getByRole('button', { name: '3×+' }));
+    fireEvent.click(within(dialog()).getByRole('button', { name: 'at night' }));
+    click('Save');
+    expect(await screen.findByText('Saved')).toBeTruthy();
+    expect(await screen.findByText('soft · 3×+ at night')).toBeTruthy();
+    expect(await rows(`select title, props from event`)).toEqual([{ title: 'Poo', props: { consistency: 'soft', times: '3+', when: 'night' } }]);
+  });
+
   it('(15) editing a filled entry changes it in place; its slot does not come back as not logged', async () => {
     await at('/day/2026-10-15');
     fireEvent.click(await screen.findByRole('button', { name: 'Fill with your usual day: 4' }));
