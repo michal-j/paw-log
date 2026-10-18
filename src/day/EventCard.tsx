@@ -16,7 +16,8 @@ const ALSO_LABEL: Record<string, MessageKey> = { anal_glands: 'label.117', nails
  * One event as a card (Day view "What happened", condition history). Without tags or photos the whole
  * card is the button that opens the event; with condition tags or photos the head and text open it
  * and each tag and photo is its own target (a button cannot hold buttons). `onEdit` null: nothing
- * to edit. Photos show as 72px thumbnails (52px with `smallPhotos`) that open the viewer.
+ * to edit. Photos show as 72px thumbnails (52px with `smallPhotos`) that open the viewer:
+ * below the text, on a vet visit to the right of it.
  */
 export function EventCard({
   event: e,
@@ -96,27 +97,40 @@ export function EventCard({
       <article className="day-card">{content}</article>
     );
   }
+  const side = e.type === 'vet';
+  const photoRow = photos.length > 0 && (
+    <div className={side ? 'photo-row photo-row--side' : 'photo-row'}>
+      {photos.map((p) => (
+        <PhotoThumb
+          key={p.id}
+          photo={p}
+          size={smallPhotos ? 'sm' : 'md'}
+          label={fill(t('photoAlt'), { d: f.shortDate(e.date) })}
+          onOpen={onViewPhoto ? () => onViewPhoto(p.id) : undefined}
+        />
+      ))}
+    </div>
+  );
+  const open = onEdit ? (
+    <button type="button" className="ev-card__open" onClick={onEdit}>
+      {content}
+    </button>
+  ) : (
+    <div className="ev-card__static">{content}</div>
+  );
   return (
     <div className="day-card ev-card">
-      {onEdit ? (
-        <button type="button" className="ev-card__open" onClick={onEdit}>
-          {content}
-        </button>
-      ) : (
-        <div className="ev-card__static">{content}</div>
-      )}
-      {photos.length > 0 && (
-        <div className="photo-row">
-          {photos.map((p) => (
-            <PhotoThumb
-              key={p.id}
-              photo={p}
-              size={smallPhotos ? 'sm' : 'md'}
-              label={fill(t('photoAlt'), { d: f.shortDate(e.date) })}
-              onOpen={onViewPhoto ? () => onViewPhoto(p.id) : undefined}
-            />
-          ))}
+      {/* A vet visit's photos sit to the right of its text, so a photo adds no height. */}
+      {side && photoRow ? (
+        <div className="ev-card__side">
+          {open}
+          {photoRow}
         </div>
+      ) : (
+        <>
+          {open}
+          {photoRow}
+        </>
       )}
       <ConditionTags conditions={tags} onOpen={onOpenCondition} />
     </div>
