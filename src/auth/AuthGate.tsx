@@ -35,7 +35,7 @@ export function AuthGate({ auth, createRepository, confirm = (m) => window.confi
 function Loading() {
   const { t } = useI18n();
   return (
-    <AuthShell>
+    <AuthShell loading>
       <p className="auth__text auth__loading" role="status">
         {t('auth.loading')}
       </p>

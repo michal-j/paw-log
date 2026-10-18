@@ -1,5 +1,6 @@
 import { Component, type ReactNode } from 'react';
 import { useI18n } from '../i18n';
+import { dismissLaunch } from '../launch';
 
 /**
  * Last line of defence: a rendering error shows a short message with Reload instead of a blank
@@ -14,6 +15,7 @@ export class ErrorBoundary extends Component<{ children: ReactNode }, { failed: 
 
   componentDidCatch(error: unknown) {
     console.error(error);
+    dismissLaunch();
   }
 
   render() {

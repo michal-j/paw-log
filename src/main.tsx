@@ -6,9 +6,11 @@ import { createRepository, isDemoMode } from './data';
 import { I18nProvider } from './i18n';
 import { App } from './App';
 import { removeServiceWorkers } from './serviceWorker';
+import { armLaunchTimeout } from './launch';
 
 // No service worker: it stood between the app and Supabase and could stall every request (JCB-71).
 void removeServiceWorkers();
+armLaunchTimeout();
 
 // The real app (sign-in, Supabase) is a separate chunk: the demo never loads it.
 const RealApp = lazy(() => import('./auth/RealApp'));
