@@ -17,7 +17,7 @@ Everything here is a proposal from the PM for the Developer to refine. Items mar
 - Frontend: Vite, React, TypeScript, CSS variables generated from `docs/design-system/tokens.json`; a small i18n layer with EN and PL catalogues seeded from `docs/copy/pawlog-copy-en-pl.csv`.
 - Backend: Supabase (Postgres, auth for two users, storage for photos and PDFs, realtime if needed). Row-level security: both household users read and write all rows of their household.
 - Hosting: Vercel (static PWA, preview deployments).
-- Offline: service worker caching the app shell; queued writes are a later decision (JCB-11).
+- Offline: no service worker since JCB-71 (it stalled Supabase requests in the installed iPhone app, see below); the app shell loads from the network. Offline shell and queued writes are a later decision (JCB-11).
 - Tests: unit tests for date and schedule logic; Playwright for the key flows at 390x844.
 
 ## Data model (draft, loose)
@@ -50,7 +50,7 @@ Everything here is a proposal from the PM for the Developer to refine. Items mar
 ## Scaffold notes (slice 1, JCB-28)
 - `npm run generate` writes `src/styles/tokens.css` and `src/i18n/catalogues.generated.json` (both git-ignored). Edit the token JSON or the copy CSV, never the output.
 - Catalogue keys: the CSV's "Where (code name)" is not unique. A code is used as the key only if it appears once; otherwise the key is `<code or copy>.<row #>` (for example `name.96`). Row numbers in the CSV are therefore part of the key: do not renumber rows.
-- Demo mode is on when the path is `/demo` (or `/demo/...`) or `VITE_DEMO_MODE=true`. `vercel.json` rewrites non-asset paths to `index.html`; the service worker falls back to the shell for navigations.
+- Demo mode is on when the path is `/demo` (or `/demo/...`) or `VITE_DEMO_MODE=true`. `vercel.json` rewrites non-asset paths to `index.html`.
 - Fonts (Onest, Instrument Sans) are named in the tokens but not yet shipped; the system font stack renders until the Designer and PM decide how to host them.
 - Placeholder icons are flat mint squares generated for the scaffold; replace with the real mark once designed.
 - Vercel project and Supabase project are not created (CEO approval pending). `SupabaseRepository` was a stub until JCB-35.
@@ -139,6 +139,7 @@ Everything here is a proposal from the PM for the Developer to refine. Items mar
 - **Fix**: `src/auth/resilientFetch.ts` is the client's `global.fetch` (auth and PostgREST): each request is aborted after 10 s (`REQUEST_TIMEOUT_MS`), and when the app returns to the foreground every request that ran while it was hidden is aborted at once (supabase-js retries the refresh); the promise settles even if the underlying fetch ignores the abort.
 - **Defence in depth**: `withTimeout` (`src/data/timeout.ts`) wraps the real repository (`createRepository`, the harness, the fake in tests): any call not settled in 15 s (`OPERATION_TIMEOUT_MS`) rejects with `RepositoryError` code `timeout`. `LogProvider.run` then reloads and shows "Couldn't save · Try again" (`errSave`); the sheet stays open and Save works again. A slow read on a very slow connection is retried by the load-retry loop.
 - **Retries never double**: sheets that create rows (Entry, Event, Slot, Pinned, Condition; new items from Other; conditions named in the Event sheet get their id when picked, in form state) take their ids from `useDraftIds`, made once per open sheet, so a retry upserts the same rows even when the first attempt reached the server late. Fill/Given/past days rely on the one-entry-per-slot index; deletes, reorders, day-part times and settings are idempotent.
+- **Reopened 18 Oct, the real cause**: in the foreground, one write got through after each app start and the next never reached the server (edge logs: every request that arrived succeeded, session valid). On the real path (`tests/saveSequence.test.tsx`: app auth settings, six saves of different kinds in a row, and a different save after a timed-out one) nothing in the app holds writes back. What stood between the app's `fetch` and the network was the Workbox service worker: a page it controls hands it every request first, cross-origin Supabase calls included, although it only cached the app shell and let them through. On iOS that hand-off can stall once the system has stopped the worker (it stops idle workers after a short while), and only a restart (a fresh worker) helps. So the app runs without one: `VitePWA` keeps the manifest but builds a self-removing `sw.js` (`selfDestroying`, `injectRegister: false`) that unregisters the old worker on phones that have it, clears its caches and reloads the page once; `src/main.tsx` calls `removeServiceWorkers()` (`src/serviceWorker.ts`) as well. Add to Home Screen does not need a worker on iOS. Lost: the shell (and the demo) no longer open offline (JCB-11). Test: `tests/serviceWorker.test.ts`.
 - **Harness**: `backend.hangNext(n, which)` holds requests (they ignore aborts, like a lost one) until `backend.release()`; the fake answers `POST /auth/v1/token`. Tests: `tests/resilientFetch.test.ts`, `tests/saveHang.test.tsx`.
 
 ## Photos (JCB-7)

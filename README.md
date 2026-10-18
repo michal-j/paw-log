@@ -20,7 +20,7 @@ The root path `/` is the real app: sign-in with e-mail and password (accounts ar
 | `npm run lint` / `npm run typecheck` / `npm test` | ESLint, `tsc --noEmit`, Vitest |
 | `npm run test:db` | Applies `supabase/migrations/` to an in-process Postgres (PGlite, no Docker) and runs the row-level-security tests in `supabase/tests/database/` |
 | `npm run dev`, then `/harness.html` | Dev only: the real app (sign-in gate, SupabaseRepository, supabase-js) against an in-browser fake Supabase on PGlite with every migration; no project or account needed (`tests/harness/`, see docs/ENGINEERING.md) |
-| `npm run build` | Type-check, then production build with the service worker |
+| `npm run build` | Type-check, then production build (manifest, plus a self-removing `sw.js` for old installs) |
 | `npm run check:secrets` | Fails on service-key or real-project-URL patterns, and on locally blocked words (the repo is public) |
 
 **Blocked words.** To stop real names (products, clinics, people) from ever being committed, list them locally and the secret scan fails on any tracked file or path that contains one (case-insensitive; the word itself is never printed):
