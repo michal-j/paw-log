@@ -210,6 +210,21 @@ describe('add and edit', () => {
     expect(ev).toMatchObject({ title: 'Poo', props: { consistency: 'soft', colour: 'blood' } });
   });
 
+  it('logs a non-vomit symptom with times and when, and shows them in the day (JCB-88)', async () => {
+    const repo = at('/demo/day/2026-10-15');
+    await screen.findAllByText('Bellavet');
+    click(/^Add$/);
+    fireEvent.click(within(dialog()).getByText('Symptom'));
+    fireEvent.click(within(dialog()).getByRole('radio', { name: 'Fear' }));
+    fireEvent.click(within(dialog()).getByRole('button', { name: 'a lot' }));
+    fireEvent.click(within(dialog()).getByRole('button', { name: '2×' }));
+    fireEvent.click(within(dialog()).getByRole('button', { name: 'in the evening' }));
+    click('Save');
+    expect(await screen.findByText('a lot · 2× in the evening')).toBeTruthy();
+    const ev = (await repo.listEvents({ from: '2026-10-15' })).find((e) => e.type === 'symptom');
+    expect(ev).toMatchObject({ title: 'Fear', intensity: 'large', props: { times: '2', when: 'evening' } });
+  });
+
   it('logs a note and an "other" event, which need text', async () => {
     at('/demo/day/2026-10-15');
     await screen.findAllByText('Bellavet');

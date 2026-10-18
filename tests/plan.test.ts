@@ -5,7 +5,7 @@ import { backfillDays, changeFrom, courseDay, dueOpenSlots, matchDay, partDue, p
 import { logStartOf } from '../src/timeline/model';
 import type { RemovedSlot } from '../src/data';
 import { buildDay } from '../src/day/model';
-import { symptomAttrs, symptomDetail, symptomKey } from '../src/log/symptoms';
+import { symptomAttrs, symptomDetail, propsFor, symptomKey } from '../src/log/symptoms';
 import { translate, type MessageKey } from '../src/i18n';
 
 const slot = (id: string, dayPart: ScheduleSlot['dayPart'], itemId: string, from = '2026-10-01', to: string | null = null, extra: Partial<ScheduleSlot> = {}): ScheduleSlot => ({
@@ -150,6 +150,14 @@ describe('symptoms', () => {
     );
     expect(symptomDetail({ ...base, title: 'Vomit', detail: '', props: { times: '1', when: 'morning' } }, en)).toBe('1× in the morning');
     expect(symptomDetail({ ...base, title: 'Fear', detail: 'thunder', intensity: 'large' }, en)).toBe('a lot · thunder');
+    // Times and when work on any symptom, after its own properties; old Vomit data reads the same (JCB-88).
+    expect(symptomDetail({ ...base, title: 'Fear', detail: 'thunder', intensity: 'large', props: { times: '2', when: 'evening' } }, en)).toBe(
+      'a lot · 2× in the evening · thunder',
+    );
+    expect(symptomAttrs({ ...base, title: 'Poo', detail: '', props: { consistency: 'soft', times: '3+' } }, en)).toBe('soft · 3×+');
+    expect(symptomAttrs({ ...base, title: 'Itching', detail: '', props: { when: 'night' } }, en)).toBe('at night');
+    expect(propsFor(undefined).map((d) => d.name)).toEqual(['intensity', 'times', 'when']);
+    expect(propsFor('sx_vomit').map((d) => d.name)).toEqual(['times', 'when']);
     // Attributes alone (the Day view shows the description on its own line below).
     expect(symptomAttrs({ ...base, title: 'Fear', detail: 'thunder', intensity: 'large' }, en)).toBe('a lot');
     expect(symptomAttrs({ ...base, title: 'Fear', detail: 'thunder' }, en)).toBe('');

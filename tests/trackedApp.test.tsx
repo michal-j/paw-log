@@ -87,6 +87,14 @@ describe('tracked conditions, real data path', () => {
     await waitFor(async () => expect(await rows(`select resolved_on from condition`)).toEqual([{ resolved_on: null }]));
   });
 
+  it('the condition page history shows times and when on a non-vomit symptom (JCB-88)', async () => {
+    await at(
+      `/tracked/${LUMP}`,
+      `${linkedEvent('symptom', 'Fear')} update public.event set intensity = 'large', props = '{"times":"2","when":"evening"}' where id = '${EVENT}';`,
+    );
+    expect(await screen.findByText('a lot · 2× in the evening')).toBeTruthy();
+  });
+
   it('deleting a condition keeps its events and returns to the list', async () => {
     await at('/tracked', linkedEvent('note', ''));
     fireEvent.click(await screen.findByText('Lump A'));
