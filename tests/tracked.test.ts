@@ -13,6 +13,7 @@ import {
   openConditions,
   orderConditions,
   resolvedConditions,
+  yearGroups,
 } from '../src/tracked/model';
 
 const cond = (id: string, startedOn: string, resolvedOn: string | null = null): Condition => ({
@@ -53,6 +54,36 @@ describe('condition lists', () => {
     expect(normaliseDates(cond('x', '2026-10-05', '2026-10-01')).resolvedOn).toBe('2026-10-05');
     expect(normaliseDates(cond('x', '2026-10-05', '2026-10-07')).resolvedOn).toBe('2026-10-07');
     expect(normaliseDates(cond('x', '2026-10-05')).resolvedOn).toBeNull();
+  });
+});
+
+describe('history by year (JCB-78)', () => {
+  const events = [
+    ev('a', '2026-10-14', 'note', ['x']),
+    ev('b', '2026-10-14', 'vet', ['x']),
+    ev('c', '2025-03-02', 'note', ['x']),
+    ev('d', '2023-04-21', 'note', ['x']),
+    ev('e', '2023-04-20', 'note', ['x']),
+  ];
+  const groups = historyGroups('x', events);
+
+  it('splits by year, newest first, counting events and not days; only the current year starts open', () => {
+    const years = yearGroups(groups, '2026-10-15')!;
+    expect(years.map((y) => [y.year, y.count, y.openByDefault])).toEqual([
+      [2026, 2, true],
+      [2025, 1, false],
+      [2023, 2, false],
+    ]);
+    expect(years[2]!.groups.map((g) => g.date)).toEqual(['2023-04-21', '2023-04-20']);
+  });
+
+  it('no current-year entries: every year starts collapsed', () => {
+    expect(yearGroups(groups.slice(1), '2026-10-15')!.every((y) => !y.openByDefault)).toBe(true);
+  });
+
+  it('one year only: no headers', () => {
+    expect(yearGroups(groups.slice(0, 1), '2026-10-15')).toBeNull();
+    expect(yearGroups([], '2026-10-15')).toBeNull();
   });
 });
 

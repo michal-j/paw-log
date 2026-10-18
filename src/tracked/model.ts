@@ -56,6 +56,34 @@ export function historyGroups(conditionId: string, events: HealthEvent[]): { dat
   return groups;
 }
 
+export interface YearGroup {
+  year: number;
+  /** Events (entries) of the year, not days. */
+  count: number;
+  /** Whether it starts open: only the current year does. */
+  openByDefault: boolean;
+  groups: { date: PlainDate; events: HealthEvent[] }[];
+}
+
+/**
+ * The history split by year, newest first, when it spans more than one year; otherwise `null` (a
+ * single year needs no headers). Only the current year starts open.
+ */
+export function yearGroups(groups: { date: PlainDate; events: HealthEvent[] }[], today: PlainDate): YearGroup[] | null {
+  const out: YearGroup[] = [];
+  for (const g of groups) {
+    const year = Number(g.date.slice(0, 4));
+    let last = out[out.length - 1];
+    if (last?.year !== year) {
+      last = { year, count: 0, openByDefault: year === Number(today.slice(0, 4)), groups: [] };
+      out.push(last);
+    }
+    last.groups.push(g);
+    last.count += g.events.length;
+  }
+  return out.length > 1 ? out : null;
+}
+
 /** "N events" on a condition card counts linked events other than photos (photos get their own count, JCB-7). */
 export function eventCount(conditionId: string, events: HealthEvent[]): number {
   return events.filter((e) => e.type !== 'photo' && e.conditionIds.includes(conditionId)).length;

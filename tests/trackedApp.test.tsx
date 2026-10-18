@@ -108,4 +108,30 @@ describe('tracked conditions, real data path', () => {
     await screen.findByText(/Open · since 21 Apr 2023/);
     expect(screen.getByText(/2 May 2023/)).toBeTruthy();
   });
+  it('groups the history by year: current year open, earlier years collapsed, headers toggle (JCB-78)', async () => {
+    const shown = (text: string) => !screen.getByText(text).closest('[hidden]');
+    const ins = (id: string, date: string, title: string) => `insert into public.event (id, dog_id, date, type, title) values ('${id}', '${SEED.dog}', '${date}', 'other', '${title}');
+      insert into public.event_condition (event_id, condition_id, dog_id) values ('${id}', '${LUMP}', '${SEED.dog}');`;
+    await at(
+      '/tracked',
+      `insert into public.condition (id, dog_id, name, started_on) values ('${LUMP}', '${SEED.dog}', 'Old limp', '2023-04-21');
+       ${ins('50000000-0000-4000-8000-000000000011', '2026-10-14', 'Newest')}
+       ${ins('50000000-0000-4000-8000-000000000012', '2023-05-02', 'Oldest')}
+       ${ins('50000000-0000-4000-8000-000000000013', '2023-05-03', 'Older')}`,
+    );
+    fireEvent.click(await screen.findByRole('button', { name: /Old limp/ }));
+    const current = await screen.findByRole('button', { name: /2026/ });
+    const past = screen.getByRole('button', { name: /2023/ });
+    expect(past.textContent).toContain('2 entries');
+    expect(current.textContent).toContain('1 entry');
+    expect(current.getAttribute('aria-expanded')).toBe('true');
+    expect(past.getAttribute('aria-expanded')).toBe('false');
+    expect(shown('Newest')).toBe(true);
+    expect(shown('Oldest')).toBe(false);
+    fireEvent.click(past);
+    expect(past.getAttribute('aria-expanded')).toBe('true');
+    expect(shown('Oldest')).toBe(true);
+    fireEvent.click(current);
+    expect(shown('Newest')).toBe(false);
+  });
 });

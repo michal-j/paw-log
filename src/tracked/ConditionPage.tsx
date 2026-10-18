@@ -1,20 +1,27 @@
-import { useEffect, useLayoutEffect, useRef } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { HealthEvent, Photo, PlainDate } from '../data';
 import { CameraIcon, ChevronIcon, PlusIcon, TrackedIcon } from '../components/icons';
 import { EventCard } from '../day/EventCard';
 import { eventKindOf } from '../log/EventSheet';
-import { fill, useI18n } from '../i18n';
+import { fill, useI18n, type MessageKey } from '../i18n';
+import { pluralForm } from '../i18n/plural';
 import * as act from '../log/actions';
 import { useFormat } from '../log/format';
 import { useLog } from '../log/LogProvider';
 import { useBusy } from '../log/useBusy';
 import { shiftDate } from '../timeline/model';
-import { conditionsOf, historyGroups } from './model';
+import { conditionsOf, historyGroups, yearGroups } from './model';
 import { conditionPhotos, photosOf } from '../photos/model';
 import { PhotoThumb } from '../photos/PhotoParts';
 import '../day/day.css';
 import '../components/list.css';
 import './tracked.css';
+
+const YEAR_ENTRIES: Record<'one' | 'few' | 'many', MessageKey> = {
+  one: 'condYearEntries_one',
+  few: 'condYearEntries_few',
+  many: 'condYearEntries_many',
+};
 
 /**
  * A tracked condition: status, name and description, then its linked events newest first under date
@@ -32,8 +39,10 @@ export function ConditionPage({
   onMissing: () => void;
   onOpenCondition: (id: string) => void;
 }) {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const f = useFormat();
+  // Years the user flipped away from their default (current year open, earlier years collapsed).
+  const [flipped, setFlipped] = useState<ReadonlySet<number>>(new Set());
   const { records, version, open, run, repository, setOverlay } = useLog();
   const { busy, guard } = useBusy();
   const condition = records?.conditions.find((c) => c.id === id) ?? null;
@@ -50,6 +59,7 @@ export function ConditionPage({
     ? fill(t('condStatusResolved'), { a: f.dayMonth(condition.startedOn), b: f.dayMonth(condition.resolvedOn) })
     : fill(t('condStatusOpen'), { d: f.dayMonth(condition.startedOn) });
   const groups = historyGroups(id, records.events);
+  const years = yearGroups(groups, today);
   const editEvent = (e: HealthEvent) => {
     if (e.type === 'photo') {
       const first = photosOf(e.id, records.photos)[0];
@@ -63,6 +73,23 @@ export function ConditionPage({
   const ids = photos.map((x) => x.photo.id);
   const view = (photoId: string) => setOverlay({ kind: 'viewer', ids, index: Math.max(0, ids.indexOf(photoId)) });
   const addPhoto = () => open({ kind: 'photo', date: today, linkTo: id });
+  const renderGroup = (g: (typeof groups)[number]) => (
+    <div key={g.date}>
+      <p className="cond__group">{relDate(g.date)}</p>
+      {g.events.map((e) => (
+        <EventCard
+          key={e.id}
+          event={e}
+          tags={conditionsOf(e, records.conditions).filter((c) => c.id !== id)}
+          photos={photosOf(e.id, records.photos)}
+          smallPhotos
+          onEdit={editEvent(e)}
+          onOpenCondition={onOpenCondition}
+          onViewPhoto={view}
+        />
+      ))}
+    </div>
+  );
   const reopen = guard(async () => {
     await run(() => act.saveCondition(repository, { ...condition, resolvedOn: null }, condition), t('condToastReopened'));
   });
@@ -120,23 +147,32 @@ export function ConditionPage({
           </button>
         </div>
         {groups.length ? (
-          groups.map((g) => (
-            <div key={g.date}>
-              <p className="cond__group">{relDate(g.date)}</p>
-              {g.events.map((e) => (
-                <EventCard
-                  key={e.id}
-                  event={e}
-                  tags={conditionsOf(e, records.conditions).filter((c) => c.id !== id)}
-                  photos={photosOf(e.id, records.photos)}
-                  smallPhotos
-                  onEdit={editEvent(e)}
-                  onOpenCondition={onOpenCondition}
-                  onViewPhoto={view}
-                />
-              ))}
-            </div>
-          ))
+          years ? (
+            years.map((y) => {
+              const isOpen = y.openByDefault !== flipped.has(y.year);
+              const panel = `cond-year-${y.year}`;
+              return (
+                <div key={y.year} className="cond__year">
+                  <button
+                    type="button"
+                    className="cond__yearhead"
+                    aria-expanded={isOpen}
+                    aria-controls={panel}
+                    onClick={() => setFlipped((s) => (s.has(y.year) ? new Set([...s].filter((x) => x !== y.year)) : new Set(s).add(y.year)))}
+                  >
+                    <span className="cond__yearname">{y.year}</span>
+                    <span className="cond__yearcount">{fill(t(YEAR_ENTRIES[pluralForm(lang, y.count)]), { n: y.count })}</span>
+                    <ChevronIcon dir={isOpen ? 'up' : 'down'} size={16} />
+                  </button>
+                  <div id={panel} hidden={!isOpen}>
+                    {y.groups.map(renderGroup)}
+                  </div>
+                </div>
+              );
+            })
+          ) : (
+            groups.map(renderGroup)
+          )
         ) : (
           <article className="day-card day-empty">
             <span className="day-empty__icon" aria-hidden="true">
