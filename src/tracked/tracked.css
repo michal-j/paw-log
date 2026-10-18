@@ -64,3 +64,26 @@
 /* Condition picker in the event forms: the inline "New" row. */
 .cond-new-row .input { flex: 1; min-width: 0; }
 .cond-new-row .btn { flex: none; }
+
+/* Year groups of the history (JCB-78): a 44px header that folds the year's entries. */
+.cond__year { margin-top: var(--space-2); }
+.cond__yearhead {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+  min-height: 44px;
+  margin: 0;
+  padding: 0 var(--space-1);
+  border: 0;
+  border-bottom: 1px solid var(--color-line);
+  background: transparent;
+  color: var(--color-ink);
+  text-align: left;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.cond__yearhead:active { opacity: 0.6; }
+.cond__yearname { font: var(--type-body-strong-weight) var(--type-body-strong-size) / var(--type-body-strong-line) var(--type-body-strong-family); }
+.cond__yearcount { flex: 1; min-width: 0; color: var(--color-ink-3); font: var(--type-small-weight) var(--type-small-size) / var(--type-small-line) var(--type-small-family); }
+.cond__yearhead svg { flex: none; color: var(--color-ink-3); }

@@ -1,0 +1,4 @@
+#,Where (code name),English,Polish,EN chars,PL chars,Fit note,Your notes
+Y1,condYearEntries_one,1 entry,1 wpis,7,6,"Year header on a condition's history, next to the year; Polish singular",JCB-78; DRAFT pending CEO review
+Y2,condYearEntries_few,{n} entries,{n} wpisy,10,9,"Year header, Polish 2-4",JCB-78; DRAFT pending CEO review
+Y3,condYearEntries_many,{n} entries,{n} wpisów,10,10,"Year header, Polish 5+ and English plural",JCB-78; DRAFT pending CEO review
