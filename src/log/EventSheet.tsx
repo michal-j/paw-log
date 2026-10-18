@@ -1,7 +1,8 @@
 import { useState, type ReactNode } from 'react';
 import type { AlsoDone, Condition, EventType, HealthEvent, PlainDate } from '../data';
 import { Chip, Chips, Field, Sheet } from '../components/Sheet';
-import { useI18n, type MessageKey } from '../i18n';
+import { fill, useI18n, type MessageKey } from '../i18n';
+import { useFormat } from './format';
 import * as act from './actions';
 import { DateLine, OTHER } from './fields';
 import { useBusy } from './useBusy';
@@ -92,7 +93,8 @@ export function EventSheet({
   onShowDay: (date: PlainDate) => void;
 }) {
   const { t } = useI18n();
-  const { records, repository, run, close } = useLog();
+  const f = useFormat();
+  const { records, repository, run, close, setOverlay } = useLog();
   const { busy, guard } = useBusy();
   // A new event keeps its id across Save attempts, so a retry never adds a copy (JCB-71).
   const draft = useDraftIds();
@@ -310,7 +312,13 @@ export function EventSheet({
         <Field label={t('chips.109')} hint={optional} error={form.photoErr ? t('photoUnreadable') : undefined}>
           <div className="photo-row photo-row--field">
             {photos.map((p) => (
-              <PhotoThumb key={p.id} photo={p} size="sm" />
+              <PhotoThumb
+                key={p.id}
+                photo={p}
+                size="sm"
+                label={fill(t('photoAlt'), { d: f.shortDate(form.date) })}
+                onOpen={() => setOverlay({ kind: 'viewer', ids: photos.map((x) => x.id), index: Math.max(0, photos.indexOf(p)) })}
+              />
             ))}
             {form.newPhotos.map((p, i) => (
               <LocalThumb key={i} file={p.thumb} />

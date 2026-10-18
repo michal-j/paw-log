@@ -179,6 +179,35 @@ describe('photos, real data path', () => {
     expect(screen.queryByText('1 of 2')).toBeNull();
   });
 
+  it('full screen (JCB-83): a thumbnail opens the viewer, double tap zooms and back, Escape closes and returns focus', async () => {
+    await at(`/tracked/${LUMP}`, twoPhotos);
+    const thumb = (await screen.findAllByRole('button', { name: 'Photo, Sat 3 Oct' }))[0]!;
+    thumb.focus();
+    fireEvent.click(thumb);
+    expect(await screen.findByText('1 of 2')).toBeTruthy();
+    expect(document.activeElement).toBe(dialog());
+    const stage = dialog().querySelector('.viewer__stage') as HTMLElement;
+    const img = () => dialog().querySelector('[data-current] img, [data-current] [role="img"]') as HTMLElement | null;
+    await waitFor(() => expect(img()).toBeTruthy());
+    expect(img()!.style.transform).toBe('');
+    // Close is a real button, at least 44px tall by the shared style.
+    expect(within(dialog()).getByRole('button', { name: 'Close' })).toBeTruthy();
+    const tap = () => {
+      fireEvent.pointerDown(stage, { pointerId: 1, clientX: 20, clientY: 30 });
+      fireEvent.pointerUp(stage, { pointerId: 1, clientX: 20, clientY: 30 });
+    };
+    tap();
+    tap();
+    expect(img()!.style.transform).toMatch(/scale\(2\.5\)/);
+    tap();
+    tap();
+    expect(img()!.style.transform).toBe('');
+    // Stepping to the next photo starts unzoomed; Escape closes just the viewer and puts focus back.
+    fireEvent.keyDown(window, { key: 'Escape' });
+    await waitFor(() => expect(screen.queryByText('1 of 2')).toBeNull());
+    expect(document.activeElement).toBe(thumb);
+  });
+
   it('delete a photo from the viewer: Undo brings it back; once the toast is gone its files go too', async () => {
     await at(`/tracked/${LUMP}`, twoPhotos);
     // Files for the first photo, as an upload would have left them.
