@@ -12,7 +12,7 @@ Automated: `npm test` (Vitest, `tests/`) and `npm run test:db` (row-level securi
 | 6 | Language switch | On `/demo` tap PL, reload | Strings turn Polish; still Polish after reload; EN returns them | `tests/app.test.tsx` (switch), manual (reload) |
 | 7 | Polish fit | `/demo` in PL at 390 wide | Banner wraps to two lines, nothing clipped or overflowing | manual |
 | 8 | Install on iPhone | Build, serve over HTTPS, Safari > Share > Add to Home Screen | Installs with the PawLog name and mint icon, opens standalone | manual (needs deployment) |
-| 9 | Offline shell | After one visit, go offline, reload `/demo` | App shell loads from the service worker | manual |
+| 9 | No service worker (JCB-71) | Open the app once after a deploy; Safari Web Inspector > Service Workers | At most one automatic reload, then normal use; no service worker registered. The app does not open offline (by decision, 18 Oct) | `tests/serviceWorker.test.ts`, manual (iPhone) |
 | 10 | Demo reset | Edit data via devtools or later screens, tap "Reset demo data" | Sample data restored | `tests/data.test.ts` (logic), manual (button) |
 | 11 | Timeline rows | Open `/demo`, scroll to the bottom | One row per day, 15 Oct (Today) down to 1 Sep; bands October 2026 and September 2026; no gaps or repeats | `tests/timeline.test.ts` |
 | 12 | Circles | On `/demo` look at 14 Oct | Breakfast big circle hollow; Dinner big circle half-filled from the bottom; Gastrelle small purple circle filled; small circles are medication, big are food | `tests/timeline.test.ts` (data), manual (look) |
@@ -49,7 +49,7 @@ Automated: `npm test` (Vitest, `tests/`) and `npm run test:db` (row-level securi
 | 43 | Add from a part | Tap + on Breakfast | Sheet "Add to Breakfast" with only Food and Medication; the entry form has Breakfast set; Change opens date and part fields that stay open | manual |
 | 44 | Amount input | Add medication > Bellavet; then Arvelin > Other | ml shows a decimal field ("0,15" and "0.15" both work) and "Usual: 0,15 ml (1,5 bars)"; Other opens a number field; fraction chips for pill | `tests/amount.test.ts`, manual |
 | 45 | Edit and change the item | On 14 Oct tap Cooked meal, pick Farm Fresh, Given, Save | The row becomes "Farm Fresh, turkey"; part and date kept | `tests/log.test.tsx` |
-| 46 | Delete with Undo | Tap an entry (or event), Delete, then Undo within 5 s | Toast "Entry deleted" / "Event deleted"; Undo restores it unchanged | `tests/log.test.tsx` |
+| 46 | Delete with Undo | Tap an entry (or event), Delete, then Undo within 8 s | Toast "Entry deleted" / "Event deleted"; Undo restores it unchanged | `tests/log.test.tsx` |
 | 47 | Make this the usual amount | On today tap the planned Bellavet, type 0,2, tick "Make this the usual amount from this day on", Save | Toast "Usual day updated"; the usual day has 0,15 ml up to yesterday and 0,2 ml from today; earlier days unchanged | `tests/log.test.tsx`, `tests/plan.test.ts` |
 | 48 | Add to the usual day | Add a medication that is not in that part, tick "Add to the usual day from this day on" | It shows as planned in that part from that date on | `tests/plan.test.ts`, manual |
 | 49 | Symptoms | + Add > Symptom: Poo (consistency, colour, amount), Vomit (times, when), Panting (intensity), Other (typed) | Only that symptom's chips show, all optional; the day card shows "soft · with blood", "1× in the morning", "a lot"; Save without a symptom says "Pick a symptom or describe it." | `tests/log.test.tsx`, `tests/plan.test.ts` |
@@ -96,3 +96,7 @@ Automated: `npm test` (Vitest, `tests/`) and `npm run test:db` (row-level securi
 | 90 | Condition photos (JCB-7) | Condition page with 2+ photos: swipe in the viewer; Compare; delete a photo then Undo | Strip oldest to newest opening at newest; Compare shows two dates; Undo restores the photo | `tests/photosApp.test.tsx` |
 | 91 | Slow upload (JCB-7) | Harness: slow but progressing upload; then a stalled upload | Slow upload succeeds; stalled one fails after ~20 s without progress and retries into a single photo | `tests/upload.test.ts` |
 | 92 | Day view focus and Back (JCB-41) | Open a day; Previous x3; Back | Day heading has focus; Timeline shows the last day viewed | `tests/app.test.tsx`, manual |
+| 93 | Undo toast length (JCB-42) | Delete an entry; separately save one (no Undo) | The Undo toast stays 8 s, the plain toast 5 s | `tests/log.test.tsx` |
+| 94 | Pinned Undo keeps Edited (JCB-42) | Pinned: open a note edited on an earlier day, change the text, Save, Undo; then Delete, Undo | The note shows its earlier "Edited" date and editor both times | `tests/pinned.test.tsx`, `supabase/tests/database/rls.test.sql` |
+| 95 | Toast contrast (JCB-64) | iPhone: trigger a toast over a white sheet (e.g. Delete in an entry) | Dark toast, white text, mint Undo, clearly readable | manual (iPhone) |
+| 96 | Saves in a row (JCB-71) | iPhone app, no restart: an entry, Given, a usual-day item, a note and a pinned note over 3–4 minutes | Each one saves; the server has all of them | `tests/saveSequence.test.tsx`, manual (iPhone) |
