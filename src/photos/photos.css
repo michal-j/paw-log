@@ -111,3 +111,10 @@ span.photo-thumb { cursor: default; }
 .add-opt__icon--photo { border-color: var(--color-badge-photo-line); background: var(--color-badge-photo-top); color: var(--color-badge-photo-ink); }
 /* Photos under a symptom row (Day view). */
 .photo-row--sym { margin: 0 0 var(--space-2); }
+
+/* JCB-83: the photo viewer is dark all over (Compare keeps the light look). Text is surface (white) on ink: 17:1. */
+.viewer--dark { background: var(--color-ink); color: var(--color-surface); }
+.viewer--dark .viewer__bar { background: var(--color-ink); border-bottom-color: transparent; }
+.viewer--dark .viewer__pos, .viewer--dark .sheet__close, .viewer--dark .link-btn, .viewer--dark .viewer__caption { color: var(--color-surface); }
+.viewer--dark .viewer__info { background: var(--color-ink); border-top-color: transparent; }
+.viewer--dark .viewer__info[hidden] { display: none; }

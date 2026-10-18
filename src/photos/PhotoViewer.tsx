@@ -235,7 +235,7 @@ export function PhotoViewer({
   const tags = conditionsOf(item.event, records.conditions);
 
   return (
-    <div ref={ref} className="viewer" role="dialog" aria-modal="true" aria-label={fill(t('photoAlt'), { d: longDate(item.event.date) })} tabIndex={-1}>
+    <div ref={ref} className="viewer viewer--dark" role="dialog" aria-modal="true" aria-label={fill(t('photoAlt'), { d: longDate(item.event.date) })} tabIndex={-1}>
       <div className="viewer__bar">
         <p className="viewer__pos" aria-live="polite">
           {fill(t('photoIofN'), { i: i + 1, n: items.length })}
@@ -285,7 +285,7 @@ export function PhotoViewer({
           </>
         )}
       </div>
-      <div className="viewer__info">
+      <div className="viewer__info" hidden={zoom.s > 1}>
         <p className="viewer__date">{longDate(item.event.date)}</p>
         {caption && <p className="viewer__caption">{caption}</p>}
         <ConditionTags
