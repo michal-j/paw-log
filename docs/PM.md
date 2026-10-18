@@ -28,7 +28,7 @@ The CEO (Michał) talks only to the PM session. The PM runs everything else: Lin
 2. Start the matching subagent (developer, qa, designer) with the issue number and nothing else it does not need. Developer works on a branch named after the issue and opens a PR.
 3. Review the PR against the acceptance criteria: read the diff, run `npm run lint`, `npm run build` and the tests, check strings exist in EN and PL, tokens used (no hard-coded colour, radius or shadow), no real data in the diff.
 4. Run QA on the PR when the issue touches UI or data.
-5. Merge only after the checks pass. Update Linear status, `docs/DECISIONS.md`, `CHANGELOG.md`. Report to the CEO in a few lines.
+5. Merge only after every check passes: read `gh pr checks N --json state` and merge in a separate step only when all are SUCCESS (CI runs twice per PR; a failure in either run blocks). Update Linear status, `docs/DECISIONS.md`, `CHANGELOG.md`. Report to the CEO in a few lines.
 6. Findings outside the issue become new Backlog issues, not extra changes.
 
 ## Stops: ask the CEO first
@@ -42,8 +42,9 @@ Creating any account, project or service (Supabase, domains, paid plans); touchi
 - The repo is public: nothing real (names, vet notes, dates, photos, keys). Demo data is fictional.
 - Design canvas mockups are history; they keep the old name and are not updated.
 
-## State when this role moved to Claude Code (16 Oct 2026)
-- Done: R10 Mint Clean design, design system, docs, copy CSV (181 pairs), repo public, Vercel project created, slice 1 scaffold merged (PR #1, JCB-28) and awaiting PM review.
-- Next: review JCB-28 against its criteria, then slice 2 (data layer and timeline view on demo data). Supabase project is created only in slice 2b, after the CEO's OK.
-- Open: JCB-26 event-icon audit; JCB-25 design for edit and bulk-add; design for Pinned, Tracked, Search; Vercel ssoProtection must be turned off for a public demo (CEO decides when); focus ring in the prototype uses mint instead of mint-deep.
-- The Design System artifact ("PawLog Design System") and the design canvas live in claude.ai and are not reachable from Claude Code. Design changes: ask the CEO to run the Designer in Claude, or export the change into `docs/design-system/`.
+## Current state (handoff, 18 Oct 2026 evening)
+- Production is live and the CEO has entered most real data. Everything merged is on main; no open PRs.
+- What is open, next and waiting on the CEO: `docs/DECISIONS.md` > Open. Linear (team JCBK, project PawLog) matches it.
+- Saving (JCB-71, In Review): three fixes are live (timeouts PR 21, no service worker PR 33, retry of stuck writes and a hidden request log PR 37). The CEO's full test on 18 Oct had no stuck saves. Keep it open a few days; close it if nothing sticks. Diagnose with the request log (Menu: tap the "Menu" heading 5 times > Copy) and the Supabase edge logs (read-only).
+- Weekly plan usage was 86% on 18 Oct (resets 21 Oct 12:00 UTC). Check `get_usage` before starting agents; the CEO wants a limit check and his OK after each piece while usage is high.
+- Gotchas: in this Claude Code shell `grep` is a wrapper function, so don't build merge gates on `grep -v`. CI has had timing-flaky tests (JCB-96 fixed, JCB-99 open); a failing run blocks the merge, so rerun it or fix the test.

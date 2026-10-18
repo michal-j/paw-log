@@ -4,6 +4,24 @@ Format: [Keep a Changelog](https://keepachangelog.com). "Unreleased" means not y
 
 ## Unreleased
 
+## 2026-10-18 evening (merged to main)
+
+### Added
+- Hidden request log for diagnosing saves: Menu, tap the "Menu" heading 5 times (or open with `?diag=1`); last 30 requests with time, method, table, duration and outcome, Copy and Clear; no ids or data (JCB-71).
+- Launch screen in mint with the paw and "PawLog" until the first data has loaded (or failed, or after 8 s); theme and startup background colour are mint (JCB-82). Bigger paw and white name (JCB-97).
+- Tap a photo to open it full screen on black: pinch and double-tap zoom, pan, swipe between photos, info hides while zoomed (JCB-83).
+- Optional "how many times" and "when" on every symptom (JCB-88).
+- A condition's history is grouped by year; the current year is open, earlier years are folded (JCB-78).
+
+### Fixed
+- Saves that got no answer within 6 s are sent once more as a fresh request, so a stuck save recovers without restarting the app (JCB-71).
+- Dates outside the current year show the year ("Since 21 Apr 2023") on Tracked, Pinned, the Usual day, the Day view and the photo viewer (JCB-77).
+- The Timeline Key names the foods again instead of the day parts (JCB-87).
+- Day view: a symptom's description sits below its name and attributes (JCB-85); a vet visit's photo is a thumbnail on the right of the card (JCB-84).
+
+### Changed
+- Tests: the pinned-notes edit test waits for the reload instead of racing it (JCB-96).
+
 ## 2026-10-17 to 2026-10-18 (merged to main)
 
 ### Added

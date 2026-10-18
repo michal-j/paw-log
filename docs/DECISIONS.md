@@ -24,17 +24,22 @@
 - Lean way of working (17 Oct): QA in proportion to risk, `docs/DEV-CHECKLIST.md` for developers, the PM owns CHANGELOG and TEST-CASES, cheaper model for QA and small fixes (see `docs/PM.md`).
 - JCB-38 (demo data: missing breakfast item) closed as intentional (18 Oct).
 - No service worker, so the app does not open offline (CEO, 18 Oct): it most likely stalled saves in the iPhone app (JCB-71). Saving offline and syncing later is a separate idea (JCB-75).
+- Saving (JCB-71, 18 Oct): stuck database writes are retried once after 6 s on a fresh request (safe: every write is idempotent); a hidden request log (tap "Menu" 5 times) is kept for diagnosis. Root cause unproven (likely Safari reusing a dead connection). Kept open for a few days of real use.
+- Launch screen (CEO, 18 Oct): mint with a white paw and a white "PawLog". The white name is below 3:1 contrast on mint, accepted as a brief brand splash. Proportions to be revisited by the Designer (JCB-98, low).
+- Tracked (18 Oct): dates outside the current year show the year; a condition's history is grouped by year. The Tracked list itself is not grouped by year (it already has Open and Resolved).
+- Photo viewer is full screen on black (CEO, 18 Oct).
+- Next big thing after saving: PDF upload on events and conditions (JCB-76, CEO 18 Oct).
 - Working rules: short explanations, clarifying questions first, quality over quantity, no unauthorised access (confirm with the CEO).
 
 ## Open
-- Waiting on the CEO's iPhone check: several saves in a row without a restart (JCB-71, PR 33). Then "Couldn't save" sooner (JCB-74).
-- JCB-75 idea: save offline and send when back online (decide after JCB-71 is confirmed).
-- Waiting on the CEO's pick: event badges on the Timeline (JCB-26 event icons, JCB-69 note badges); proposal on branch `michaljaciubek/design-event-badges`.
-- JCB-37 Design follow-ups from the Timeline: column headers, sticky month label, tablet/desktop layout, rail hit area, mini badge type token.
-- JCB-25 Design for bulk adding (editing is designed and built); build is JCB-33 slice 6.
-- JCB-10 Dose changes on the timeline. JCB-11 Real-time sync need. JCB-73 idea: swipe between views.
-- Slice 4 (calendar, matrix, filters, jump to date, JCB-31) and search (part of JCB-34) not started.
-- Copy review of the draft EN/PL lines in `docs/copy/` is parked as low priority until the CEO raises it.
+- Saving (JCB-71): watch for a few days of real use; if a save sticks, the CEO sends the request log. Then "Couldn't save" sooner (JCB-74).
+- Next big thing: PDF upload (JCB-76), needs a short design pass first.
+- Medium from the CEO's 18 Oct list: Tracked start date follows the earliest entry (JCB-81), own vet services (JCB-89), Timeline horizontal overflow and crowded icons (JCB-86, part design). Also flaky launch test (JCB-99).
+- Waiting on the CEO's pick: event badges on the Timeline (JCB-26, JCB-69); proposal on branch `michaljaciubek/design-event-badges`.
+- Ideas/questions for later: reminders for recurring treatments (JCB-79), tracked conditions on the Timeline (JCB-80), offline saving (JCB-75).
+- Low backlog: JCB-90 to JCB-95, JCB-98; JCB-37 Timeline design follow-ups; JCB-25 bulk-add design; JCB-10, JCB-11, JCB-73.
+- Slice 4 (calendar, matrix, filters, JCB-31) and search (part of JCB-34) not started.
+- Copy review of the draft EN/PL lines in `docs/copy/` is parked until the CEO raises it.
 
 ## Parked
 JCB-12 tasks and notifications, JCB-13 recipes, JCB-14 file sharing, native app and several dogs, JCB-23 per-item history, JCB-24 data export.
