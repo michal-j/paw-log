@@ -291,6 +291,11 @@ export function LogProvider({ repository, children }: { repository: Repository; 
   return <Context.Provider value={value}>{children}</Context.Provider>;
 }
 
+/** The app's "today" once records are loaded, else null (and outside a provider): used to decide whether a date shows its year. */
+export function useToday(): PlainDate | null {
+  return useContext(Context)?.records?.today ?? null;
+}
+
 export function useLog(): LogApi {
   const ctx = useContext(Context);
   if (!ctx) throw new Error('useLog must be used inside LogProvider');

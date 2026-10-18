@@ -3,6 +3,7 @@ import type { DayPart, EventType, HealthEvent, Item, PlainDate, Unit } from '../
 import { useI18n, type Lang, type MessageKey } from '../i18n';
 import { parseDate } from '../timeline/model';
 import { formatAmount } from './amount';
+import { useToday } from './LogProvider';
 
 export const LOCALE: Record<Lang, string> = { en: 'en-GB', pl: 'pl-PL' };
 
@@ -20,18 +21,33 @@ export const EVENT_LABEL: Partial<Record<EventType, MessageKey>> = {
   note: 'note.154',
 };
 
+/**
+ * Date formatters for a language. A date outside `currentYear` also shows its year ("21 Apr 2023",
+ * "21 kwi 2023"); one in the current year stays short ("21 Apr").
+ */
+export function makeDateFormat(lang: Lang, currentYear: number) {
+  const make = (o: Intl.DateTimeFormatOptions) => new Intl.DateTimeFormat(LOCALE[lang], { timeZone: 'UTC', ...o });
+  const short = make({ weekday: 'short', day: 'numeric', month: 'short' });
+  const shortYear = make({ weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+  const dayMonth = make({ day: 'numeric', month: 'short' });
+  const dayMonthYear = make({ day: 'numeric', month: 'short', year: 'numeric' });
+  const past = (d: PlainDate) => parseDate(d).getUTCFullYear() !== currentYear;
+  return {
+    /** "Thu 15 Oct", or "Fri 21 Apr 2023" in another year */
+    shortDate: (d: PlainDate) => (past(d) ? shortYear : short).format(parseDate(d)),
+    /** "15 Oct", or "21 Apr 2023" in another year */
+    dayMonth: (d: PlainDate) => (past(d) ? dayMonthYear : dayMonth).format(parseDate(d)),
+  };
+}
+
 /** Formatting that depends on the UI language: dates, amounts, day parts, event titles. */
 export function useFormat() {
   const { lang, t } = useI18n();
+  const today = useToday();
+  const year = today ? Number(today.slice(0, 4)) : new Date().getFullYear();
   return useMemo(() => {
-    const make = (o: Intl.DateTimeFormatOptions) => new Intl.DateTimeFormat(LOCALE[lang], { timeZone: 'UTC', ...o });
-    const short = make({ weekday: 'short', day: 'numeric', month: 'short' });
-    const dayMonth = make({ day: 'numeric', month: 'short' });
     return {
-      /** "Thu 15 Oct" */
-      shortDate: (d: PlainDate) => short.format(parseDate(d)),
-      /** "15 Oct" */
-      dayMonth: (d: PlainDate) => dayMonth.format(parseDate(d)),
+      ...makeDateFormat(lang, year),
       part: (p: DayPart) => t(PART_NAME[p]),
       /** "½ can", "0,15 ml (1,5 bars)"; falls back to the free-text dose of old rows. */
       amount: (amount: number | null, unit: Unit | null, conversion?: Item['conversion'], doseText = '') =>
@@ -46,5 +62,5 @@ export function useFormat() {
         return key ? t(key) : e.title;
       },
     };
-  }, [lang, t]);
+  }, [lang, t, year]);
 }

@@ -97,4 +97,15 @@ describe('tracked conditions, real data path', () => {
     expect(await rows(`select count(*)::int as n from event`)).toEqual([{ n: 1 }]);
     expect(await rows(`select count(*)::int as n from condition`)).toEqual([{ n: 0 }]);
   });
+  it('shows the year on dates outside the current year (JCB-77), on the list and the condition page', async () => {
+    await at(
+      '/tracked',
+      `insert into public.condition (id, dog_id, name, started_on) values ('${LUMP}', '${SEED.dog}', 'Old limp', '2023-04-21');
+       insert into public.event (id, dog_id, date, type, title) values ('${EVENT}', '${SEED.dog}', '2023-05-02', 'note', 'Checked');
+       insert into public.event_condition (event_id, condition_id, dog_id) values ('${EVENT}', '${LUMP}', '${SEED.dog}');`,
+    );
+    fireEvent.click(await screen.findByRole('button', { name: /Old limp/ }));
+    await screen.findByText(/Open · since 21 Apr 2023/);
+    expect(screen.getByText(/2 May 2023/)).toBeTruthy();
+  });
 });
