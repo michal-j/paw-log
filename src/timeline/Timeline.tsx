@@ -29,9 +29,6 @@ import './timeline.css';
 const LOCALE: Record<Lang, string> = { en: 'en-GB', pl: 'pl-PL' };
 const LIST_ID = 'timeline-list';
 
-/** Key labels for the shared food lane in each meal part. */
-const MEAL_LABEL: Partial<Record<number, MessageKey>> = { 2: 'copy.49', 4: 'copy.51', 6: 'copy.53' };
-
 const LEGEND_MARKS: { key: MessageKey; state: MarkState; size: 'food' | 'small'; colour: string }[] = [
   { key: 'name.96', state: 'given', size: 'food', colour: 'food-cooked' },
   { key: 'name.97', state: 'skipped', size: 'food', colour: 'food-cooked' },
@@ -261,8 +258,7 @@ export function Timeline({ initialScrollTop = 0, focusDate, dayHref, onOpenDay }
               {col.lanes.map((lane, li) => {
                 const mark = keyDay?.slots[ci]?.[li]?.mark;
                 const item = mark && items.get(mark.itemId);
-                const mealKey = lane.size === 'food' ? MEAL_LABEL[col.part] : undefined;
-                const label = item ? (mealKey ? t(mealKey) : item.name) : '';
+                const label = item ? item.name : '';
                 return (
                   <span key={lane.key} className="tl-key__lane" style={{ width: lane.width }}>
                     <span className="tl-key__label">{label}</span>
