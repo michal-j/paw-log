@@ -12,11 +12,14 @@ export function Sheet({
   onClose,
   children,
   footer,
+  onTitleTap,
 }: {
   title: string;
   onClose: () => void;
   children: ReactNode;
   footer?: ReactNode;
+  /** A tap on the heading (no visible affordance; the Menu uses it for a hidden switch). */
+  onTitleTap?: () => void;
 }) {
   const { t } = useI18n();
   const titleId = useId();
@@ -44,7 +47,7 @@ export function Sheet({
           <span />
         </div>
         <header className="sheet__head">
-          <h2 id={titleId} className="sheet__title">
+          <h2 id={titleId} className="sheet__title" onClick={onTitleTap}>
             {title}
           </h2>
           <button type="button" className="sheet__close" onClick={onClose}>

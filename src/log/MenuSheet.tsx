@@ -1,3 +1,4 @@
+import { useRef } from 'react';
 import type { DayPart, PlainDate } from '../data';
 import { ChevronIcon, RoutineIcon } from '../components/icons';
 import { LangSwitch } from '../components/LangSwitch';
@@ -8,6 +9,12 @@ import { useFormat } from './format';
 import { useLog } from './LogProvider';
 import { CommitInput } from './CommitInput';
 import { isPlainDate } from '../day/model';
+import { RequestLogPanel, useDiagEnabled } from '../diag/RequestLogPanel';
+import { diagEnabled, setDiagEnabled } from '../diag/requestLog';
+
+/** Taps on the Menu heading, this close together, that switch the request log on or off (JCB-71). */
+const DIAG_TAPS = 5;
+const DIAG_TAP_WINDOW_MS = 3000;
 
 const TIME = /^([01]\d|2[0-3]):[0-5]\d$/;
 
@@ -28,6 +35,16 @@ export function MenuSheet({
   const { t } = useI18n();
   const f = useFormat();
   const { records, repository, run, close } = useLog();
+  const diag = useDiagEnabled();
+  const taps = useRef<number[]>([]);
+  // The installed app has no address bar for ?diag=1, so five quick taps on the heading switch the log.
+  const onTitleTap = () => {
+    const now = Date.now();
+    taps.current = [...taps.current.filter((at) => now - at < DIAG_TAP_WINDOW_MS), now];
+    if (taps.current.length < DIAG_TAPS) return;
+    taps.current = [];
+    setDiagEnabled(!diagEnabled());
+  };
 
   // Saved on commit (blur, Enter, picker closed), one write at a time through `run`.
   const saveTime = (part: DayPart, value: string) => {
@@ -48,7 +65,7 @@ export function MenuSheet({
   };
 
   return (
-    <Sheet title={t('menu')} onClose={close}>
+    <Sheet title={t('menu')} onClose={close} onTitleTap={onTitleTap}>
       <ul className="menu-list">
         <li>
           <button type="button" className="menu-row" onClick={onUsualDay}>
@@ -92,6 +109,7 @@ export function MenuSheet({
       <Field label={t('langSwitch')}>
         <LangSwitch />
       </Field>
+      {diag && <RequestLogPanel />}
       {(onSignOut || onResetDemo) && (
         <div className="menu-end">
           <button type="button" className="btn btn--ghost btn--lg menu-end__btn" onClick={onSignOut ?? onResetDemo}>

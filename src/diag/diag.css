@@ -1,0 +1,19 @@
+/* The request log in the Menu (JCB-71, hidden unless switched on). Tokens only. */
+.diag-log {
+  margin: var(--space-2) 0 0;
+  padding: var(--space-2);
+  max-height: 260px;
+  overflow: auto;
+  list-style: none;
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-tint);
+  color: var(--color-ink-2);
+  font: var(--type-small-weight) var(--type-small-size) / var(--type-small-line) var(--type-small-family);
+  font-variant-numeric: tabular-nums;
+  white-space: pre-wrap; /* keeps the double spaces between columns */
+  overflow-wrap: anywhere;
+}
+.diag-log li + li { margin-top: 2px; }
+.diag-actions { display: flex; gap: var(--space-2); margin-top: var(--space-2); }
+.diag-actions .btn { flex: 1; }
