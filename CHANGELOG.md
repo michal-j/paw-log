@@ -12,6 +12,7 @@ Format: [Keep a Changelog](https://keepachangelog.com). "Unreleased" means not y
 - Photos on events and tracked conditions: take or pick, resized on the phone, stored privately; photo strip, viewer and Compare on the condition page; uploads only give up when they stop making progress (JCB-7).
 
 ### Fixed
+- In the installed iPhone app, saves stopped reaching the server about a minute after each start. The app no longer uses a service worker, which most likely held Supabase requests back; as a result it no longer opens offline (JCB-71).
 - Save could stay stuck after the iPhone app came back from the background; requests now time out and recover, a failed save says "Couldn't save · Try again" and retries never duplicate (JCB-71).
 - Changing the start date of a usual-day item is saved; a dose change on a running item gets its own "New amount from" date; starts that would overlap another period are refused (JCB-72).
 - The Key always shows the row directly below it while scrolling (JCB-67).

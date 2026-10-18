@@ -12,7 +12,7 @@ Automated: `npm test` (Vitest, `tests/`) and `npm run test:db` (row-level securi
 | 6 | Language switch | On `/demo` tap PL, reload | Strings turn Polish; still Polish after reload; EN returns them | `tests/app.test.tsx` (switch), manual (reload) |
 | 7 | Polish fit | `/demo` in PL at 390 wide | Banner wraps to two lines, nothing clipped or overflowing | manual |
 | 8 | Install on iPhone | Build, serve over HTTPS, Safari > Share > Add to Home Screen | Installs with the PawLog name and mint icon, opens standalone | manual (needs deployment) |
-| 9 | Offline shell | After one visit, go offline, reload `/demo` | App shell loads from the service worker | manual |
+| 9 | No service worker (JCB-71) | Open the app once after a deploy; Safari Web Inspector > Service Workers | At most one automatic reload, then normal use; no service worker registered. The app does not open offline (by decision, 18 Oct) | `tests/serviceWorker.test.ts`, manual (iPhone) |
 | 10 | Demo reset | Edit data via devtools or later screens, tap "Reset demo data" | Sample data restored | `tests/data.test.ts` (logic), manual (button) |
 | 11 | Timeline rows | Open `/demo`, scroll to the bottom | One row per day, 15 Oct (Today) down to 1 Sep; bands October 2026 and September 2026; no gaps or repeats | `tests/timeline.test.ts` |
 | 12 | Circles | On `/demo` look at 14 Oct | Breakfast big circle hollow; Dinner big circle half-filled from the bottom; Gastrelle small purple circle filled; small circles are medication, big are food | `tests/timeline.test.ts` (data), manual (look) |
@@ -99,3 +99,4 @@ Automated: `npm test` (Vitest, `tests/`) and `npm run test:db` (row-level securi
 | 93 | Undo toast length (JCB-42) | Delete an entry; separately save one (no Undo) | The Undo toast stays 8 s, the plain toast 5 s | `tests/log.test.tsx` |
 | 94 | Pinned Undo keeps Edited (JCB-42) | Pinned: open a note edited on an earlier day, change the text, Save, Undo; then Delete, Undo | The note shows its earlier "Edited" date and editor both times | `tests/pinned.test.tsx`, `supabase/tests/database/rls.test.sql` |
 | 95 | Toast contrast (JCB-64) | iPhone: trigger a toast over a white sheet (e.g. Delete in an entry) | Dark toast, white text, mint Undo, clearly readable | manual (iPhone) |
+| 96 | Saves in a row (JCB-71) | iPhone app, no restart: an entry, Given, a usual-day item, a note and a pinned note over 3–4 minutes | Each one saves; the server has all of them | `tests/saveSequence.test.tsx`, manual (iPhone) |

@@ -23,10 +23,12 @@
 - Toasts: dark background with white text and mint Undo (JCB-64); Undo toasts stay 8 s, plain ones 5 s (JCB-42).
 - Lean way of working (17 Oct): QA in proportion to risk, `docs/DEV-CHECKLIST.md` for developers, the PM owns CHANGELOG and TEST-CASES, cheaper model for QA and small fixes (see `docs/PM.md`).
 - JCB-38 (demo data: missing breakfast item) closed as intentional (18 Oct).
+- No service worker, so the app does not open offline (CEO, 18 Oct): it most likely stalled saves in the iPhone app (JCB-71). Saving offline and syncing later is a separate idea (JCB-75).
 - Working rules: short explanations, clarifying questions first, quality over quantity, no unauthorised access (confirm with the CEO).
 
 ## Open
-- Waiting on the CEO's iPhone check: save after the app was in the background (JCB-71), Usual day "Starts on" (JCB-72), photos from camera and library on mobile data (JCB-7).
+- Waiting on the CEO's iPhone check: several saves in a row without a restart (JCB-71, PR 33). Then "Couldn't save" sooner (JCB-74).
+- JCB-75 idea: save offline and send when back online (decide after JCB-71 is confirmed).
 - Waiting on the CEO's pick: event badges on the Timeline (JCB-26 event icons, JCB-69 note badges); proposal on branch `michaljaciubek/design-event-badges`.
 - JCB-37 Design follow-ups from the Timeline: column headers, sticky month label, tablet/desktop layout, rail hit area, mini badge type token.
 - JCB-25 Design for bulk adding (editing is designed and built); build is JCB-33 slice 6.
