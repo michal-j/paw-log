@@ -1,17 +1,52 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" class="launching">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <meta name="theme-color" content="#1fd38a" />
+    <meta name="theme-color" content="%token:mint%" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="PawLog" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=2" />
     <link rel="icon" href="/icon.svg?v=2" type="image/svg+xml" />
     <title>PawLog</title>
+    <!-- Launch cover (JCB-82): painted before any JS runs; src/launch.ts removes it once the first data has loaded or failed. -->
+    <style>
+      html.launching { background: %token:mint%; }
+      #launch {
+        position: fixed;
+        inset: 0;
+        z-index: 1000;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 16px;
+        padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+        background: linear-gradient(to bottom, %token:mint-top%, %token:mint%);
+        color: %token:on-mint%;
+        font: 700 22px/26px var(--type-title-family, system-ui, -apple-system, sans-serif);
+        letter-spacing: -0.02em;
+        opacity: 1;
+        transition: opacity 200ms ease-out;
+      }
+      #launch svg { width: 96px; height: 96px; fill: %token:surface%; }
+      #launch.launch--out { opacity: 0; pointer-events: none; }
+      @media (prefers-reduced-motion: reduce) { #launch { transition: none; } }
+    </style>
   </head>
   <body>
     <div id="root"></div>
+    <div id="launch" aria-hidden="true">
+      <svg viewBox="0 0 24 24" focusable="false">
+        <ellipse cx="6.2" cy="11" rx="2" ry="2.6" />
+        <ellipse cx="10.2" cy="6.6" rx="2" ry="2.6" />
+        <ellipse cx="15" cy="6.6" rx="2" ry="2.6" />
+        <ellipse cx="18.6" cy="11" rx="2" ry="2.6" />
+        <path d="M12.4 11.4c2.6 0 5.2 2.9 5.2 5.4 0 1.8-1.5 2.7-3 2.4-.8-.2-1.4-.5-2.2-.5s-1.4.3-2.2.5c-1.5.3-3-.6-3-2.4 0-2.5 2.6-5.4 5.2-5.4z" />
+      </svg>
+      <span>PawLog</span>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

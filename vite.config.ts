@@ -15,6 +15,17 @@ export default defineConfig({
   plugins: [
     react(),
     {
+      // index.html (launch cover, theme colour) cannot import the stylesheet's variables before JS runs,
+      // so `%token:name%` there is replaced with the value from tokens.json (JCB-82).
+      name: 'pawlog-html-tokens',
+      transformIndexHtml: (html) =>
+        html.replace(/%token:([a-z-]+)%/g, (_m, name: string) => {
+          const value = colour(name);
+          if (!value) throw new Error(`index.html: unknown colour token "${name}"`);
+          return value;
+        }),
+    },
+    {
       // Dev only: once /harness.html has set its session cookie, every page is the harness, so a
       // reload on /day/… stays on the fake backend instead of the unconfigured real app.
       name: 'pawlog-harness-reload',
@@ -43,7 +54,7 @@ export default defineConfig({
         start_url: '/',
         scope: '/',
         display: 'standalone',
-        background_color: colour('ground'),
+        background_color: colour('mint'),
         theme_color: colour('mint'),
         icons: [
           { src: `icon-192.png?v=${ICON_VERSION}`, sizes: '192x192', type: 'image/png', purpose: 'any' },

@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import type { Condition, DayPart, DayPartTimes, DogSettings, Entry, HealthEvent, Item, Photo, PinnedNote, PlainDate, RemovedSlot, Repository, ScheduleSlot } from '../data';
 import { useI18n } from '../i18n';
+import { dismissLaunch } from '../launch';
 import { logStartOf } from '../timeline/model';
 import type { KindGroup } from './amount';
 import type { Undo } from './actions';
@@ -152,6 +153,11 @@ export function LogProvider({ repository, children }: { repository: Repository; 
   const shownColours = useRef(new Map<string, string>());
 
   const reload = useCallback(() => setVersion((v) => v + 1), []);
+
+  // The launch cover (JCB-82) goes once the first load has finished, with data or with the error screen.
+  useEffect(() => {
+    if (records || loadFailed) dismissLaunch();
+  }, [records, loadFailed]);
 
   useEffect(() => {
     let live = true;
