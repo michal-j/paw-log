@@ -116,6 +116,9 @@
   cursor: pointer;
 }
 .day-card__row:active { opacity: 0.6; }
+/* A symptom with a description: name and attributes on line 1, the description full width below. */
+.day-card__row--desc { flex-wrap: wrap; row-gap: var(--space-1); padding-block: var(--space-2); }
+.day-card__row-desc { flex: 0 0 100%; min-width: 0; color: var(--color-ink-2); white-space: pre-line; overflow-wrap: anywhere; }
 .day-card__row-label { font: var(--type-body-strong-weight) var(--type-body-strong-size) / var(--type-body-strong-line) var(--type-body-strong-family); }
 .day-card__row-value { min-width: 0; text-align: right; color: var(--color-ink-2); overflow-wrap: anywhere; }
 /* A card that opens its event: a full-width button with the Card look. */

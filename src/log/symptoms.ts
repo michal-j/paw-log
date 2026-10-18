@@ -102,19 +102,17 @@ const optionLabel = (def: PropDef, value: string, t: (k: MessageKey) => string) 
 export const propValue = (e: Pick<HealthEvent, 'props' | 'intensity'>, name: string): string =>
   name === 'intensity' ? (e.intensity ?? '') : (e.props?.[name] ?? '');
 
-/** "diarrhea · dark · medium amount", "1× in the morning", "a lot", then the details. */
-export function symptomDetail(e: HealthEvent, t: (k: MessageKey) => string): string {
+/** The chosen properties only: "diarrhea · dark · medium amount", "1× in the morning", "a lot". */
+export function symptomAttrs(e: HealthEvent, t: (k: MessageKey) => string): string {
   const defs = propsFor(symptomKey(e.title));
   const vals = defs.map((d) => [d, propValue(e, d.name)] as const).filter(([, v]) => v);
-  const parts: string[] = [];
-  if (symptomKey(e.title) === 'sx_vomit') {
-    const s = vals.map(([d, v]) => optionLabel(d, v, t)).join(' ');
-    if (s) parts.push(s);
-  } else {
-    for (const [d, v] of vals) parts.push(optionLabel(d, v, t));
-  }
-  if (e.detail) parts.push(e.detail);
-  return parts.join(' · ');
+  const labels = vals.map(([d, v]) => optionLabel(d, v, t));
+  return (symptomKey(e.title) === 'sx_vomit' ? [labels.join(' ')] : labels).filter(Boolean).join(' · ');
+}
+
+/** The properties, then the written details: "a lot · thunder". */
+export function symptomDetail(e: HealthEvent, t: (k: MessageKey) => string): string {
+  return [symptomAttrs(e, t), e.detail].filter(Boolean).join(' · ');
 }
 
 export const isIntensity = (v: string): v is Intensity => v === 'small' || v === 'medium' || v === 'large';
