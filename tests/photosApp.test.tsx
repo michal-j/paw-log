@@ -228,6 +228,13 @@ describe('photos, real data path', () => {
       { position: 1, type: 'vet', date: '2026-10-15' },
     ]);
     expect(fake!.backend.files()).toHaveLength(4);
-    expect(await screen.findAllByRole('button', { name: 'Photo, Thu 15 Oct' })).toHaveLength(2);
+    const thumbs = await screen.findAllByRole('button', { name: 'Photo, Thu 15 Oct' });
+    expect(thumbs).toHaveLength(2);
+    // JCB-84: on a vet visit the photos sit beside the text (right column), not in a row below it.
+    const side = thumbs[0]!.closest('.ev-card__side');
+    expect(side?.querySelector('.ev-card__open')).toBeTruthy();
+    expect(thumbs[0]!.closest('.photo-row')?.classList.contains('photo-row--side')).toBe(true);
+    fireEvent.click(thumbs[0]!);
+    expect(await screen.findByText('1 of 2')).toBeTruthy();
   });
 });

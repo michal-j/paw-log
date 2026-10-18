@@ -28,6 +28,10 @@ span.photo-thumb { cursor: default; }
 .photo-row--field { margin-top: 0; }
 /* Above the card's open button (which covers the card), like the condition tags. */
 .ev-card .photo-row { position: relative; z-index: 1; }
+/* A vet visit: the text on the left, its photos in a column on the right, whatever the text length. */
+.ev-card__side { display: flex; align-items: flex-start; gap: var(--space-3); }
+.ev-card__side > .ev-card__open, .ev-card__side > .ev-card__static { flex: 1; min-width: 0; }
+.photo-row--side { flex: none; flex-direction: column; flex-wrap: nowrap; margin-top: 0; }
 
 /* ---------- PhotoStrip: a condition's photos, oldest on the left, the add tile last ---------- */
 .strip { display: flex; gap: 10px; margin: 0 calc(-1 * var(--space-3)); padding: 2px var(--space-3) var(--space-2); overflow-x: auto; scroll-snap-type: x proximity; scrollbar-width: none; }
