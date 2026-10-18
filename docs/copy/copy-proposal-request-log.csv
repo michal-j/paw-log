@@ -1,0 +1,18 @@
+#,Where (code name),English,Polish,EN chars,PL chars,Fit note,Your notes
+D1,diagTitle,Request log,Dziennik połączeń,11,16,Field label in the Menu; fits at 390,"JCB-71: diagnostic, hidden unless switched on (?diag=1, or five quick taps on the Menu heading). DRAFT pending CEO review"
+D2,diagHint,"Last 30 requests on this phone, newest first. No content or ids are kept.","Ostatnie 30 połączeń na tym telefonie, od najnowszego. Bez treści i identyfikatorów.",72,83,Wraps to two lines at 390 in both,DRAFT
+D3,diagEmpty,No requests yet,Brak połączeń,15,13,,DRAFT
+D4,diagCopy,Copy,Kopiuj,4,6,Button,DRAFT
+D5,diagCopied,Copied,Skopiowano,6,10,Button after copying,DRAFT
+D6,diagClear,Clear,Wyczyść,5,7,Button,DRAFT
+D7,diagRunning,running,w toku,7,6,A request still waiting for its answer,DRAFT
+D8,diagTimeout,no answer,brak odpowiedzi,9,15,Outcome,DRAFT
+D9,diagBackground,lost in background,utracone w tle,18,14,Outcome,DRAFT
+D10,diagAborted,cancelled,anulowane,9,9,Outcome,DRAFT
+D11,diagNetwork,network error,błąd sieci,13,10,Outcome,DRAFT
+D12,diagRetry,retry,ponowienie,5,10,Marks the second try of a stuck save,DRAFT
+D13,diagStart,app started,start aplikacji,11,15,App event,DRAFT
+D14,diagHidden,app in background,aplikacja w tle,17,15,App event,DRAFT
+D15,diagVisible,app back,powrót do aplikacji,8,19,App event,DRAFT
+D16,diagOnline,online,online,6,6,App event,DRAFT
+D17,diagOffline,offline,offline,7,7,App event,DRAFT

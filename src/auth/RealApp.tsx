@@ -4,6 +4,7 @@ import { ConfigError } from './ConfigError';
 import { readSupabaseConfig, type SupabaseConfig } from './config';
 import { createSupabaseAuth } from './supabaseAuth';
 import { createSupabaseClient } from './supabaseClient';
+import { startDiag } from '../diag/requestLog';
 
 // Wiring for the real app. Loaded lazily from main.tsx, so demo visitors never download
 // supabase-js and the demo makes no network calls. One client per page load.
@@ -11,6 +12,9 @@ function connect(config: SupabaseConfig) {
   const client = createSupabaseClient(config);
   return { auth: createSupabaseAuth(client), newRepository: () => createRepository(false, client) };
 }
+
+// The on-device request log (JCB-71): records always, in memory; shown and kept only when switched on.
+startDiag();
 
 const config = readSupabaseConfig();
 const backend = config ? connect(config) : null;

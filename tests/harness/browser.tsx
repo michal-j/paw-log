@@ -15,6 +15,7 @@ import type { AuthService, AuthUser } from '../../src/auth/authService';
 import { I18nProvider } from '../../src/i18n';
 import { shiftDate } from '../../src/timeline/model';
 import { localDate } from '../../src/data/supabaseRepository';
+import { startDiag } from '../../src/diag/requestLog';
 import { SEED, createFakeBackend } from './fakeBackend';
 import { fakeClient, fakeUploader, harnessDisplayUrl, timedRepository } from './fakeSupabase';
 
@@ -38,6 +39,7 @@ const auth: AuthService = {
   signOut: async () => {},
 };
 
+startDiag(); // ?diag=1 shows the request log in the Menu (JCB-71)
 const backend = await createFakeBackend({ start });
 const client = fakeClient(backend);
 // For poking at from the console: window.harness.backend.sql('select * from entry').

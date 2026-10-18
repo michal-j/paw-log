@@ -89,6 +89,113 @@ describe('resilientFetch', () => {
   });
 });
 
+describe('stalled writes are sent once more (JCB-71, stall recovery)', () => {
+  const REST = 'https://x.test/rest/v1/event?on_conflict=id';
+  const write = (init: RequestInit = {}): RequestInit => ({ method: 'POST', body: '{"id":"x"}', ...init });
+  const quiet = () => () => {};
+
+  /** The first `lost` requests never answer (and ignore aborts); later ones answer 201. */
+  function stuckThenFine(lost = 1) {
+    const calls: (RequestInit | undefined)[] = [];
+    const base: typeof fetch = (_input, init) => {
+      calls.push(init);
+      return calls.length <= lost ? new Promise<Response>(() => {}) : Promise.resolve(new Response(null, { status: 201 }));
+    };
+    return { base, calls };
+  }
+
+  it('a write with no answer after the stall limit goes again as a new high-priority request, and succeeds', async () => {
+    vi.useFakeTimers();
+    const { base, calls } = stuckThenFine();
+    const f = resilientFetch(base, { stallMs: 6000, retryMs: 8000, doc: fakePage().doc, log: quiet });
+    const p = f(REST, write());
+    await vi.advanceTimersByTimeAsync(5999);
+    expect(calls).toHaveLength(1);
+    await vi.advanceTimersByTimeAsync(1);
+    expect((await p).status).toBe(201);
+    expect(calls).toHaveLength(2);
+    expect(calls[0]?.signal?.aborted).toBe(true);
+    expect(calls[1]?.signal).not.toBe(calls[0]?.signal);
+    expect(calls[1]).toMatchObject({ method: 'POST', body: '{"id":"x"}', cache: 'no-store', keepalive: false, priority: 'high' });
+  });
+
+  it('tries only once more: a second stall rejects after 6 s + 8 s, under the 15 s limit of a repository call', async () => {
+    vi.useFakeTimers();
+    const { base, calls } = stuckThenFine(2);
+    const f = resilientFetch(base, { doc: fakePage().doc, log: quiet });
+    const p = f(REST, write()).then(
+      () => 'answered',
+      (e: Error) => e.name,
+    );
+    await vi.advanceTimersByTimeAsync(13_999);
+    expect(calls).toHaveLength(2);
+    await vi.advanceTimersByTimeAsync(1);
+    expect(await p).toBe('AbortError');
+    expect(calls).toHaveLength(2);
+  });
+
+  it('a network error on a write is retried once', async () => {
+    let n = 0;
+    const f = resilientFetch(
+      async () => {
+        if (++n === 1) throw new TypeError('Load failed');
+        return new Response(null, { status: 204 });
+      },
+      { doc: fakePage().doc, log: quiet },
+    );
+    expect((await f(REST, { method: 'DELETE' })).status).toBe(204);
+    expect(n).toBe(2);
+  });
+
+  it('a write lost in the background is sent again on return', async () => {
+    const page = fakePage();
+    const { base, calls } = stuckThenFine();
+    const f = resilientFetch(base, { stallMs: 60_000, doc: page.doc, log: quiet });
+    const p = f(REST, write());
+    page.hide();
+    page.show();
+    expect((await p).status).toBe(201);
+    expect(calls).toHaveLength(2);
+  });
+
+  it('reads, auth, storage and caller-aborted writes are never repeated', async () => {
+    vi.useFakeTimers();
+    const cases: [string, RequestInit][] = [
+      ['https://x.test/rest/v1/event?select=*', { method: 'GET' }],
+      ['https://x.test/auth/v1/token?grant_type=refresh_token', write()],
+      ['https://x.test/storage/v1/object/sign/photos', write()],
+    ];
+    for (const [url, init] of cases) {
+      const { base, calls } = stuckThenFine();
+      const f = resilientFetch(base, { stallMs: 1000, timeoutMs: 2000, doc: fakePage().doc, log: quiet });
+      const p = f(url, init).catch((e: Error) => e.name);
+      await vi.advanceTimersByTimeAsync(2000);
+      expect(await p).toBe('AbortError');
+      expect(calls, url).toHaveLength(1);
+    }
+    const { base, calls } = stuckThenFine();
+    const f = resilientFetch(base, { doc: fakePage().doc, log: quiet });
+    const controller = new AbortController();
+    const p = f(REST, write({ signal: controller.signal })).catch((e: Error) => e.name);
+    controller.abort();
+    expect(await p).toBe('AbortError');
+    await vi.advanceTimersByTimeAsync(20_000);
+    expect(calls).toHaveLength(1);
+  });
+
+  it('notes every attempt with its outcome for the request log', async () => {
+    vi.useFakeTimers();
+    const notes: string[] = [];
+    const log = (method: string, url: string, attempt = 1) => (outcome: unknown) =>
+      void notes.push(`${method} ${url.split('?')[0]} #${attempt} ${String(outcome)}`);
+    const f = resilientFetch(stuckThenFine().base, { doc: fakePage().doc, log });
+    const p = f(REST, write());
+    await vi.advanceTimersByTimeAsync(6000);
+    await p;
+    expect(notes).toEqual(['POST https://x.test/rest/v1/event #1 timeout', 'POST https://x.test/rest/v1/event #2 201']);
+  });
+});
+
 describe('withTimeout', () => {
   const repo = {
     value: 7,
