@@ -142,7 +142,7 @@ describe('Pinned screen (demo)', () => {
   it('lists the notes with their edit day, and the nav marks Pinned as the current page', async () => {
     mount(new DemoRepository(null));
     expect(await screen.findByRole('heading', { name: 'Pinned notes' })).toBeTruthy();
-    expect(screen.getByText('4 notes')).toBeTruthy();
+    expect(await screen.findByText('4 notes')).toBeTruthy(); // the heading shows before the list has loaded
     expect(cardTitles()).toEqual(['Allergies', 'Bellavet dose', 'Gastrelle: mix the sachet into a spoon of wet food, not into the whole bowl.', 'Next deworming']);
     expect(screen.getByText('Edited 25 Sept')).toBeTruthy();
     const nav = within(screen.getByRole('navigation'));
@@ -186,8 +186,9 @@ describe('Pinned screen (demo)', () => {
     click('Save');
     expect(await screen.findByText('Saved')).toBeTruthy();
     await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
-    expect(screen.getByText('Deworming')).toBeTruthy();
-    expect(screen.getByText('Due in March, then September!')).toBeTruthy();
+    // The sheet closes and "Saved" shows before the list has reloaded, so wait for the reloaded card.
+    expect(await screen.findByText('Deworming')).toBeTruthy();
+    expect(await screen.findByText('Due in March, then September!')).toBeTruthy();
     expect(screen.getAllByText(/^Edited/)).toHaveLength(4);
   });
 
