@@ -13,7 +13,7 @@ import { eventKindOf } from '../log/EventSheet';
 import { LOCALE, useFormat } from '../log/format';
 import { useLog } from '../log/LogProvider';
 import { plannedEntry } from '../log/plan';
-import { symptomDetail } from '../log/symptoms';
+import { symptomAttrs } from '../log/symptoms';
 import { useBusy } from '../log/useBusy';
 import { ConditionTags } from '../tracked/ConditionTag';
 import { conditionsOf } from '../tracked/model';
@@ -217,9 +217,14 @@ export function DayView({ date, onBack, onStep, onInvalid, onUsualDay, onOpenCon
                 <ul className="day-card__rows">
                   {day.events.symptoms.map((e) => (
                     <li key={e.id}>
-                      <button type="button" className="day-card__row" onClick={() => editEvent(e)}>
+                      <button
+                        type="button"
+                        className={`day-card__row${e.detail ? ' day-card__row--desc' : ''}`}
+                        onClick={() => editEvent(e)}
+                      >
                         <span className="day-card__row-label">{symptomLabel(e.title, t)}</span>
-                        <span className="day-card__row-value">{symptomDetail(e, t)}</span>
+                        <span className="day-card__row-value">{symptomAttrs(e, t)}</span>
+                        {e.detail && <span className="day-card__row-desc">{e.detail}</span>}
                       </button>
                       <ConditionTags conditions={tagsOf(e)} onOpen={onOpenCondition} row />
                       {photosFor(e).length > 0 && (

@@ -5,7 +5,7 @@ import { backfillDays, changeFrom, courseDay, dueOpenSlots, matchDay, partDue, p
 import { logStartOf } from '../src/timeline/model';
 import type { RemovedSlot } from '../src/data';
 import { buildDay } from '../src/day/model';
-import { symptomDetail, symptomKey } from '../src/log/symptoms';
+import { symptomAttrs, symptomDetail, symptomKey } from '../src/log/symptoms';
 import { translate, type MessageKey } from '../src/i18n';
 
 const slot = (id: string, dayPart: ScheduleSlot['dayPart'], itemId: string, from = '2026-10-01', to: string | null = null, extra: Partial<ScheduleSlot> = {}): ScheduleSlot => ({
@@ -150,6 +150,9 @@ describe('symptoms', () => {
     );
     expect(symptomDetail({ ...base, title: 'Vomit', detail: '', props: { times: '1', when: 'morning' } }, en)).toBe('1× in the morning');
     expect(symptomDetail({ ...base, title: 'Fear', detail: 'thunder', intensity: 'large' }, en)).toBe('a lot · thunder');
+    // Attributes alone (the Day view shows the description on its own line below).
+    expect(symptomAttrs({ ...base, title: 'Fear', detail: 'thunder', intensity: 'large' }, en)).toBe('a lot');
+    expect(symptomAttrs({ ...base, title: 'Fear', detail: 'thunder' }, en)).toBe('');
   });
 });
 
