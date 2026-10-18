@@ -17,9 +17,12 @@ Format: [Keep a Changelog](https://keepachangelog.com). "Unreleased" means not y
 - The Key always shows the row directly below it while scrolling (JCB-67).
 - Add button hit area, page language on load, toast no longer covers the Restore line, type tokens (JCB-42).
 - Day heading takes focus; Back after Previous/Next lands on the last day viewed (JCB-41).
+- Toasts stand out on white sheets: dark background, white text, mint Undo (JCB-64).
+- Undo of a pinned note edit or delete keeps its original Edited date and editor (new migration with `restore_pinned_note()`) (JCB-42).
 
 ### Changed
 - Tests are more reliable on CI (longer async timeout, 3 workers) (JCB-70).
+- Toasts with Undo stay 8 s, plain toasts 5 s (JCB-42).
 
 ## 2026-10-16 to 2026-10-17 (merged to main)
 
