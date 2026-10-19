@@ -9,7 +9,7 @@ You are working inside a multi-agent setup. Read `docs/AGENTS.md` first to see w
 2. `docs/PRODUCT.md`: what the app is, requirements, sample data, decisions so far.
 3. `docs/DESIGN.md` and `docs/design-system/`: the look, the tokens, the components. The README there is binding.
 4. `docs/ENGINEERING.md`: proposed stack, data model draft, build slices, conventions.
-5. `docs/DECISIONS.md`: what is decided, what is open. Check before asking the CEO anything.
+5. `docs/DECISIONS.md`: what is decided. What is open, next or waiting on the CEO lives in Linear (latest project update). Check both before asking the CEO anything.
 
 ## This repo is PUBLIC (a showcase)
 - Never commit real data about the household or the dog: no real medication, food or clinic names, vet notes, photos, PDFs, dates of real visits, keys or URLs of the real Supabase project. Sample data in docs, prototype and tests is fictional.
