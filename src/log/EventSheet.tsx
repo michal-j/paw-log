@@ -1,10 +1,12 @@
-import { useState, type ReactNode } from 'react';
-import type { AlsoDone, Condition, EventType, HealthEvent, PlainDate } from '../data';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { SERVICE_MAX_LENGTH, SERVICES_MAX, type AlsoDone, type Condition, type EventType, type HealthEvent, type PlainDate } from '../data';
+import { PlusIcon } from '../components/icons';
 import { Chip, Chips, Field, Sheet } from '../components/Sheet';
 import { fill, useI18n, type MessageKey } from '../i18n';
 import { useFormat } from './format';
 import * as act from './actions';
 import { DateLine, OTHER } from './fields';
+import { BUILT_IN_SERVICES, ownServices, resolveService } from './services';
 import { useBusy } from './useBusy';
 import { useDraftIds } from './useDraftIds';
 import { useLog, type EventKind } from './LogProvider';
@@ -21,10 +23,6 @@ const OTHER_TYPES: readonly { type: OtherType; label: MessageKey }[] = [
   { type: 'anal_glands', label: 'label.117' },
   { type: 'nails', label: 'label.118' },
   { type: 'other', label: 'other' },
-];
-const ALSO: readonly { value: AlsoDone; label: MessageKey }[] = [
-  { value: 'anal_glands', label: 'label.117' },
-  { value: 'nails', label: 'label.118' },
 ];
 const ADD_TITLE: Record<EventKind, MessageKey> = { symptom: 'symptom.139', vet: 'visit.146', note: 'note.153', other: 'addOther' };
 
@@ -44,6 +42,10 @@ interface Form {
   props: Record<string, string>;
   intensity: string;
   alsoDone: AlsoDone[];
+  /** Own services typed in this form, newest first: offered as chips even before they are saved. */
+  addedServices: AlsoDone[];
+  /** The "+ Add service" field: closed (null) or open with its text. */
+  serviceDraft: string | null;
   detail: string;
   /** Linked tracked conditions, including new ones in `pending`. */
   conditionIds: string[];
@@ -66,6 +68,8 @@ function initial(kind: EventKind, date: PlainDate, event: HealthEvent | undefine
     props: { ...(event?.props ?? {}) },
     intensity: event?.intensity ?? '',
     alsoDone: [...(event?.alsoDone ?? [])],
+    addedServices: [],
+    serviceDraft: null,
     detail: event?.detail ?? '',
     conditionIds: event ? [...event.conditionIds] : linkTo ? [linkTo] : [],
     pending: [],
@@ -100,6 +104,11 @@ export function EventSheet({
   const draft = useDraftIds();
   const [form, setForm] = useState<Form>(() => initial(kind, date, event, ctxOpen, linkTo));
   const [preparing, setPreparing] = useState(false);
+  const serviceInput = useRef<HTMLInputElement>(null);
+  const addingService = form.serviceDraft !== null;
+  useEffect(() => {
+    if (addingService) serviceInput.current?.focus();
+  }, [addingService]);
   if (!records) return null;
   const photos = event ? photosOf(event.id, records.photos) : [];
   const withPhotos = kind !== 'other';
@@ -146,6 +155,26 @@ export function EventSheet({
   };
   const remove = async () => {
     if (event && (await run(() => act.deleteEvent(repository, event, photos), t('toastEventDeleted')))) close();
+  };
+
+  // Own services: those used in earlier visits of this dog (most recent first), after the ones typed here.
+  const known = [...form.addedServices, ...ownServices(records.events)];
+  const ownChips = known.filter((x, i) => known.findIndex((y) => y.toLowerCase() === x.toLowerCase()) === i);
+  const toggleService = (value: AlsoDone) =>
+    form.alsoDone.includes(value)
+      ? set({ alsoDone: form.alsoDone.filter((x) => x !== value) })
+      : form.alsoDone.length < SERVICES_MAX && set({ alsoDone: [...form.alsoDone, value] });
+  const addService = () => {
+    const chips = [...BUILT_IN_SERVICES.map((b) => b.value), ...ownChips];
+    const value = resolveService(form.serviceDraft ?? '', chips);
+    if (!value) return serviceInput.current?.focus();
+    const isNew = !chips.includes(value);
+    setForm((x) => ({
+      ...x,
+      addedServices: isNew ? [value, ...x.addedServices] : x.addedServices,
+      alsoDone: x.alsoDone.includes(value) || x.alsoDone.length >= SERVICES_MAX ? x.alsoDone : [...x.alsoDone, value],
+      serviceDraft: null,
+    }));
   };
 
   const optional = t('optional');
@@ -237,19 +266,47 @@ export function EventSheet({
         </Field>
         <Field label={t('visit.150')} hint={optional}>
           <Chips label={t('visit.150')} toggles>
-            {ALSO.map((a) => (
-              <Chip
-                key={a.value}
-                mode="toggle"
-                on={form.alsoDone.includes(a.value)}
-                onClick={() =>
-                  set({ alsoDone: form.alsoDone.includes(a.value) ? form.alsoDone.filter((x) => x !== a.value) : [...form.alsoDone, a.value] })
-                }
-              >
+            {BUILT_IN_SERVICES.map((a) => (
+              <Chip key={a.value} mode="toggle" on={form.alsoDone.includes(a.value)} onClick={() => toggleService(a.value)}>
                 {t(a.label)}
               </Chip>
             ))}
+            {ownChips.map((c) => (
+              <Chip key={c} mode="toggle" on={form.alsoDone.includes(c)} onClick={() => toggleService(c)}>
+                {c}
+              </Chip>
+            ))}
+            {!addingService && form.alsoDone.length < SERVICES_MAX && (
+              <button type="button" className="chip" aria-label={t('addService')} onClick={() => set({ serviceDraft: '' })}>
+                <span className="chip__mark">
+                  <PlusIcon size={12} />
+                </span>
+                {t('addService')}
+              </button>
+            )}
           </Chips>
+          {addingService && (
+            <div className="input-row cond-new-row">
+              <input
+                ref={serviceInput}
+                className="input"
+                aria-label={t('serviceName')}
+                placeholder={t('servicePh')}
+                maxLength={SERVICE_MAX_LENGTH}
+                value={form.serviceDraft ?? ''}
+                onChange={(e) => set({ serviceDraft: e.target.value })}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    addService();
+                  }
+                }}
+              />
+              <button type="button" className="btn btn--ghost btn--lg" onClick={addService}>
+                {t('label.172')}
+              </button>
+            </div>
+          )}
         </Field>
       </>
     );

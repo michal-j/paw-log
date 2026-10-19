@@ -10,6 +10,7 @@ import lumpA1 from '../../data/demo/photos/lump-a-1.svg?url';
 import lumpA2 from '../../data/demo/photos/lump-a-2.svg?url';
 import { DuplicateSlotEntryError } from './errors';
 import { DEFAULT_DAY_PART_TIMES, type Repository } from './repository';
+import { cleanAlsoDone } from './types';
 import type { Condition, DateRange, DayPart, DayPartTimes, Dog, DogSettings, Entry, EntryState, HealthEvent, Item, Photo, PhotoFiles, PhotoSize, PinnedNote, RemovedSlot, ScheduleSlot } from './types';
 
 /** v2: JCB-39 changed the shape (amounts, usual day). Changes saved under v1 are dropped. */
@@ -75,6 +76,7 @@ function seed(): Persisted {
 const stored = (event: HealthEvent): StoredEvent => {
   const rest: Partial<HealthEvent> = copy(event);
   delete rest.conditionIds;
+  if (rest.alsoDone) rest.alsoDone = cleanAlsoDone(rest.alsoDone);
   return rest as StoredEvent;
 };
 

@@ -15,8 +15,24 @@ export type Intensity = 'small' | 'medium' | 'large';
 /** How an amount is counted. Stored as a key; shown through the i18n layer (`u_*`). */
 export type Unit = 'pill' | 'capsule' | 'sachet' | 'ml' | 'drop' | 'can' | 'tray' | 'g' | 'piece';
 export const UNITS: readonly Unit[] = ['pill', 'capsule', 'sachet', 'ml', 'drop', 'can', 'tray', 'g', 'piece'];
-/** Done at a vet visit besides the visit itself. */
-export type AlsoDone = 'anal_glands' | 'nails';
+/** A vet visit's "also done": a built-in key (anal_glands, nails) or an own service as typed (1-40 characters, at most 10 per visit). */
+export type AlsoDone = string;
+/** Same limits as the database check on `event.also_done` (migration 20261022120000_vet_own_services.sql). */
+export const SERVICE_MAX_LENGTH = 40;
+export const SERVICES_MAX = 10;
+/** What a repository stores: trimmed, 1-40 characters, no repeats (ignoring case), at most 10. */
+export const cleanAlsoDone = (list: readonly AlsoDone[] | undefined): AlsoDone[] => {
+  const seen = new Set<string>();
+  const out: AlsoDone[] = [];
+  for (const raw of list ?? []) {
+    const s = raw.trim().slice(0, SERVICE_MAX_LENGTH).trim();
+    if (s && !seen.has(s.toLowerCase())) {
+      seen.add(s.toLowerCase());
+      out.push(s);
+    }
+  }
+  return out.slice(0, SERVICES_MAX);
+};
 
 /** ISO date `YYYY-MM-DD` in the household timezone. */
 export type PlainDate = string;
