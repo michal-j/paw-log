@@ -10,20 +10,28 @@ export const MONTH_BAND_H = 28;
 export const LIST_TAIL_H = 16;
 /** Width of the date column on the left of each row, px. */
 export const DATE_COL_W = 44;
+/** The date column on a very narrow screen, only when nothing else is enough (fitLayout), px. */
+export const DATE_COL_W_TIGHT = 40;
 /** Left inset of each row before the date column, px. */
 export const ROW_INSET = 4;
 /** Width of the tick rail, px. */
 export const RAIL_W = 20;
-/** Minimum width of the Events column, px. */
-export const EVENTS_MIN_W = 48;
+/** Minimum width of the Events column, px: one badge plus a "+N" chip (JCB-86). */
+export const EVENTS_MIN_W = 60;
 
 /** Circle diameters (PRODUCT.md "Reading the circles"). */
 export const FOOD_MARK = 16;
 export const SMALL_MARK = 11;
 /** A lane is the circle plus 2px on each side. */
 export const LANE_PAD = 4;
+/** Lane padding when the columns still do not fit (circles keep their size): food lane 18, small lane 14. */
+export const LANE_PAD_TIGHT = { food: 2, small: 3 } as const;
 /** Horizontal breathing room inside a day-part column. */
 export const COLUMN_PAD = 8;
+/** Column padding on a narrow screen when the columns do not fit (fitColumns, JCB-86). */
+export const COLUMN_PAD_TIGHT = 2;
+/** A meal column never gets narrower than its icon in the parts bar, px. */
+export const MEAL_ICON_W = 22;
 /** Minimum column widths: meals, the last part of the day, the other parts. */
 export const MEAL_COL_MIN = 44;
 export const LAST_PART_COL_MIN = 36;

@@ -12,6 +12,17 @@
 
 /* DoseMark and EventBadge styles live in src/components/marks.css (shared with the Day view). */
 
+/* ---------- Sideways scroll (JCB-86) ----------
+   Rows are at least as wide as their content; when that is wider than the list, the list scrolls
+   sideways with the date column pinned. The Key and parts bars hold the same content in a scroller
+   the list drives (Timeline.tsx onScroll), so everything stays aligned. The rail never moves. */
+.tl-hs { flex: 1; min-width: 0; align-self: stretch; display: flex; overflow: hidden; }
+.tl-hs__in { flex: 1 0 auto; display: flex; align-items: flex-end; box-sizing: border-box; }
+.tl-key__date, .tl-parts__date { position: sticky; z-index: 2; }
+.timeline--hscrolled .tl-key__date { background: linear-gradient(180deg, var(--color-surface-tint), var(--color-ground)); }
+.timeline--hscrolled .tl-parts__date { background: linear-gradient(180deg, var(--color-ground), var(--color-surface-tint)); }
+.timeline--hscrolled .tl-row__date { background: var(--color-surface); }
+
 /* ---------- Key bar ---------- */
 .tl-key {
   flex: none;
@@ -38,7 +49,7 @@
   text-align: left;
   cursor: pointer;
 }
-.tl-key__date { flex: none; align-self: stretch; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 2px; }
+.tl-key__date { flex: none; box-sizing: border-box; align-self: stretch; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 2px; }
 .tl-key__word { display: inline-flex; align-items: center; gap: 1px; font-size: 10px; font-weight: 700; letter-spacing: 0.01em; text-transform: uppercase; white-space: nowrap; color: var(--color-mint-deep); }
 /* Chevron is a 6px glyph, not a text arrow, so "KLUCZ" plus chevron fits the 44px date column. */
 .tl-key__chev { width: 6px; height: 4px; flex: none; }
@@ -95,7 +106,7 @@
 
 /* ---------- List and rows ---------- */
 .tl-body { display: flex; flex: 1; min-height: 0; position: relative; }
-.tl-list { flex: 1; min-width: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: none; }
+.tl-list { flex: 1; min-width: 0; overflow-y: auto; overflow-x: auto; overscroll-behavior: contain; scrollbar-width: none; }
 /* The tick rail is the scroll indicator; hide the native bar so it does not double up. */
 .tl-list::-webkit-scrollbar { display: none; }
 .tl-list:focus-visible { outline-offset: -2px; }
@@ -111,6 +122,8 @@
   background: linear-gradient(180deg, var(--color-surface-tint), var(--color-ground));
 }
 .tl-band__title {
+  position: sticky;
+  left: var(--space-4);
   margin: 0;
   color: var(--color-ink-2);
   font: var(--type-caption-weight) var(--type-caption-size) / var(--type-caption-line) var(--type-caption-family);
@@ -119,7 +132,7 @@
 }
 
 .tl-row { display: flex; align-items: stretch; box-sizing: border-box; border-bottom: 1px solid var(--color-line); position: relative; }
-.tl-row__date { position: relative; flex: none; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+.tl-row__date { position: sticky; z-index: 2; pointer-events: none; flex: none; display: flex; flex-direction: column; justify-content: center; align-items: center; }
 .tl-row__num {
   font-family: var(--font-display);
   font-size: 16px;
@@ -132,10 +145,10 @@
 .tl-row__wd { font-size: 9.5px; font-weight: 500; line-height: 12px; letter-spacing: 0.03em; text-transform: uppercase; color: var(--color-ink-3); }
 .tl-row--today .tl-row__num { font-weight: 700; }
 .tl-row--today .tl-row__wd { font-weight: 700; color: var(--color-mint-deep); }
-.tl-row--today::before {
+.tl-row--today .tl-row__date::before {
   content: '';
   position: absolute;
-  left: 0;
+  left: -4px; /* ROW_INSET: the bar sits on the row's left edge and stays with the date column */
   top: 50%;
   width: 3px;
   height: 24px;
@@ -206,6 +219,7 @@
   color: var(--color-ink-2);
 }
 .tl-parts .tl-col { flex-direction: column; gap: 3px; padding-top: 2px; align-self: stretch; }
+.tl-parts__date { flex: none; align-self: stretch; }
 .tl-parts__icon { height: 24px; display: flex; align-items: center; justify-content: center; }
 .tl-parts__tick { height: 3px; border-radius: var(--radius-xs); background: var(--color-ink); }
 
