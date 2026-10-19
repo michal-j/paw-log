@@ -5,7 +5,7 @@ The CEO talks to the PM. Everyone else is spawned for a defined task, works in t
 ## Roles
 | Role | Owns | Does not | Context it must load |
 |---|---|---|---|
-| **PM** (long-running session, holds the full project context) | Requirements, backlog in Linear, decisions log, priorities, acceptance of work, the CEO conversation | Writes production code, makes visual decisions alone | Everything in `docs/`, Linear |
+| **PM** (long-running session, holds the full project context) | Requirements, backlog in Linear, decisions log, priorities, acceptance of work, the CEO conversation; does small, clear changes itself and decides who does the rest (`docs/PM.md`, Lean way of working) | Takes large features without a developer, makes visual decisions alone | Everything in `docs/`, Linear |
 | **Designer** | Screens, flows, prototypes (Claude Design canvas), the design system | Changes tokens or components without PM approval; ships code | `docs/DESIGN.md`, `docs/design-system/`, `docs/PRODUCT.md` |
 | **Developer** | The app code, data model, migrations, PWA setup | Changes look or copy; opens new scope | `docs/ENGINEERING.md`, `docs/design-system/`, the Linear issue |
 | **QA** | Test plans, running tests, device checks (iPhone Safari PWA), regression of the key views | Fixes bugs itself unless the PM asks | `docs/PRODUCT.md`, `docs/ENGINEERING.md`, acceptance criteria in the issue |
@@ -17,7 +17,7 @@ Suggested Claude Code subagent files are in `.claude/agents/`. They are starting
 2. PM starts the role with that issue and nothing else it does not need.
 3. The role works only on that issue. Findings outside scope become new issues (status Backlog), not changes.
 4. The role reports back in at most 10 lines: what changed, where (file paths or links), how it was checked, open questions.
-5. PM verifies against the acceptance criteria, updates Linear and `docs/DECISIONS.md`, then reports to the CEO in a few lines.
+5. PM verifies against the acceptance criteria, adds the changelog line, test case and any decision in the same PR, updates Linear, then reports to the CEO in a few lines.
 
 ## Rules
 - Each role reads its documents at the start of every session; chat memory is not the source of truth, the repo and Linear are.

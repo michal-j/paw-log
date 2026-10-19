@@ -30,7 +30,7 @@ Replace JCB-28 with the issue number. The agent definition is in `.claude/agents
 Same, with `You are QA on PawLog`, the issue number, and `.claude/agents/qa.md`. QA reports findings and does not fix them.
 
 ## After a session
-Tell the PM in the chat that the issue is ready for review. The PM reads the pull request, checks it against the acceptance criteria, updates Linear and `docs/DECISIONS.md`, and gives you the next prompt.
+Tell the PM in the chat that the issue is ready for review. The PM reads the pull request, checks it against the acceptance criteria, adds the docs lines in the same PR, updates Linear, and gives you the next prompt.
 
 ## Rules that never change
 - The repo is public: no real data, names, photos or keys in commits.

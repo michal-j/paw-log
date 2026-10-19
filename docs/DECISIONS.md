@@ -32,18 +32,9 @@
 - Own vet services (JCB-89, CEO 19 Oct): saved as text with the visit and offered again as chips like clinic names, no new table; the database check allows up to 10 services of 1–40 characters (applied to production 19 Oct). New copy is a draft in `docs/copy/copy-proposal-vet-services.csv`.
 - Timeline width (JCB-86, CEO 19 Oct): columns give up space in steps (column minimums, padding, lanes 20/15 to 18/14 px with circles unchanged, date column 44 to 40), then the Timeline scrolls sideways with the date pinned. Busy days: Option 3 (one line of badges, then "+N"), built with the badge colour pick (JCB-26/69). Column filters later (JCB-100).
 - Next big thing after saving: PDF upload on events and conditions (JCB-76, CEO 18 Oct).
+- Event badges (JCB-26, JCB-69, CEO 19 Oct): Option B (cyan vet with a heart-line glyph, white outlined page for notes) with Option A's orange "!" for symptoms; a single vet card shows the glyph without a count. Built together with busy-day "+N".
+- Way of working, tightened (CEO 19 Oct) to cut plan usage: the PM decides who does each change and does small ones itself; QA agent only for saving, data and schema changes; docs lines in the same PR; Linear holds open and next, this file only what is decided (see `docs/PM.md`).
 - Working rules: short explanations, clarifying questions first, quality over quantity, no unauthorised access (confirm with the CEO).
 
-## Open
-- Saving (JCB-71): watch for a few days of real use; if a save sticks, the CEO sends the request log. Then "Couldn't save" sooner (JCB-74).
-- Next big thing: PDF upload (JCB-76), needs a short design pass first.
-- Medium from the CEO's 18 Oct list: none left (busy-day "+N" waits for the badge pick).
-- Waiting on the CEO's pick: event badges on the Timeline (JCB-26, JCB-69); proposal on branch `michaljaciubek/design-event-badges`. Busy-day "+N" (Option 3, `design/proposals/timeline-busy-day/` on branch `michaljaciubek/design-timeline-busy-day`) ships with it.
-- Timeline column filters (JCB-100), design first.
-- Ideas/questions for later: reminders for recurring treatments (JCB-79), tracked conditions on the Timeline (JCB-80), offline saving (JCB-75).
-- Low backlog: JCB-90 to JCB-95, JCB-98; JCB-37 Timeline design follow-ups; JCB-25 bulk-add design; JCB-10, JCB-11, JCB-73.
-- Slice 4 (calendar, matrix, filters, JCB-31) and search (part of JCB-34) not started.
-- Copy review of the draft EN/PL lines in `docs/copy/` is parked until the CEO raises it.
-
-## Parked
-JCB-12 tasks and notifications, JCB-13 recipes, JCB-14 file sharing, native app and several dogs, JCB-23 per-item history, JCB-24 data export.
+## Open, next, parked
+In Linear (team JCBK, project PawLog): the latest project update says what is live, in progress and waiting on the CEO; issues hold the backlog and priorities. Parked ideas are Backlog issues with low or no priority.
