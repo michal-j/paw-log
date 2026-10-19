@@ -28,13 +28,14 @@
 - Launch screen (CEO, 18 Oct): mint with a white paw and a white "PawLog". The white name is below 3:1 contrast on mint, accepted as a brief brand splash. Proportions to be revisited by the Designer (JCB-98, low).
 - Tracked (18 Oct): dates outside the current year show the year; a condition's history is grouped by year. The Tracked list itself is not grouped by year (it already has Open and Resolved).
 - Photo viewer is full screen on black (CEO, 18 Oct).
+- Tracked start date (JCB-81, PM 19 Oct): linking an older entry moves the condition's start back to that entry's date; it never moves forward on its own (unlink, delete, a later date or Undo of the save leave it). Set in the app on save, no schema change.
 - Next big thing after saving: PDF upload on events and conditions (JCB-76, CEO 18 Oct).
 - Working rules: short explanations, clarifying questions first, quality over quantity, no unauthorised access (confirm with the CEO).
 
 ## Open
 - Saving (JCB-71): watch for a few days of real use; if a save sticks, the CEO sends the request log. Then "Couldn't save" sooner (JCB-74).
 - Next big thing: PDF upload (JCB-76), needs a short design pass first.
-- Medium from the CEO's 18 Oct list: Tracked start date follows the earliest entry (JCB-81), own vet services (JCB-89), Timeline horizontal overflow and crowded icons (JCB-86, part design). Also flaky launch test (JCB-99).
+- Medium from the CEO's 18 Oct list: own vet services (JCB-89), Timeline horizontal overflow and crowded icons (JCB-86, part design). Also flaky launch test (JCB-99).
 - Waiting on the CEO's pick: event badges on the Timeline (JCB-26, JCB-69); proposal on branch `michaljaciubek/design-event-badges`.
 - Ideas/questions for later: reminders for recurring treatments (JCB-79), tracked conditions on the Timeline (JCB-80), offline saving (JCB-75).
 - Low backlog: JCB-90 to JCB-95, JCB-98; JCB-37 Timeline design follow-ups; JCB-25 bulk-add design; JCB-10, JCB-11, JCB-73.
