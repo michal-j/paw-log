@@ -10,6 +10,7 @@ Format: [Keep a Changelog](https://keepachangelog.com). "Unreleased" means not y
 - Vet visit: add your own "also done" services; they come back as chips in later visits. Typing an existing name selects it instead of adding a duplicate. Database: the also-done check now allows up to 10 services of 1–40 characters (JCB-89).
 
 ### Changed
+- Tests: the launch-screen test waits for the launch class to go instead of checking right after the first render, which failed at random in CI (JCB-99).
 - A tracked condition's start date moves back to the date of an older entry when that entry is linked to it; it never moves forward on its own (JCB-81).
 
 ## 2026-10-18 evening (merged to main)
