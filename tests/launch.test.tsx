@@ -32,7 +32,8 @@ describe('launch cover', () => {
     expect(cover()).not.toBeNull();
     mount(new DemoRepository(null));
     await screen.findByText('October 2026');
-    expect(document.documentElement.classList.contains('launching')).toBe(false);
+    // The class is removed in an effect after the first render with data, so wait for it, do not assume it.
+    await vi.waitFor(() => expect(document.documentElement.classList.contains('launching')).toBe(false));
     await vi.waitFor(() => expect(cover()).toBeNull());
   });
 
