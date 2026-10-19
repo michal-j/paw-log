@@ -15,6 +15,9 @@ as $$
       where s is null or s <> btrim(s) or char_length(s) not between 1 and 40
     );
 $$;
+-- Callable only where rows are written (the check runs as the writing role); not from the anon API.
+revoke all on function public.also_done_valid(text[]) from public, anon;
+grant execute on function public.also_done_valid(text[]) to authenticated;
 
 alter table public.event drop constraint event_also_done_check;
 alter table public.event
