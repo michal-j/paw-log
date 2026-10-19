@@ -4,6 +4,11 @@ Format: [Keep a Changelog](https://keepachangelog.com). "Unreleased" means not y
 
 ## Unreleased
 
+## 2026-10-19 (merged to main)
+
+### Changed
+- A tracked condition's start date moves back to the date of an older entry when that entry is linked to it; it never moves forward on its own (JCB-81).
+
 ## 2026-10-18 evening (merged to main)
 
 ### Added
