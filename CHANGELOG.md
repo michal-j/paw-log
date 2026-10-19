@@ -7,6 +7,7 @@ Format: [Keep a Changelog](https://keepachangelog.com). "Unreleased" means not y
 ## 2026-10-19 (merged to main)
 
 ### Changed
+- Tests: the launch-screen test waits for the launch class to go instead of checking right after the first render, which failed at random in CI (JCB-99).
 - A tracked condition's start date moves back to the date of an older entry when that entry is linked to it; it never moves forward on its own (JCB-81).
 
 ## 2026-10-18 evening (merged to main)
