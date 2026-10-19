@@ -585,7 +585,8 @@ export class SupabaseRepository implements Repository {
 
   /**
    * Upsert the event, then make its links exactly `conditionIds`: add the missing ones first, then
-   * drop the others. Each step can be repeated safely, so a retry after a failure converges.
+   * drop the others. A linked condition that starts after the event's date moves its start back to
+   * that date (never forward). Each step can be repeated safely, so a retry after a failure converges.
    */
   async saveEvent(event: HealthEvent): Promise<void> {
     requireUuid('saveEvent', event.id);
@@ -598,6 +599,9 @@ export class SupabaseRepository implements Repository {
         'saveEvent',
         await this.client.from('event_condition').upsert(rows, { onConflict: 'event_id,condition_id', ignoreDuplicates: true }),
       );
+    }
+    if (ids.length) {
+      unwrap('saveEvent', await this.client.from('condition').update({ started_on: event.date }).in('id', ids).gt('started_on', event.date));
     }
     let stale = this.client.from('event_condition').delete().eq('event_id', event.id);
     if (ids.length) stale = stale.not('condition_id', 'in', `(${ids.join(',')})`);
