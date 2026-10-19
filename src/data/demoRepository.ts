@@ -194,6 +194,9 @@ export class DemoRepository implements Repository {
       ...this.links().filter((l) => l.eventId !== event.id),
       ...[...new Set(event.conditionIds)].map((conditionId) => ({ eventId: event.id, conditionId })),
     ];
+    // A linked condition that starts after the event moves its start back to the event's date (never forward).
+    const linked = new Set(event.conditionIds);
+    this.data.conditions = this.conditions().map((c) => (linked.has(c.id) && c.startedOn > event.date ? { ...c, startedOn: event.date } : c));
     this.persist();
   }
   async deleteEvent(id: string) {

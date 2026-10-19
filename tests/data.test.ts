@@ -3,7 +3,7 @@ import { DemoRepository, DEMO_STORAGE_KEY } from '../src/data/demoRepository';
 import { DuplicateSlotEntryError, createRepository, isDemoMode } from '../src/data';
 import { SupabaseRepository } from '../src/data/supabaseRepository';
 import type { SupabaseClient } from '@supabase/supabase-js';
-import type { Entry, Item } from '../src/data';
+import type { Entry, HealthEvent, Item } from '../src/data';
 
 const memory = () => {
   const m = new Map<string, string>();
@@ -18,6 +18,52 @@ describe('DemoRepository', () => {
   let storage: ReturnType<typeof memory>;
   beforeEach(() => {
     storage = memory();
+  });
+
+  describe('condition start follows the earliest linked event (JCB-81)', () => {
+    const ev = (id: string, date: string, conditionIds: string[]): HealthEvent => ({
+      id, dogId: 'x', date, type: 'note', title: '', detail: 'n', intensity: null, props: {}, alsoDone: [], conditionIds,
+    });
+    const setup = async (resolvedOn: string | null = null) => {
+      const repo = new DemoRepository(storage);
+      const dog = await repo.getDog();
+      await repo.saveCondition({ id: 'c-81', dogId: dog.id, name: 'Test', startedOn: '2026-10-10', description: '', resolvedOn, position: 0 });
+      const start = async () => (await repo.listConditions()).find((c) => c.id === 'c-81')?.startedOn;
+      return { repo, dog, start };
+    };
+
+    it('moves back for a new event, a newly linked event and an already linked event moved earlier', async () => {
+      const { repo, dog, start } = await setup();
+      await repo.saveEvent({ ...ev('e1', '2026-10-08', ['c-81']), dogId: dog.id });
+      expect(await start()).toBe('2026-10-08');
+      await repo.saveEvent({ ...ev('e2', '2026-10-05', []), dogId: dog.id });
+      expect(await start()).toBe('2026-10-08');
+      await repo.saveEvent({ ...ev('e2', '2026-10-05', ['c-81']), dogId: dog.id });
+      expect(await start()).toBe('2026-10-05');
+      await repo.saveEvent({ ...ev('e1', '2026-10-02', ['c-81']), dogId: dog.id });
+      expect(await start()).toBe('2026-10-02');
+    });
+
+    it('leaves it for an event on or after the start, and never moves it forward', async () => {
+      const { repo, dog, start } = await setup();
+      await repo.saveEvent({ ...ev('e1', '2026-10-10', ['c-81']), dogId: dog.id });
+      await repo.saveEvent({ ...ev('e2', '2026-10-12', ['c-81']), dogId: dog.id });
+      expect(await start()).toBe('2026-10-10');
+      await repo.saveEvent({ ...ev('e1', '2026-10-06', ['c-81']), dogId: dog.id });
+      await repo.saveEvent({ ...ev('e1', '2026-10-13', ['c-81']), dogId: dog.id });
+      expect(await start()).toBe('2026-10-06');
+      await repo.saveEvent({ ...ev('e1', '2026-10-13', []), dogId: dog.id });
+      await repo.deleteEvent('e2');
+      expect(await start()).toBe('2026-10-06');
+    });
+
+    it('applies to resolved conditions and keeps resolved on >= started on', async () => {
+      const { repo, dog, start } = await setup('2026-10-12');
+      await repo.saveEvent({ ...ev('e1', '2026-10-01', ['c-81']), dogId: dog.id });
+      const c = (await repo.listConditions()).find((x) => x.id === 'c-81');
+      expect(await start()).toBe('2026-10-01');
+      expect(c?.resolvedOn).toBe('2026-10-12');
+    });
   });
 
   it('serves fictional frozen data', async () => {

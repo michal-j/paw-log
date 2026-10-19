@@ -40,6 +40,8 @@ class FakeQuery implements PromiseLike<Result> {
   delete = (...a: unknown[]) => this.add('delete', a);
   in = (...a: unknown[]) => this.add('in', a);
   not = (...a: unknown[]) => this.add('not', a);
+  update = (...a: unknown[]) => this.add('update', a);
+  gt = (...a: unknown[]) => this.add('gt', a);
   has(name: string) {
     return this.calls.find((c) => c[0] === name);
   }
@@ -282,6 +284,22 @@ describe('SupabaseRepository writes', () => {
     expect(drop?.has('delete')).toBeTruthy();
     expect(drop?.calls).toContainEqual(['eq', 'event_id', event.id]);
     expect(drop?.calls).toContainEqual(['not', 'condition_id', 'in', `(${c1})`]);
+  });
+
+  it("moves a linked condition's start back to the event's date, only when it starts later (JCB-81)", async () => {
+    const f = fake({});
+    const c1 = 'c0000000-0000-4000-8000-000000000001';
+    await new SupabaseRepository(f.client).saveEvent({ ...event, conditionIds: [c1] });
+    const [q] = f.of('condition');
+    expect(q?.has('update')).toEqual(['update', { started_on: '2026-10-15' }]);
+    expect(q?.calls).toContainEqual(['in', 'id', [c1]]);
+    expect(q?.calls).toContainEqual(['gt', 'started_on', '2026-10-15']);
+  });
+
+  it('does not touch conditions when the event links none (JCB-81)', async () => {
+    const f = fake({});
+    await new SupabaseRepository(f.client).saveEvent(event);
+    expect(f.of('condition')).toHaveLength(0);
   });
 
   it('with no conditions picked, drops every link of the event', async () => {
