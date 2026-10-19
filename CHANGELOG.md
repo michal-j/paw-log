@@ -6,6 +6,9 @@ Format: [Keep a Changelog](https://keepachangelog.com). "Unreleased" means not y
 
 ## 2026-10-19 (merged to main)
 
+### Added
+- Vet visit: add your own "also done" services; they come back as chips in later visits. Typing an existing name selects it instead of adding a duplicate. Database: the also-done check now allows up to 10 services of 1–40 characters (JCB-89).
+
 ### Changed
 - A tracked condition's start date moves back to the date of an older entry when that entry is linked to it; it never moves forward on its own (JCB-81).
 
