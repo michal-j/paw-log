@@ -2,15 +2,14 @@ import type { ReactNode } from 'react';
 import type { Condition, HealthEvent, Photo } from '../data';
 import { EventBadge } from '../components/EventBadge';
 import { DotsIcon, NoteIcon } from '../components/icons';
-import { fill, useI18n, type MessageKey } from '../i18n';
+import { fill, useI18n } from '../i18n';
 import { useFormat } from '../log/format';
+import { serviceLabel } from '../log/services';
 import { symptomDetail } from '../log/symptoms';
 import { ConditionTags } from '../tracked/ConditionTag';
 import { PhotoThumb } from '../photos/PhotoParts';
 import { symptomLabel } from '../timeline/labels';
 import { BADGE_FOR } from './model';
-
-const ALSO_LABEL: Record<string, MessageKey> = { anal_glands: 'label.117', nails: 'label.118' };
 
 /**
  * One event as a card (Day view "What happened", condition history). Without tags or photos the whole
@@ -51,7 +50,7 @@ export function EventCard({
           <span className="day-card__chips">
             {e.alsoDone.map((a) => (
               <span key={a} className="day-card__chip">
-                {t(ALSO_LABEL[a] ?? 'other')}
+                {serviceLabel(a, t)}
               </span>
             ))}
           </span>

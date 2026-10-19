@@ -26,7 +26,7 @@ import type {
   ScheduleSlot,
   Unit,
 } from './types';
-import { photoPath } from './types';
+import { cleanAlsoDone, photoPath } from './types';
 import { UploadError, defaultUploader, type UploadResponse, type Uploader } from './upload';
 
 export { DuplicateSlotEntryError, NoDogError, RepositoryError };
@@ -347,7 +347,7 @@ export const fromEvent = (e: HealthEvent) => ({
   detail: e.detail,
   intensity: e.intensity ?? null,
   props: e.props ?? {},
-  also_done: e.alsoDone ?? [],
+  also_done: cleanAlsoDone(e.alsoDone),
 });
 
 /** `taken_at` comes back as `YYYY-MM-DDTHH:MM:SS` or `YYYY-MM-DD HH:MM:SS`; the app uses the first. */

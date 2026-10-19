@@ -4,7 +4,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(144);
+select plan(151);
 
 -- Fixtures (as the postgres role, which bypasses RLS, like the bootstrap SQL).
 -- Household A: users a1, a2, dog A. Household B: user b1, dog B. User c belongs to no household.
@@ -180,10 +180,38 @@ select lives_ok(
     values ('20000000-0000-4000-8000-00000000000a', '2026-10-06', 'symptom', 'Poo', '{"consistency":"soft","colour":"dark"}', '{}'),
            ('20000000-0000-4000-8000-00000000000a', '2026-10-06', 'vet', 'Clinic A', '{}', '{anal_glands,nails}')$$,
   'events take symptom properties and vet "also done"');
+select lives_ok(
+  $$insert into public.event (dog_id, date, type, title, also_done)
+    values ('20000000-0000-4000-8000-00000000000a', '2026-10-06', 'vet', 'x', '{grooming,Ear cleaning}')$$,
+  'also_done takes own services next to the built-in keys');
+select lives_ok(
+  $$insert into public.event (dog_id, date, type, title, also_done)
+    values ('20000000-0000-4000-8000-00000000000a', '2026-10-06', 'vet', 'x', array(select 'service ' || n from generate_series(1, 10) n))$$,
+  'also_done takes 10 items');
 select throws_ok(
   $$insert into public.event (dog_id, date, type, title, also_done)
-    values ('20000000-0000-4000-8000-00000000000a', '2026-10-06', 'vet', 'x', '{grooming}')$$,
-  '23514', null, 'also_done takes only the known values');
+    values ('20000000-0000-4000-8000-00000000000a', '2026-10-06', 'vet', 'x', array(select 'service ' || n from generate_series(1, 11) n))$$,
+  '23514', null, 'also_done takes at most 10 items');
+select lives_ok(
+  $$insert into public.event (dog_id, date, type, title, also_done)
+    values ('20000000-0000-4000-8000-00000000000a', '2026-10-06', 'vet', 'x', array[repeat('x', 40)])$$,
+  'an own service may be 40 characters');
+select throws_ok(
+  $$insert into public.event (dog_id, date, type, title, also_done)
+    values ('20000000-0000-4000-8000-00000000000a', '2026-10-06', 'vet', 'x', array[repeat('x', 41)])$$,
+  '23514', null, 'an own service is at most 40 characters');
+select throws_ok(
+  $$insert into public.event (dog_id, date, type, title, also_done)
+    values ('20000000-0000-4000-8000-00000000000a', '2026-10-06', 'vet', 'x', '{""}')$$,
+  '23514', null, 'an own service is not empty');
+select throws_ok(
+  $$insert into public.event (dog_id, date, type, title, also_done)
+    values ('20000000-0000-4000-8000-00000000000a', '2026-10-06', 'vet', 'x', '{" "}')$$,
+  '23514', null, 'an own service is not blank');
+select throws_ok(
+  $$insert into public.event (dog_id, date, type, title, also_done)
+    values ('20000000-0000-4000-8000-00000000000a', '2026-10-06', 'vet', 'x', '{" Ears"}')$$,
+  '23514', null, 'an own service is stored trimmed');
 select throws_ok(
   $$insert into public.event (dog_id, date, type, title, props)
     values ('20000000-0000-4000-8000-00000000000a', '2026-10-06', 'symptom', 'x', '[1]')$$,

@@ -1,0 +1,4 @@
+#,Where (code name),English,Polish,EN chars,PL chars,Fit note,Your notes
+V1,addService,Add service,Dodaj usługę,11,12,Chip after the built-in services in the vet visit form,JCB-89; DRAFT pending CEO review
+V2,serviceName,Service name,Nazwa usługi,12,11,Accessible name of the inline field,JCB-89; DRAFT pending CEO review
+V3,servicePh,e.g. Ear cleaning,np. Czyszczenie uszu,16,20,Placeholder of the inline field (max 40 characters typed),JCB-89; DRAFT pending CEO review
