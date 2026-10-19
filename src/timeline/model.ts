@@ -3,13 +3,20 @@
 import type { DayPart, Entry, EntryState, EventType, HealthEvent, Item, PlainDate } from '../data';
 import {
   COLUMN_PAD,
+  COLUMN_PAD_TIGHT,
+  DATE_COL_W,
+  DATE_COL_W_TIGHT,
   DAY_ROW_H,
+  EVENTS_MIN_W,
   FOOD_MARK,
   LANE_PAD,
+  LANE_PAD_TIGHT,
   LAST_PART_COL_MIN,
+  MEAL_ICON_W,
   MEAL_COL_MIN,
   MONTH_BAND_H,
   OTHER_COL_MIN,
+  ROW_INSET,
   SMALL_MARK,
 } from './geometry';
 
@@ -103,6 +110,54 @@ export function buildColumns(items: Item[], entries: Entry[]): Column[] {
     const width = part === 7 && partLanes.length === 0 ? 0 : Math.max(min, content);
     return { part, meal, width, lanes: partLanes };
   });
+}
+
+/** Total width of the day-part columns, px. */
+export const columnsWidth = (columns: Column[]) => columns.reduce((sum, c) => sum + c.width, 0);
+
+/**
+ * Fit the day-part columns into `available` px (JCB-86), taking width back only as far as needed:
+ * (a) a column's minimum gives way to its lanes + COLUMN_PAD; (b) the padding shrinks to
+ * COLUMN_PAD_TIGHT; (c) lanes get 2 px narrower (food 18, small 14; circles keep their size).
+ * A meal column keeps room for its icon. If even (c) does not fit, that result is returned anyway:
+ * check it with `columnsWidth` (the Timeline then scrolls sideways, see `fitLayout`).
+ */
+export function fitColumns(columns: Column[], available: number): Column[] {
+  if (columnsWidth(columns) <= available) return columns;
+  const tighten = (pad: number, tightLanes: boolean) =>
+    columns.map((c): Column => {
+      if (!c.width) return c;
+      const lanes = tightLanes ? c.lanes.map((l) => ({ ...l, width: markDiameter(l.size) + LANE_PAD_TIGHT[l.size] })) : c.lanes;
+      const content = lanes.reduce((sum, l) => sum + l.width, 0);
+      return { ...c, lanes, width: Math.min(c.width, Math.max(content + pad, c.meal ? MEAL_ICON_W : 0)) };
+    });
+  for (const [pad, tight] of [[COLUMN_PAD, false], [COLUMN_PAD_TIGHT, false]] as const) {
+    const cols = tighten(pad, tight);
+    if (columnsWidth(cols) <= available) return cols;
+  }
+  return tighten(COLUMN_PAD_TIGHT, true);
+}
+
+/** Width of the Timeline list left for the day-part columns: everything but the inset, date column and Events column. */
+export const columnsAvailable = (listWidth: number, dateW: number = DATE_COL_W) => listWidth - ROW_INSET - dateW - EVENTS_MIN_W;
+
+export interface Fit {
+  columns: Column[];
+  dateW: number;
+  /** Width every row needs: inset + date + columns + Events minimum. Wider than the list means the list scrolls sideways. */
+  rowW: number;
+  scrolls: boolean;
+}
+
+/** The whole horizontal layout for a list `listWidth` px wide: `fitColumns`, then a narrower date column, then sideways scroll. */
+export function fitLayout(columns: Column[], listWidth: number): Fit {
+  const make = (cols: Column[], dateW: number): Fit => {
+    const rowW = ROW_INSET + dateW + columnsWidth(cols) + EVENTS_MIN_W;
+    return { columns: cols, dateW, rowW, scrolls: rowW > listWidth };
+  };
+  const roomy = make(fitColumns(columns, columnsAvailable(listWidth)), DATE_COL_W);
+  if (!roomy.scrolls) return roomy;
+  return make(fitColumns(columns, columnsAvailable(listWidth, DATE_COL_W_TIGHT)), DATE_COL_W_TIGHT);
 }
 
 // ---------- Event badges ----------

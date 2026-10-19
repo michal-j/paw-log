@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState, type MouseEvent, type PointerEvent, type ReactNode } from 'react';
+import { useLayoutEffect, useMemo, useRef, useState, type MouseEvent, type PointerEvent, type ReactNode } from 'react';
 import type { HealthEvent, Item, PlainDate } from '../data';
 import { useLog } from '../log/LogProvider';
 import { eventsWithPhotos } from '../photos/model';
@@ -7,10 +7,11 @@ import { symptomLabel } from './labels';
 import { DoseMark, colourVar } from '../components/DoseMark';
 import { EventBadge } from '../components/EventBadge';
 import { MealIcon } from '../components/MealIcon';
-import { DATE_COL_W, EVENTS_MIN_W, LIST_TAIL_H, PART_TICK_INSET, PART_TICK_MAX, RAIL_W, ROW_INSET, SCRUB_GAP, SCRUB_LIFT, TICK, TICK_H } from './geometry';
+import { EVENTS_MIN_W, LIST_TAIL_H, PART_TICK_INSET, PART_TICK_MAX, RAIL_W, ROW_INSET, SCRUB_GAP, SCRUB_LIFT, TICK, TICK_H } from './geometry';
 import {
   activeTickOffset,
   buildTimeline,
+  fitLayout,
   parseDate,
   railFraction,
   railTarget,
@@ -96,13 +97,21 @@ export function Timeline({ initialScrollTop = 0, focusDate, dayHref, onOpenDay }
   // The scroll position the rail last set while it holds the focus (null: the focus follows the scroll).
   const railHold = useRef<number | null>(null);
   const [viewport, setViewport] = useState(0);
+  // The list width (0 until measured) decides how tightly the day-part columns are packed (fitColumns).
+  const [listWidth, setListWidth] = useState(0);
+  // Rows wider than the list scroll sideways; the Key and parts bars follow (scrolled: the date column floats over the rows).
+  const keyScroll = useRef<HTMLSpanElement>(null);
+  const partsScroll = useRef<HTMLSpanElement>(null);
+  const [hScrolled, setHScrolled] = useState(false);
 
   // The list height drives windowing; the scroll range (and so the focus) is read from the element.
-  useEffect(() => {
+  // The width fits the columns; measured before paint so the first frame is already fitted.
+  useLayoutEffect(() => {
     const el = listRef.current;
     if (!el) return;
     const measure = () => {
       setViewport(el.clientHeight);
+      setListWidth(el.clientWidth);
       // A new height changes the scroll range, and with it which row the focus is on near the end.
       if (data && railHold.current === null) setFocusIndex(rowIndexAt(data.timeline.rows, focusAt(el)));
     };
@@ -162,7 +171,8 @@ export function Timeline({ initialScrollTop = 0, focusDate, dayHref, onOpenDay }
     );
   }
   const { timeline, items } = data;
-  const { rows, columns, ticks, span } = timeline;
+  const { rows, ticks, span } = timeline;
+  const { columns, dateW, rowW } = fitLayout(timeline.columns, listWidth);
   // Windowing for long logs: rows have fixed heights and tops, so the hidden ones become two spacers.
   const windowed = rows.length > WINDOW_FROM_ROWS;
   const lo = windowed ? rowIndexAt(rows, Math.max(0, scrollTop - OVERSCAN_PX)) : 0;
@@ -183,6 +193,9 @@ export function Timeline({ initialScrollTop = 0, focusDate, dayHref, onOpenDay }
   const onScroll = () => {
     const el = listRef.current;
     if (!el) return;
+    if (keyScroll.current) keyScroll.current.scrollLeft = el.scrollLeft;
+    if (partsScroll.current) partsScroll.current.scrollLeft = el.scrollLeft;
+    if ((el.scrollLeft > 0) !== hScrolled) setHScrolled(el.scrollLeft > 0);
     // The rail's own scrolling keeps the focus it set; any other scrolling hands it back to the list.
     const held = railHold.current !== null && Math.abs(el.scrollTop - railHold.current) <= 1;
     if (!held) {
@@ -234,7 +247,7 @@ export function Timeline({ initialScrollTop = 0, focusDate, dayHref, onOpenDay }
   };
 
   return (
-    <div className="timeline">
+    <div className={`timeline${hScrolled ? ' timeline--hscrolled' : ''}`}>
       <div className="tl-key">
         <button
           type="button"
@@ -242,35 +255,38 @@ export function Timeline({ initialScrollTop = 0, focusDate, dayHref, onOpenDay }
           aria-expanded={keyOpen}
           aria-label={t('keyAria')}
           onClick={() => setKeyOpen((v) => !v)}
-          style={{ paddingLeft: ROW_INSET }}
         >
-          <span className="tl-key__date" style={{ width: DATE_COL_W }}>
-            <span className="tl-key__word">
-              {t('key')}
-              <svg className={`tl-key__chev${keyOpen ? ' tl-key__chev--open' : ''}`} viewBox="0 0 6 4" aria-hidden="true">
-                <path d="M0 0h6L3 4z" fill="currentColor" />
-              </svg>
+          <span ref={keyScroll} className="tl-hs">
+            <span className="tl-hs__in" style={{ minWidth: rowW, paddingLeft: ROW_INSET }}>
+              <span className="tl-key__date" style={{ width: dateW, left: ROW_INSET }}>
+                <span className="tl-key__word">
+                  {t('key')}
+                  <svg className={`tl-key__chev${keyOpen ? ' tl-key__chev--open' : ''}`} viewBox="0 0 6 4" aria-hidden="true">
+                    <path d="M0 0h6L3 4z" fill="currentColor" />
+                  </svg>
+                </span>
+                <span className="tl-key__day">{keyDay ? fmt.dayMonth(keyDay.date) : ''}</span>
+              </span>
+              {columns.map((col, ci) => (
+                <ColumnBox key={col.part} col={col}>
+                  {col.lanes.map((lane, li) => {
+                    const mark = keyDay?.slots[ci]?.[li]?.mark;
+                    const item = mark && items.get(mark.itemId);
+                    const label = item ? item.name : '';
+                    return (
+                      <span key={lane.key} className="tl-key__lane" style={{ width: lane.width }}>
+                        <span className="tl-key__label">{label}</span>
+                        <span className="tl-key__bar" style={{ background: mark ? colourVar(mark.colour) : 'transparent' }} />
+                      </span>
+                    );
+                  })}
+                </ColumnBox>
+              ))}
+              <span className="tl-key__lane tl-key__lane--events" style={{ minWidth: EVENTS_MIN_W }}>
+                <span className="tl-key__label">{t('events')}</span>
+                <span className="tl-key__bar tl-key__bar--ink" />
+              </span>
             </span>
-            <span className="tl-key__day">{keyDay ? fmt.dayMonth(keyDay.date) : ''}</span>
-          </span>
-          {columns.map((col, ci) => (
-            <ColumnBox key={col.part} col={col}>
-              {col.lanes.map((lane, li) => {
-                const mark = keyDay?.slots[ci]?.[li]?.mark;
-                const item = mark && items.get(mark.itemId);
-                const label = item ? item.name : '';
-                return (
-                  <span key={lane.key} className="tl-key__lane" style={{ width: lane.width }}>
-                    <span className="tl-key__label">{label}</span>
-                    <span className="tl-key__bar" style={{ background: mark ? colourVar(mark.colour) : 'transparent' }} />
-                  </span>
-                );
-              })}
-            </ColumnBox>
-          ))}
-          <span className="tl-key__lane tl-key__lane--events" style={{ minWidth: EVENTS_MIN_W }}>
-            <span className="tl-key__label">{t('events')}</span>
-            <span className="tl-key__bar tl-key__bar--ink" />
           </span>
           <span style={{ width: RAIL_W, flex: 'none' }} />
         </button>
@@ -308,14 +324,14 @@ export function Timeline({ initialScrollTop = 0, focusDate, dayHref, onOpenDay }
             {padTop > 0 && <li className="tl-pad" style={{ height: padTop }} aria-hidden="true" />}
             {shownRows.map((row) =>
               row.kind === 'band' ? (
-                <li key={row.month} className="tl-band" style={{ height: row.height }}>
+                <li key={row.month} className="tl-band" style={{ height: row.height, minWidth: rowW }}>
                   <h2 className="tl-band__title">{fmt.month(row.month)}</h2>
                 </li>
               ) : (
                 <li
                   key={row.date}
                   className={`tl-row${row.isToday ? ' tl-row--today' : ''}`}
-                  style={{ height: row.height, paddingLeft: ROW_INSET }}
+                  style={{ height: row.height, paddingLeft: ROW_INSET, minWidth: rowW }}
                   data-date={row.date}
                 >
                   {dayHref ? (
@@ -325,14 +341,14 @@ export function Timeline({ initialScrollTop = 0, focusDate, dayHref, onOpenDay }
                   ) : (
                     <span className="sr-only">{summary(row)}</span>
                   )}
-                  <span className="tl-row__date" style={{ width: DATE_COL_W }} aria-hidden="true">
+                  <span className="tl-row__date" style={{ width: dateW, left: ROW_INSET }} aria-hidden="true">
                     <span className="tl-row__num">{Number(row.date.slice(8))}</span>
                     <span className="tl-row__wd">{row.isToday ? t('wd') : fmt.weekday(row.date)}</span>
                   </span>
                   {columns.map((col, ci) => (
                     <ColumnBox key={col.part} col={col} hidden>
-                      {row.slots[ci]?.map((slot) => (
-                        <span key={slot.laneKey} className="tl-slot" style={{ width: slot.width }}>
+                      {row.slots[ci]?.map((slot, si) => (
+                        <span key={slot.laneKey} className="tl-slot" style={{ width: col.lanes[si]?.width ?? slot.width }}>
                           {slot.mark && <DoseMark colour={slot.mark.colour} size={slot.size} state={slot.mark.state} />}
                         </span>
                       ))}
@@ -395,15 +411,20 @@ export function Timeline({ initialScrollTop = 0, focusDate, dayHref, onOpenDay }
         )}
       </div>
 
-      <div className="tl-parts" style={{ paddingLeft: ROW_INSET }} aria-hidden="true">
-        <span style={{ width: DATE_COL_W, flex: 'none' }} />
-        {columns.map((col) => (
-          <ColumnBox key={col.part} col={col}>
-            <span className="tl-parts__icon">{col.meal && <MealIcon part={col.part} />}</span>
-            <span className="tl-parts__tick" style={{ width: col.meal ? Math.min(PART_TICK_MAX, col.width - PART_TICK_INSET) : 0 }} />
-          </ColumnBox>
-        ))}
-        <span style={{ flex: 1, minWidth: EVENTS_MIN_W + RAIL_W }} />
+      <div className="tl-parts" aria-hidden="true">
+        <span ref={partsScroll} className="tl-hs">
+          <span className="tl-hs__in" style={{ minWidth: rowW, paddingLeft: ROW_INSET }}>
+            <span className="tl-parts__date" style={{ width: dateW, left: ROW_INSET }} />
+            {columns.map((col) => (
+              <ColumnBox key={col.part} col={col}>
+                <span className="tl-parts__icon">{col.meal && <MealIcon part={col.part} />}</span>
+                <span className="tl-parts__tick" style={{ width: col.meal ? Math.max(0, Math.min(PART_TICK_MAX, col.width - PART_TICK_INSET)) : 0 }} />
+              </ColumnBox>
+            ))}
+            <span style={{ flex: 1, minWidth: EVENTS_MIN_W }} />
+          </span>
+        </span>
+        <span style={{ width: RAIL_W, flex: 'none' }} />
       </div>
     </div>
   );
