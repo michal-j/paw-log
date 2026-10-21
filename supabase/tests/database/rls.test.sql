@@ -4,7 +4,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(151);
+select plan(152);
 
 -- Fixtures (as the postgres role, which bypasses RLS, like the bootstrap SQL).
 -- Household A: users a1, a2, dog A. Household B: user b1, dog B. User c belongs to no household.
@@ -48,6 +48,14 @@ insert into public.condition (id, dog_id, name, started_on) values
 insert into public.event_condition (event_id, condition_id, dog_id) values
   ('50000000-0000-4000-8000-00000000000a', '70000000-0000-4000-8000-00000000000a', '20000000-0000-4000-8000-00000000000a'),
   ('50000000-0000-4000-8000-00000000000b', '70000000-0000-4000-8000-00000000000b', '20000000-0000-4000-8000-00000000000b');
+
+-- 0. Every table in public is granted to signed-in users explicitly. Supabase no longer does it
+-- for new tables (from 30 Oct 2026), and the app would get "permission denied" (JCB-128).
+select is_empty(
+  $$select c.relname from pg_class c join pg_namespace n on n.oid = c.relnamespace
+    where n.nspname = 'public' and c.relkind = 'r'
+      and not has_table_privilege('authenticated', c.oid, 'SELECT')$$,
+  'every table in public has an explicit grant to authenticated');
 
 -- 1. Anonymous visitors get nothing, not even an empty list.
 set local role anon;

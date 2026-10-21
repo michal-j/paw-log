@@ -14,7 +14,7 @@ Briefs from the PM point here instead of repeating setup. Do all of it unless th
 3. 390x844 first, then 768 and desktop; EN and PL (Polish runs ~20% longer); no horizontal scroll; touch targets ≥ 44px; tokens only.
 4. Short log (a few days) and long log (a year+) if the Timeline is involved.
 5. New user-facing strings: draft EN/PL in a `docs/copy/copy-proposal-*.csv`; never invent copy silently.
-6. Database changes: a **new** migration file; never edit an applied one. RLS on every new table, extend `supabase/tests/database/rls.test.sql`.
+6. Database changes: a **new** migration file; never edit an applied one. RLS on every new table, and explicit grants in the same migration (`revoke all … from anon, authenticated;` then `grant select, insert, update, delete … to authenticated;`): Supabase no longer grants new tables to the API on its own. Extend `supabase/tests/database/rls.test.sql`.
 7. Merge `origin/main` into your branch right before pushing, so the PR is mergeable.
 8. Close browser tabs and stop your dev server.
 
