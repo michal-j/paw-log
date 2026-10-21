@@ -1,7 +1,9 @@
 -- Minimal stand-in for what a Supabase database provides before our migrations run,
 -- so `npm run test:db` can apply them in PGlite (in-process Postgres) without Docker.
 -- Mirrors Supabase: the API roles, auth.users, auth.uid() reading the request JWT claims,
--- and default grants of everything in `public` to anon and authenticated.
+-- and default grants of functions in `public` to anon and authenticated. Tables get no default
+-- grants: from 30 Oct 2026 Supabase stops granting new `public` tables to the Data API, so every
+-- migration must grant its own tables (JCB-128).
 
 create role anon nologin noinherit;
 create role authenticated nologin noinherit;
@@ -26,7 +28,6 @@ as $$
 $$;
 
 grant usage on schema public to anon, authenticated;
-alter default privileges in schema public grant all on tables to anon, authenticated;
 alter default privileges in schema public grant all on functions to anon, authenticated;
 
 -- Storage (JCB-7): the two tables of Supabase's `storage` schema the migrations use, with RLS on
