@@ -4,6 +4,9 @@ Format: [Keep a Changelog](https://keepachangelog.com). "Unreleased" means not y
 
 ## Unreleased
 
+### Changed
+- Saving: "Couldn't save" now shows within about 6 s instead of up to 15 s. A stuck write is sent again after 2.5 s (was 6 s) and its second try is cut off 3 s later; reads and photo uploads keep their limits (JCB-74).
+
 ## 2026-10-22 (merged to main)
 
 ### Added

@@ -107,9 +107,9 @@ describe('stalled writes are sent once more (JCB-71, stall recovery)', () => {
   it('a write with no answer after the stall limit goes again as a new high-priority request, and succeeds', async () => {
     vi.useFakeTimers();
     const { base, calls } = stuckThenFine();
-    const f = resilientFetch(base, { stallMs: 6000, retryMs: 8000, doc: fakePage().doc, log: quiet });
+    const f = resilientFetch(base, { stallMs: 2500, retryMs: 3000, doc: fakePage().doc, log: quiet });
     const p = f(REST, write());
-    await vi.advanceTimersByTimeAsync(5999);
+    await vi.advanceTimersByTimeAsync(2499);
     expect(calls).toHaveLength(1);
     await vi.advanceTimersByTimeAsync(1);
     expect((await p).status).toBe(201);
@@ -119,7 +119,7 @@ describe('stalled writes are sent once more (JCB-71, stall recovery)', () => {
     expect(calls[1]).toMatchObject({ method: 'POST', body: '{"id":"x"}', cache: 'no-store', keepalive: false, priority: 'high' });
   });
 
-  it('tries only once more: a second stall rejects after 6 s + 8 s, under the 15 s limit of a repository call', async () => {
+  it('tries only once more: a second stall rejects after 2.5 s + 3 s, under the 6 s limit of a repository write (JCB-74)', async () => {
     vi.useFakeTimers();
     const { base, calls } = stuckThenFine(2);
     const f = resilientFetch(base, { doc: fakePage().doc, log: quiet });
@@ -127,7 +127,7 @@ describe('stalled writes are sent once more (JCB-71, stall recovery)', () => {
       () => 'answered',
       (e: Error) => e.name,
     );
-    await vi.advanceTimersByTimeAsync(13_999);
+    await vi.advanceTimersByTimeAsync(5_499);
     expect(calls).toHaveLength(2);
     await vi.advanceTimersByTimeAsync(1);
     expect(await p).toBe('AbortError');
@@ -224,5 +224,24 @@ describe('withTimeout', () => {
     const err = await caught;
     expect(err).toBeInstanceOf(RepositoryError);
     expect(err).toMatchObject({ operation: 'hangs', code: TIMEOUT_CODE });
+  });
+
+  it('gives writes a shorter limit than reads, so "Couldn\'t save" shows within about 6 s (JCB-74)', async () => {
+    vi.useFakeTimers();
+    const timed = withTimeout({ saveEvent: () => new Promise<void>(() => {}), listEvents: () => new Promise<void>(() => {}) });
+    const save = timed.saveEvent().catch((e: unknown) => e);
+    const list = timed.listEvents().then(
+      () => 'answered',
+      (e: unknown) => e,
+    );
+    await vi.advanceTimersByTimeAsync(5_999);
+    let saveDone = false;
+    void save.then(() => (saveDone = true));
+    await vi.advanceTimersByTimeAsync(0);
+    expect(saveDone).toBe(false);
+    await vi.advanceTimersByTimeAsync(1);
+    expect(await save).toMatchObject({ operation: 'saveEvent', code: TIMEOUT_CODE });
+    await vi.advanceTimersByTimeAsync(9_000);
+    expect(await list).toMatchObject({ operation: 'listEvents', code: TIMEOUT_CODE });
   });
 });

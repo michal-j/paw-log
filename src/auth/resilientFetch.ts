@@ -6,9 +6,9 @@ export const REQUEST_TIMEOUT_MS = 10_000;
  * A write with no answer after this long is presumed stuck and sent again (JCB-71). A healthy write
  * answers in well under a second, even on mobile data.
  */
-export const WRITE_STALL_MS = 6_000;
-/** The limit for that second try. Both together stay under the 15 s limit of a repository call. */
-export const WRITE_RETRY_MS = 8_000;
+export const WRITE_STALL_MS = 2_500;
+/** The limit for that second try. Both together (5.5 s) stay under the 6 s limit of a repository write (JCB-74). */
+export const WRITE_RETRY_MS = 3_000;
 
 type VisibilitySource = Pick<Document, 'visibilityState' | 'addEventListener'>;
 type Why = 'timeout' | 'background' | 'aborted';
