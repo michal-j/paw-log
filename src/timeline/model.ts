@@ -162,30 +162,66 @@ export function fitLayout(columns: Column[], listWidth: number): Fit {
 
 // ---------- Event badges ----------
 
-export type BadgeKind = 'vet' | 'sym' | 'photo' | 'front' | 'worm';
+export type BadgeKind = 'vet' | 'sym' | 'note' | 'photo' | 'front' | 'worm' | 'more';
 export interface Badge {
   kind: BadgeKind;
-  /** Text after the glyph: vet count, "!" or "!N", "F", "D"; empty for photo. */
+  /** Text after the glyph: vet count, "!" or "!N", "F", "D", "+N" for the hidden rest; empty for note and photo. */
   text: string;
 }
 
 /**
- * Badge order and text per docs/DESIGN.md "Event badges". Other event types have no badge yet.
+ * Badge order and text per docs/DESIGN.md "Event badges" (priority order: vet, symptoms, note, photo,
+ * Frontline, deworming). Other event types have no badge yet.
  * The camera shows once for a day with any photo: a photo event, or another event with photos
  * (`withPhotos`: ids of events that have photos, JCB-7). Never one per photo, so the row keeps its geometry.
+ * The note badge shows once for a day with any note: a note event, or a note on a food or medication entry
+ * (`entryNote`). Never a count.
  */
-export function badgesFor(events: Pick<HealthEvent, 'type' | 'id'>[], withPhotos: ReadonlySet<string> = new Set()): Badge[] {
+export function badgesFor(
+  events: Pick<HealthEvent, 'type' | 'id'>[],
+  withPhotos: ReadonlySet<string> = new Set(),
+  entryNote = false,
+): Badge[] {
   const count = (t: EventType) => events.filter((e) => e.type === t).length;
   const out: Badge[] = [];
   const vet = count('vet');
   const sym = count('symptom');
   if (vet) out.push({ kind: 'vet', text: String(vet) });
   if (sym) out.push({ kind: 'sym', text: sym > 1 ? `!${sym}` : '!' });
+  if (entryNote || count('note')) out.push({ kind: 'note', text: '' });
   if (hasPhoto(events, withPhotos)) out.push({ kind: 'photo', text: '' });
   if (count('frontline')) out.push({ kind: 'front', text: 'F' });
   if (count('deworming')) out.push({ kind: 'worm', text: 'D' });
   return out;
 }
+
+// Rendered widths of a badge (border 2 + padding 8 + glyph + 2 gap + text), px; a table so the fit needs no DOM measuring.
+const BADGE_GLYPH_W: Record<BadgeKind, number> = { vet: 12, sym: 0, note: 12, photo: 12, front: 0, worm: 0, more: 0 };
+const BADGE_MIN_W = 18;
+const BADGE_GAP = 3;
+const textWidth = (text: string) => [...text].reduce((w, ch) => w + (ch === '!' ? 4 : ch === '+' ? 7 : /\d/.test(ch) ? 7 : 8), 0);
+export function badgeWidth(b: Badge): number {
+  const glyph = BADGE_GLYPH_W[b.kind];
+  const text = textWidth(b.text);
+  return Math.max(BADGE_MIN_W, 10 + glyph + (glyph && text ? 2 : 0) + text);
+}
+
+/**
+ * Busy days (JCB-26/69): one line of whole badges in priority order; those that do not fit fold into a
+ * trailing "+N" chip (N = how many are hidden). `width` is the room inside the Events column.
+ */
+export function fitBadges(badges: Badge[], width: number): Badge[] {
+  const rowWidth = (list: Badge[]) => list.reduce((w, b, i) => w + badgeWidth(b) + (i ? BADGE_GAP : 0), 0);
+  if (rowWidth(badges) <= width) return badges;
+  for (let shown = badges.length - 1; shown >= 0; shown--) {
+    const withMore = [...badges.slice(0, shown), { kind: 'more' as const, text: `+${badges.length - shown}` }];
+    if (rowWidth(withMore) <= width || shown === 0) return withMore;
+  }
+  return badges;
+}
+
+/** Room for the Events column in a list `listWidth` px wide, given the fitted layout (never below EVENTS_MIN_W). */
+export const eventsWidth = (fit: Fit, listWidth: number) => Math.max(EVENTS_MIN_W, listWidth - (fit.rowW - EVENTS_MIN_W));
 
 /** A day has a photo: a photo event, or an event carrying photos. */
 export function hasPhoto(events: Pick<HealthEvent, 'type' | 'id'>[], withPhotos: ReadonlySet<string> = new Set()): boolean {
@@ -335,7 +371,7 @@ export function buildTimeline(input: {
       height: DAY_ROW_H,
       isToday,
       slots,
-      badges: badgesFor(dayEvents, input.withPhotos),
+      badges: badgesFor(dayEvents, input.withPhotos, dayEntries.some((e) => e.note.trim() !== '')),
       events: dayEvents,
       anySkipped: dayEntries.some((e) => e.state === 'skipped'),
       logged: dayEntries.length > 0 || dayEvents.length > 0,

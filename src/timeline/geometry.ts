@@ -16,7 +16,7 @@ export const DATE_COL_W_TIGHT = 40;
 export const ROW_INSET = 4;
 /** Width of the tick rail, px. */
 export const RAIL_W = 20;
-/** Minimum width of the Events column, px: one badge plus a "+N" chip (JCB-86). */
+/** Minimum width of the Events column, px: a vet badge with a count (31) plus a "+N" chip (24) and the 3px gap (JCB-86, JCB-26). */
 export const EVENTS_MIN_W = 60;
 
 /** Circle diameters (PRODUCT.md "Reading the circles"). */

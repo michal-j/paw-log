@@ -11,6 +11,8 @@ import { EVENTS_MIN_W, LIST_TAIL_H, PART_TICK_INSET, PART_TICK_MAX, RAIL_W, ROW_
 import {
   activeTickOffset,
   buildTimeline,
+  eventsWidth,
+  fitBadges,
   fitLayout,
   parseDate,
   railFraction,
@@ -39,10 +41,12 @@ const LEGEND_MARKS: { key: MessageKey; state: MarkState; size: 'food' | 'small';
 ];
 const LEGEND_BADGES: { key: MessageKey; kind: BadgeKind; text: string }[] = [
   { key: 'kVet', kind: 'vet', text: '2' },
-  { key: 'kSym', kind: 'sym', text: '!' },
+  { key: 'kSymN', kind: 'sym', text: '!2' },
+  { key: 'kNote', kind: 'note', text: '' },
   { key: 'kPhoto', kind: 'photo', text: '' },
   { key: 'kFront', kind: 'front', text: 'F' },
   { key: 'kWorm', kind: 'worm', text: 'D' },
+  { key: 'kMore', kind: 'more', text: '+2' },
 ];
 
 interface Loaded {
@@ -172,7 +176,10 @@ export function Timeline({ initialScrollTop = 0, focusDate, dayHref, onOpenDay }
   }
   const { timeline, items } = data;
   const { rows, ticks, span } = timeline;
-  const { columns, dateW, rowW } = fitLayout(timeline.columns, listWidth);
+  const fit = fitLayout(timeline.columns, listWidth);
+  const { columns, dateW, rowW } = fit;
+  // Room for badges: the whole Events column (it has no side padding).
+  const badgeRoom = eventsWidth(fit, listWidth);
   // Windowing for long logs: rows have fixed heights and tops, so the hidden ones become two spacers.
   const windowed = rows.length > WINDOW_FROM_ROWS;
   const lo = windowed ? rowIndexAt(rows, Math.max(0, scrollTop - OVERSCAN_PX)) : 0;
@@ -235,7 +242,7 @@ export function Timeline({ initialScrollTop = 0, focusDate, dayHref, onOpenDay }
   const scrubLabel = !focusRow ? '' : focusRow.kind === 'day' ? fmt.full(focusRow.date) : fmt.month(focusRow.month);
 
   const summary = (row: DayRow) => {
-    const flags = flagsFor(row.events, row.badges.some((b) => b.kind === 'photo'), row.anySkipped, t);
+    const flags = flagsFor(row.events, row.badges.some((b) => b.kind === 'photo'), row.badges.some((b) => b.kind === 'note'), row.anySkipped, t);
     return `${fmt.long(row.date)}: ${flags.length ? flags.join(', ') : row.logged ? t('copy.95') : t('nothingLogged')}`;
   };
 
@@ -355,7 +362,7 @@ export function Timeline({ initialScrollTop = 0, focusDate, dayHref, onOpenDay }
                     </ColumnBox>
                   ))}
                   <span className="tl-row__events" style={{ minWidth: EVENTS_MIN_W }} aria-hidden="true">
-                    {row.badges.map((b) => (
+                    {fitBadges(row.badges, badgeRoom).map((b) => (
                       <EventBadge key={b.kind} kind={b.kind} text={b.text} />
                     ))}
                   </span>
@@ -445,12 +452,13 @@ function ColumnBox({ col, hidden, children }: { col: Column; hidden?: boolean; c
 }
 
 /** Words for the screen-reader summary of a day row. */
-function flagsFor(events: HealthEvent[], photo: boolean, anySkipped: boolean, t: (k: MessageKey) => string): string[] {
+function flagsFor(events: HealthEvent[], photo: boolean, note: boolean, anySkipped: boolean, t: (k: MessageKey) => string): string[] {
   const out: string[] = [];
   const vet = events.filter((e) => e.type === 'vet').length;
   if (vet) out.push(vet > 1 ? `${t('copy.101')} ×${vet}` : t('copy.101'));
   const syms = events.filter((e) => e.type === 'symptom').map((e) => symptomLabel(e.title, t));
   if (syms.length) out.push(syms.join(', '));
+  if (note) out.push(t('kNote'));
   if (photo) out.push(t('copy.103'));
   if (events.some((e) => e.type === 'frontline')) out.push(t('kFront'));
   if (events.some((e) => e.type === 'deworming')) out.push(t('copy.102'));

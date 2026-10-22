@@ -169,11 +169,12 @@
 .tl-row__events {
   flex: 1;
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap; /* one line: what does not fit is folded into "+N" (fitBadges) */
   gap: 3px;
-  align-content: center;
+  align-items: center;
   justify-content: center;
-  padding: 0 2px;
+  padding: 0;
+  overflow: hidden;
   box-sizing: border-box;
 }
 
