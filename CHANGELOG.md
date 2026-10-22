@@ -4,6 +4,9 @@ Format: [Keep a Changelog](https://keepachangelog.com). "Unreleased" means not y
 
 ## Unreleased
 
+### Fixed
+- Timeline: the Key's columns now line up with the rows below (the Key button's default left padding pushed it 6 px right) (JCB-129).
+
 ### Changed
 - Database tests: the local test database no longer grants new tables to the app on its own, matching Supabase from 30 Oct 2026, and a check fails if a table has no explicit grant. The developer checklist asks for grants in the same migration as the table (JCB-128).
 
