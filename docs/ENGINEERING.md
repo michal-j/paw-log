@@ -36,7 +36,7 @@ Everything here is a proposal from the PM for the Developer to refine. Items mar
 3. Day view and logging one entry; edit entry.
 4. Calendar and matrix views, filters, jump to date.
 5. Events (vet, symptoms, photos) and attachments.
-6. Bulk add and backfill (needs design JCB-25).
+6. Bulk add and backfill: not planned (CEO 22 Oct).
 7. Pinned notes, issues with photo history, search.
 8. Later: per-item history, export, tasks and notifications.
 

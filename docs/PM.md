@@ -29,7 +29,7 @@ Usage drivers, biggest first: a long session on the most expensive model (every 
 - A known-flaky CI test: rerun once; a second failure means fix the test (small fix, PM directly) rather than keep rerunning.
 
 **Docs and bookkeeping, once each:**
-- Design system (CEO 22 Oct): any PR that adds or changes a component or token updates `docs/design-system/` in the same PR. The published Design System artifact may lag to save usage, but the change is logged as a comment on the running Linear issue "Design system: sync the published artifact" when it ships; the Designer syncs the artifact from the docs in one pass later.
+- Design system (CEO 22 Oct): `docs/design-system/` in the repo is the one design system. A PR that adds or changes a component or token updates it in the same PR. There is no separate log of design-system changes: git history and `CHANGELOG.md` are the record. The published Design System artifact is a stale snapshot from 16 Oct and not maintained unless the CEO asks for it.
 - Changelog line, test case and decision go **in the same PR as the change** (the PM adds them on the branch before merging), not in a separate docs PR.
 - Linear is the source of truth for status, backlog, what is next and what waits on the CEO. `docs/DECISIONS.md` holds only the decided log. Don't repeat Linear's state in docs or memory; point to it.
 - Short reports: agents at most 5 lines, the PM to the CEO briefly.
@@ -41,7 +41,9 @@ Usage drivers, biggest first: a long session on the most expensive model (every 
 ## Linear is the source of truth (CEO, 22 Oct 2026)
 Linear and the app must say the same thing. Every piece of work follows one path, and nothing is built that is not in Linear first.
 
-**Lifecycle of an issue:** Backlog (not committed) > Todo (specified and prioritised, ready to take) > In Progress (being built) > In Review (PR open or being tested; or deployed and being watched in real use) > Done. **Done means deployed to production and checked**, nothing less. Wrong or replaced issues are Canceled with a comment saying where the work went (the tool cannot set Duplicate).
+**Who decides what:** the CEO owns priority and the queue. **Todo = the CEO has decided it will be done; Backlog = parked, may be left alone.** The PM builds only from Todo, in priority order (Urgent first), and never moves items between Todo and Backlog or changes a priority on its own: it proposes and the CEO decides. The PM may refine the description, labels and sub-issues.
+
+**Lifecycle of an issue:** Backlog (parked) > Todo (decided, ready to take) > In Progress (being built) > In Review (PR open or being tested; or deployed and being watched in real use) > Done. **Done means deployed to production and checked**, nothing less. Wrong or replaced issues are Canceled with a comment saying where the work went (the tool cannot set Duplicate).
 
 **One issue, one deliverable.** Take an issue, build it, test it, deploy it, close it. If the work turns out bigger, or you find something else on the way, do not stretch the issue: finish it, and file the rest as new issues. Do not close an issue that is only partly done, and close the ones already shipped the moment they ship (an issue still open for something built is a bug in Linear).
 
@@ -53,9 +55,26 @@ Linear and the app must say the same thing. Every piece of work follows one path
 - Priority orders the Backlog (Urgent/High = next, Medium = soon, Low/None = later). Backlog items that need a design first say so in the description.
 - Every issue has a description with the goal and acceptance criteria while open, and says "UNCLEAR" where something is unknown. When work ships, the description matches what was built.
 
+**Issues are deliverables, never logs.** An issue has an outcome and an end. No standing, running-log or "keep in sync" issues: a record of what changed belongs in git history and `CHANGELOG.md`, status in the Linear project update. If something recurring is needed, it is a routine in this file, not an issue.
+
 **New findings go in Linear immediately**, as their own issue with a label: a bug from QA or the CEO, an idea, a follow-up. The PM does not carry open items only in chat, docs or memory. `docs/DECISIONS.md` records decisions, not open items.
 
 **Check Linear against reality** at the start of every PM session and at every handoff: open issues for things already built, issues grouping several deliverables, stale descriptions, status that does not match (In Review with no PR or no watching reason). Fix them then, not later. Flag anything unclear to the CEO instead of guessing.
+
+## Where information lives (one home each, never duplicated)
+| What | Home |
+|---|---|
+| What to build, priority, status, bugs, ideas, open questions | Linear (issues, labels, priority) |
+| Where the project stands, handoff between sessions | Latest Linear project update on PawLog |
+| What was decided and why | `docs/DECISIONS.md` (decided only) |
+| What changed in the product, by date | `CHANGELOG.md` |
+| What is covered by tests and how to check it by hand | `docs/TEST-CASES.md` and `tests/` |
+| What the product is | `docs/PRODUCT.md` |
+| Look, tokens, components | `docs/design-system/` (single source) |
+| How the app is built | `docs/ENGINEERING.md` |
+| How the team works | `docs/PM.md`, `docs/AGENTS.md`, `docs/DEV-CHECKLIST.md` |
+| Draft and reviewed copy | `docs/copy/` |
+A new kind of document or tracking needs a home from this table first. If none fits, the PM proposes one to the CEO with the reason, before creating it. The PM applies standard product and project practice proactively (clear ownership, one source of truth, deliverable-sized issues, definition of done, no dead or duplicate records) and does not wait to be told.
 
 ## Start of every PM session
 1. Read `CLAUDE.md`, `docs/AGENTS.md`, `docs/DECISIONS.md`. Read `docs/PRODUCT.md` only when the work needs it.
