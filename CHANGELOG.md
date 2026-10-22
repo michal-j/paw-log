@@ -4,6 +4,8 @@ Format: [Keep a Changelog](https://keepachangelog.com). "Unreleased" means not y
 
 ## Unreleased
 
+## 2026-10-22 later (merged to main)
+
 ### Added
 - PDF documents on vet visits and tracked conditions: attach PDFs (up to 10 MB, 5 per entry) to a vet visit or note, or with "Add document" on a condition; they show in the Day view, the condition's Documents section and History, and open in the phone's PDF viewer. Private `documents` storage (migration `documents`, not yet applied to production); demo mode has two sample PDFs (JCB-76).
 - Design system: FileRow documented; EventBadge page brought up to date with the new badges.
