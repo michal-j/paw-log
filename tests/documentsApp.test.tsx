@@ -273,7 +273,7 @@ describe('documents, demo mode', () => {
     expect(screen.getByRole('button', { name: 'Open PDF Blood pressure check, 1 KB' }).textContent).toContain('1 page');
     await tick();
     fireEvent.click(row);
-    expect(open).toHaveBeenCalledWith(expect.stringMatching(/ultrasound-report.*\.pdf$/), '_blank', 'noopener');
+    expect(open).toHaveBeenCalledWith(expect.stringMatching(/ultrasound-report.*\.pdf(\?no-inline)?$/), '_blank', 'noopener');
   });
 
   it('the condition page lists them; Add document works offline and the change stays in this browser', async () => {
