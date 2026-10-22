@@ -107,3 +107,16 @@ export const TargetIcon = ({ size = 11 }: { size?: number }) => (
     <circle cx="12" cy="12" r="2.5" fill="currentColor" />
   </svg>
 );
+/** A page with lines: the Add PDF button and the empty Documents card (JCB-76). */
+export const DocIcon = ({ size = 16 }: { size?: number }) => (
+  <svg {...stroke(size)}>
+    <path d="M5 4h10l4 4v12H5z" />
+    <path d="M9 12h6M9 16h6" />
+  </svg>
+);
+/** An arrow leaving a box: the row opens outside the app (the phone's own PDF viewer). */
+export const OpenOutIcon = ({ size = 16 }: { size?: number }) => (
+  <svg {...stroke(size, 2.2)}>
+    <path d="M14 4h6v6M20 4l-9 9M18 14v5H5V6h5" />
+  </svg>
+);

@@ -5,7 +5,7 @@ export const OPERATION_TIMEOUT_MS = 15_000;
 /** `RepositoryError.code` of a call that took longer than that. */
 export const TIMEOUT_CODE = 'timeout';
 /** Calls not limited here because they limit themselves: each file upload stops when stalled (20 s) or at 120 s. */
-export const OWN_LIMITS: ReadonlySet<string> = new Set(['uploadPhotoFiles']);
+export const OWN_LIMITS: ReadonlySet<string> = new Set(['uploadPhotoFiles', 'uploadDocumentFile']);
 
 function limit<T>(work: Promise<T>, ms: number, operation: string): Promise<T> {
   let timer: ReturnType<typeof setTimeout> | undefined;
@@ -26,7 +26,7 @@ export function withTimeout<R extends object>(repository: R, ms: number = OPERAT
     get(target, prop, receiver) {
       const value: unknown = Reflect.get(target, prop, receiver);
       if (typeof value !== 'function') return value;
-      // Photo uploads have their own limits (src/data/upload.ts): slow but moving is fine, stalled is not.
+      // File uploads have their own limits (src/data/upload.ts): slow but moving is fine, stalled is not.
       if (typeof prop === 'string' && OWN_LIMITS.has(prop)) return (value as (...a: unknown[]) => unknown).bind(target);
       return (...args: unknown[]) => {
         const result: unknown = (value as (...a: unknown[]) => unknown).apply(target, args);

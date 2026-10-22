@@ -1,4 +1,4 @@
-import type { Condition, DateRange, DayPart, DayPartTimes, Dog, DogSettings, Entry, HealthEvent, Item, Photo, PhotoFiles, PhotoSize, PinnedNote, PlainDate, RemovedSlot, ScheduleSlot } from './types';
+import type { Condition, DateRange, DayPart, DayPartTimes, DocFile, Dog, DogSettings, Entry, HealthEvent, Item, Photo, PhotoFiles, PhotoSize, PinnedNote, PlainDate, RemovedSlot, ScheduleSlot } from './types';
 
 /** Usual times of the day parts until the household changes them (design proposal JCB-25). */
 export const DEFAULT_DAY_PART_TIMES: DayPartTimes = {
@@ -75,6 +75,22 @@ export interface Repository {
   purgePhotoFiles(photos: Pick<Photo, 'id' | 'dogId'>[]): Promise<void>;
   /** URLs to show photos at, by id: short-lived, so ask again rather than keep them. Missing files are left out. */
   photoUrls(photos: Pick<Photo, 'id' | 'dogId'>[], size: PhotoSize): Promise<Record<string, string>>;
+  /** Every PDF row (the files are opened through `documentUrls`). */
+  listDocuments(): Promise<DocFile[]>;
+  /**
+   * Store a document's file at its path (it depends only on dog and id), replacing what is there, so a
+   * retry after a failed attempt writes the same file again. `onProgress` gets 0 to 1 while it is sent
+   * (where the transport can tell). Called before `saveDocument`, so a row never points at a missing file.
+   */
+  uploadDocumentFile(doc: DocFile, file: Blob, onProgress?: (fraction: number) => void): Promise<void>;
+  /** Insert or update a document row by id (its event must exist). */
+  saveDocument(doc: DocFile): Promise<void>;
+  /** Delete a document row; its file stays until `purgeDocumentFiles`, so Undo can bring it back. */
+  deleteDocument(id: string): Promise<void>;
+  /** Remove the files of these documents whose row is gone; files of a document that still has its row are kept. */
+  purgeDocumentFiles(docs: Pick<DocFile, 'id' | 'dogId'>[]): Promise<void>;
+  /** URLs to open documents at, by id: short-lived, so ask again rather than keep them. Missing files are left out. */
+  documentUrls(docs: Pick<DocFile, 'id' | 'dogId'>[]): Promise<Record<string, string>>;
   /** Tracked conditions, open and resolved. */
   listConditions(): Promise<Condition[]>;
   /** Insert or update by id. */

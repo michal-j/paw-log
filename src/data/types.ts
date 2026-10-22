@@ -220,3 +220,29 @@ export type PhotoSize = 'full' | 'thumb';
 /** Storage path of a photo's file: `<dog>/<id>.jpg` or `<dog>/<id>.thumb.jpg` (the storage policies check it). */
 export const photoPath = (p: Pick<Photo, 'id' | 'dogId'>, size: PhotoSize = 'full') =>
   `${p.dogId}/${p.id}${size === 'thumb' ? '.thumb' : ''}.jpg`;
+
+/**
+ * A PDF on an event (an `attachment` row of kind pdf): a vet visit's result or report, or a note made
+ * with "Add document" on a tracked condition. The file lives in the private `documents` bucket at
+ * `documentPath(doc)`. Shown as a row: name (without ".pdf"), size and, when it was cheap to read, pages.
+ */
+export interface DocFile {
+  id: string;
+  dogId: string;
+  eventId: string;
+  /** What the household calls it; starts as the file name without ".pdf". 1-120 characters. */
+  name: string;
+  sizeBytes: number;
+  /** Read from the PDF on the phone only when cheap; null when unknown (never guessed). */
+  pageCount: number | null;
+  /** Order within the event. */
+  position: number;
+}
+
+/** Limits, the same as the bucket and the database (migration 20261023120000_documents.sql). */
+export const DOC_MAX_BYTES = 10 * 1024 * 1024;
+export const DOCS_MAX = 5;
+export const DOC_NAME_MAX_LENGTH = 120;
+
+/** Storage path of a document's file: `<dog>/<id>.pdf` (the storage policies check it). */
+export const documentPath = (d: Pick<DocFile, 'id' | 'dogId'>) => `${d.dogId}/${d.id}.pdf`;

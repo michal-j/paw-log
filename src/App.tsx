@@ -15,6 +15,7 @@ import { conditionPath, dayPath, parseRoute, routePath, tabPath, timelinePath, u
 import { PinnedNotes } from './pinned/PinnedNotes';
 import { PinnedSheet } from './pinned/PinnedSheet';
 import { PhotoSheet } from './photos/PhotoSheet';
+import { AddDocumentSheet } from './documents/AddDocumentSheet';
 import { PhotoCompare, PhotoViewer } from './photos/PhotoViewer';
 import { ConditionPage } from './tracked/ConditionPage';
 import { ConditionSheet, ResolveSheet } from './tracked/ConditionSheet';
@@ -320,6 +321,8 @@ function SheetHost({
           onShowDay={onShowDay}
         />
       );
+    case 'document':
+      return <AddDocumentSheet key={`document-${sheet.condition}`} date={sheet.date} condition={sheet.condition} />;
     case 'menu':
       return <MenuSheet onUsualDay={onUsualDay} onSignOut={onSignOut} onResetDemo={onResetDemo} />;
   }

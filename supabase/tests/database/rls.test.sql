@@ -4,7 +4,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(152);
+select plan(180);
 
 -- Fixtures (as the postgres role, which bypasses RLS, like the bootstrap SQL).
 -- Household A: users a1, a2, dog A. Household B: user b1, dog B. User c belongs to no household.
@@ -531,6 +531,109 @@ set local role authenticated;
 select set_config('request.jwt.claims', '{"sub":"00000000-0000-4000-8000-0000000000b1","role":"authenticated"}', true);
 select is((select caption from public.attachment), '', 'b1 sees only dog B''s attachment, which a1 could not change or delete');
 select is((select count(*)::int from storage.objects where bucket_id = 'photos'), 2, 'b1 sees only dog B''s files, which a1 could not delete');
+reset role;
+
+-- 9. Documents (JCB-76): PDF attachments and the private documents bucket.
+insert into public.event (id, dog_id, date, type, title) values ('50000000-0000-4000-8000-0000000000a9', '20000000-0000-4000-8000-00000000000a', '2026-10-14', 'vet', 'Check-up A2');
+insert into public.attachment (id, dog_id, event_id, kind, storage_path, name, size_bytes, page_count) values
+  ('90000000-0000-4000-8000-00000000000b', '20000000-0000-4000-8000-00000000000b', '50000000-0000-4000-8000-00000000000b', 'pdf', '20000000-0000-4000-8000-00000000000b/90000000-0000-4000-8000-00000000000b.pdf', 'Report B', 120000, 2);
+insert into storage.objects (bucket_id, name) values ('documents', '20000000-0000-4000-8000-00000000000b/90000000-0000-4000-8000-00000000000b.pdf');
+select is((select public from storage.buckets where id = 'documents'), false, 'the documents bucket is private');
+select is((select allowed_mime_types from storage.buckets where id = 'documents'), array['application/pdf'], 'the documents bucket takes PDF only');
+select is((select file_size_limit from storage.buckets where id = 'documents'), 10485760::bigint, 'the documents bucket limits a file to 10 MB');
+select throws_ok(
+  $$insert into public.attachment (id, dog_id, event_id, kind, storage_path, name, size_bytes)
+    values ('90000000-0000-4000-8000-000000000001', '20000000-0000-4000-8000-00000000000a', '50000000-0000-4000-8000-0000000000a9', 'pdf', '20000000-0000-4000-8000-00000000000a/90000000-0000-4000-8000-000000000001.jpg', 'Wrong extension', 1000)$$,
+  '23514', null, 'a PDF attachment path must end in .pdf');
+select throws_ok(
+  $$insert into public.attachment (id, dog_id, event_id, kind, storage_path, width, height)
+    values ('90000000-0000-4000-8000-000000000001', '20000000-0000-4000-8000-00000000000a', '50000000-0000-4000-8000-0000000000a9', 'photo', '20000000-0000-4000-8000-00000000000a/90000000-0000-4000-8000-000000000001.pdf', 10, 10)$$,
+  '23514', null, 'a photo attachment path must end in .jpg');
+select throws_ok(
+  $$insert into public.attachment (id, dog_id, event_id, kind, storage_path)
+    values ('90000000-0000-4000-8000-000000000001', '20000000-0000-4000-8000-00000000000a', '50000000-0000-4000-8000-0000000000a9', 'pdf', '20000000-0000-4000-8000-00000000000a/90000000-0000-4000-8000-000000000001.pdf')$$,
+  '23514', null, 'a PDF needs a name and a size');
+select throws_ok(
+  $$insert into public.attachment (id, dog_id, event_id, kind, storage_path, name, size_bytes)
+    values ('90000000-0000-4000-8000-000000000001', '20000000-0000-4000-8000-00000000000a', '50000000-0000-4000-8000-0000000000a9', 'pdf', '20000000-0000-4000-8000-00000000000a/90000000-0000-4000-8000-000000000001.pdf', 'Too big', 10485761)$$,
+  '23514', null, 'a PDF over 10 MB is refused');
+select throws_ok(
+  $$insert into public.attachment (id, dog_id, event_id, kind, storage_path, width, height, name, size_bytes)
+    values ('90000000-0000-4000-8000-000000000001', '20000000-0000-4000-8000-00000000000a', '50000000-0000-4000-8000-0000000000a9', 'photo', '20000000-0000-4000-8000-00000000000a/90000000-0000-4000-8000-000000000001.jpg', 10, 10, 'A photo with a name', 1000)$$,
+  '23514', null, 'a photo carries no name or size');
+select throws_ok(
+  $$insert into public.attachment (id, dog_id, event_id, kind, storage_path, name, size_bytes)
+    values ('90000000-0000-4000-8000-000000000001', '20000000-0000-4000-8000-00000000000a', '50000000-0000-4000-8000-0000000000a9', 'video', '20000000-0000-4000-8000-00000000000a/90000000-0000-4000-8000-000000000001.mp4', 'Clip', 1000)$$,
+  '23514', null, 'only photos and PDFs are attachments');
+
+set local role anon;
+select set_config('request.jwt.claims', '{"role":"anon"}', true);
+select is((select count(*)::int from storage.objects where bucket_id = 'documents'), 0, 'anon sees no documents');
+select throws_ok(
+  $$insert into storage.objects (bucket_id, name) values ('documents', '20000000-0000-4000-8000-00000000000a/90000000-0000-4000-8000-000000000001.pdf')$$,
+  '42501', null, 'anon cannot upload a document');
+reset role;
+
+set local role authenticated;
+select set_config('request.jwt.claims', '{"sub":"00000000-0000-4000-8000-0000000000a1","role":"authenticated"}', true);
+select is((select count(*)::int from storage.objects where bucket_id = 'documents'), 0, 'a1 does not see the documents of dog B');
+select lives_ok(
+  $$insert into storage.objects (bucket_id, name) values ('documents', '20000000-0000-4000-8000-00000000000a/90000000-0000-4000-8000-000000000001.pdf')$$,
+  'a1 can upload a document of dog A');
+select lives_ok(
+  $$insert into storage.objects (bucket_id, name) values ('documents', '20000000-0000-4000-8000-00000000000a/90000000-0000-4000-8000-000000000001.pdf')
+    on conflict (bucket_id, name) do update set updated_at = now()$$,
+  'a1 can upload the same document again (a retry replaces it)');
+select lives_ok(
+  $$insert into public.attachment (id, dog_id, event_id, kind, storage_path, name, size_bytes, page_count)
+    values ('90000000-0000-4000-8000-000000000001', '20000000-0000-4000-8000-00000000000a', '50000000-0000-4000-8000-0000000000a9', 'pdf', '20000000-0000-4000-8000-00000000000a/90000000-0000-4000-8000-000000000001.pdf', 'Ultrasound report', 1258291, 3)$$,
+  'a1 can add a document to an event of dog A');
+select is((select created_by from public.attachment where id = '90000000-0000-4000-8000-000000000001'),
+  '00000000-0000-4000-8000-0000000000a1'::uuid, 'the document is stamped with its author');
+select throws_ok(
+  $$insert into storage.objects (bucket_id, name) values ('documents', '20000000-0000-4000-8000-00000000000b/90000000-0000-4000-8000-000000000002.pdf')$$,
+  '42501', null, 'a1 cannot upload a document into dog B''s folder');
+select throws_ok(
+  $$insert into storage.objects (bucket_id, name) values ('documents', '20000000-0000-4000-8000-00000000000a/90000000-0000-4000-8000-000000000002.jpg')$$,
+  '42501', null, 'a1 cannot upload a document under a name that is not <dog>/<id>.pdf');
+select throws_ok(
+  $$insert into storage.objects (bucket_id, name) values ('documents', '20000000-0000-4000-8000-00000000000a/../20000000-0000-4000-8000-00000000000b/x.pdf')$$,
+  '42501', null, 'a1 cannot reach another folder with a crafted name');
+select throws_ok(
+  $$insert into public.attachment (id, dog_id, event_id, kind, storage_path, name, size_bytes)
+    values ('90000000-0000-4000-8000-000000000003', '20000000-0000-4000-8000-00000000000b', '50000000-0000-4000-8000-00000000000b', 'pdf', '20000000-0000-4000-8000-00000000000b/90000000-0000-4000-8000-000000000003.pdf', 'Sneaky', 1000)$$,
+  '42501', null, 'a1 cannot add a document to dog B');
+select lives_ok(
+  $$insert into public.attachment (id, dog_id, event_id, kind, storage_path, name, size_bytes) values
+    ('90000000-0000-4000-8000-000000000004', '20000000-0000-4000-8000-00000000000a', '50000000-0000-4000-8000-0000000000a9', 'pdf', '20000000-0000-4000-8000-00000000000a/90000000-0000-4000-8000-000000000004.pdf', 'Two', 1000),
+    ('90000000-0000-4000-8000-000000000005', '20000000-0000-4000-8000-00000000000a', '50000000-0000-4000-8000-0000000000a9', 'pdf', '20000000-0000-4000-8000-00000000000a/90000000-0000-4000-8000-000000000005.pdf', 'Three', 1000),
+    ('90000000-0000-4000-8000-000000000006', '20000000-0000-4000-8000-00000000000a', '50000000-0000-4000-8000-0000000000a9', 'pdf', '20000000-0000-4000-8000-00000000000a/90000000-0000-4000-8000-000000000006.pdf', 'Four', 1000),
+    ('90000000-0000-4000-8000-000000000007', '20000000-0000-4000-8000-00000000000a', '50000000-0000-4000-8000-0000000000a9', 'pdf', '20000000-0000-4000-8000-00000000000a/90000000-0000-4000-8000-000000000007.pdf', 'Five', 1000)$$,
+  'an event can have five documents');
+select throws_ok(
+  $$insert into public.attachment (id, dog_id, event_id, kind, storage_path, name, size_bytes)
+    values ('90000000-0000-4000-8000-000000000008', '20000000-0000-4000-8000-00000000000a', '50000000-0000-4000-8000-0000000000a9', 'pdf', '20000000-0000-4000-8000-00000000000a/90000000-0000-4000-8000-000000000008.pdf', 'Six', 1000)$$,
+  '23514', null, 'a sixth document on one event is refused');
+select lives_ok(
+  $$insert into public.attachment (id, dog_id, event_id, kind, storage_path, name, size_bytes)
+    values ('90000000-0000-4000-8000-000000000001', '20000000-0000-4000-8000-00000000000a', '50000000-0000-4000-8000-0000000000a9', 'pdf', '20000000-0000-4000-8000-00000000000a/90000000-0000-4000-8000-000000000001.pdf', 'Ultrasound report (renamed)', 1258291)
+    on conflict (id) do update set name = excluded.name$$,
+  'saving a document again (a retry, a rename) is not counted as a sixth');
+update public.attachment set name = 'tampered' where id = '90000000-0000-4000-8000-00000000000b';
+delete from public.attachment where id = '90000000-0000-4000-8000-00000000000b';
+delete from storage.objects where name = '20000000-0000-4000-8000-00000000000b/90000000-0000-4000-8000-00000000000b.pdf';
+delete from storage.objects where name = '20000000-0000-4000-8000-00000000000a/90000000-0000-4000-8000-000000000001.pdf';
+select is((select count(*)::int from storage.objects where name = '20000000-0000-4000-8000-00000000000a/90000000-0000-4000-8000-000000000001.pdf'), 1,
+  'a document file cannot be deleted while its attachment row exists');
+select lives_ok($$delete from public.attachment where id = '90000000-0000-4000-8000-000000000001'$$, 'a1 can delete a document');
+delete from storage.objects where name = '20000000-0000-4000-8000-00000000000a/90000000-0000-4000-8000-000000000001.pdf';
+select is((select count(*)::int from storage.objects where name = '20000000-0000-4000-8000-00000000000a/90000000-0000-4000-8000-000000000001.pdf'), 0, 'once the row is gone the file can be deleted');
+reset role;
+
+set local role authenticated;
+select set_config('request.jwt.claims', '{"sub":"00000000-0000-4000-8000-0000000000b1","role":"authenticated"}', true);
+select is((select name from public.attachment where kind = 'pdf'), 'Report B', 'b1 sees only dog B''s document, which a1 could not change or delete');
+select is((select count(*)::int from storage.objects where bucket_id = 'documents'), 1, 'b1 sees only dog B''s document file, which a1 could not delete');
 reset role;
 
 select * from finish();

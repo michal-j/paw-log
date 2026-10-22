@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import type { Condition, DayPart, DayPartTimes, DogSettings, Entry, HealthEvent, Item, Photo, PinnedNote, PlainDate, RemovedSlot, Repository, ScheduleSlot } from '../data';
+import type { Condition, DayPart, DayPartTimes, DocFile, DogSettings, Entry, HealthEvent, Item, Photo, PinnedNote, PlainDate, RemovedSlot, Repository, ScheduleSlot } from '../data';
 import { useI18n } from '../i18n';
 import { dismissLaunch } from '../launch';
 import { logStartOf } from '../timeline/model';
@@ -22,6 +22,8 @@ export interface Records {
   pinned: PinnedNote[];
   /** Photos on events (JCB-7); `photosOf` and friends in src/photos/model.ts read them. */
   photos: Photo[];
+  /** PDFs on events (JCB-76); `docsOf` and friends in src/documents/model.ts read them. */
+  documents: DocFile[];
   times: DayPartTimes;
   settings: DogSettings;
   /** The first day offered ("Log starts on", set or derived): the Timeline and Day view reach back to it. */
@@ -61,6 +63,8 @@ export type SheetState =
   | { kind: 'pinned'; note?: PinnedNote }
   /** A photo (JCB-7): new (a photo event; `linkTo` from a condition page), or `photo` to edit or delete. */
   | { kind: 'photo'; date: PlainDate; photo?: Photo; ctxOpen?: boolean; linkTo?: string }
+  /** Add document on a condition page (JCB-76): saved as a note on `date`, linked to the condition. */
+  | { kind: 'document'; date: PlainDate; condition: string }
   | { kind: 'menu' };
 
 /** Full-screen photo views over the app: the viewer (pages through `ids`) and Compare (a condition's photos). */
@@ -91,6 +95,8 @@ interface LogApi {
   run: (work: () => Promise<Undo | null>, message: string | (() => string | null)) => Promise<boolean>;
   /** Reload everything (after a reset, say). */
   reload: () => void;
+  /** Show a plain toast (no Undo), for something that went wrong outside a write. */
+  notify: (text: string) => void;
   toast: Toast | null;
   undoToast: () => void;
   dismissToast: () => void;
@@ -115,7 +121,7 @@ const RETRY_MS = 4000;
  */
 async function loadRecords(repository: Repository, version: number, shown: Map<string, string>): Promise<Records> {
   const today = repository.today();
-  const [dog, items, slots, entries, removed, events, conditions, pinned, times, settings, photos] = await Promise.all([
+  const [dog, items, slots, entries, removed, events, conditions, pinned, times, settings, photos, documents] = await Promise.all([
     repository.getDog(),
     repository.listItems(),
     repository.listScheduleSlots(),
@@ -127,6 +133,7 @@ async function loadRecords(repository: Repository, version: number, shown: Map<s
     repository.getDayPartTimes(),
     repository.getSettings(),
     repository.listPhotos(),
+    repository.listDocuments(),
   ]);
   const logStart = logStartOf({ today, setting: settings.logStart, entries, events, slotStarts: slots.map((x) => x.activeFrom) });
   // Items still grey (no item colour yet) show the colour the data migration gives them, and keep
@@ -134,7 +141,7 @@ async function loadRecords(repository: Repository, version: number, shown: Map<s
   const shownItems = withItemColours(items, shown);
   shown.clear();
   items.forEach((raw, i) => !isItemColour(raw.colour) && shown.set(raw.id, shownItems[i]!.colour));
-  return { dogId: dog.id, items: shownItems, slots, entries, removed, events, conditions, pinned, photos, times, settings, logStart, today, version };
+  return { dogId: dog.id, items: shownItems, slots, entries, removed, events, conditions, pinned, photos, documents, times, settings, logStart, today, version };
 }
 
 export function LogProvider({ repository, children }: { repository: Repository; children: ReactNode }) {
@@ -285,6 +292,7 @@ export function LogProvider({ repository, children }: { repository: Repository; 
       setOverlay,
       run,
       reload,
+      notify: show,
       toast,
       undoToast,
       dismissToast: () => {
@@ -292,7 +300,7 @@ export function LogProvider({ repository, children }: { repository: Repository; 
         setToast(null);
       },
     }),
-    [repository, version, records, loadFailed, sheet, overlay, run, reload, toast, undoToast, settle],
+    [repository, version, records, loadFailed, sheet, overlay, run, reload, show, toast, undoToast, settle],
   );
   return <Context.Provider value={value}>{children}</Context.Provider>;
 }

@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { HealthEvent, Photo, PlainDate } from '../data';
-import { CameraIcon, ChevronIcon, PlusIcon, TrackedIcon } from '../components/icons';
+import { CameraIcon, ChevronIcon, DocIcon, PlusIcon, TrackedIcon } from '../components/icons';
 import { EventCard } from '../day/EventCard';
 import { eventKindOf } from '../log/EventSheet';
 import { fill, useI18n, type MessageKey } from '../i18n';
@@ -13,6 +13,9 @@ import { shiftDate } from '../timeline/model';
 import { conditionsOf, historyGroups, yearGroups } from './model';
 import { conditionPhotos, photosOf } from '../photos/model';
 import { PhotoThumb } from '../photos/PhotoParts';
+import { conditionDocs, docsOf } from '../documents/model';
+import { FileList } from '../documents/FileRow';
+import { StoredFileRow } from '../documents/StoredFileRow';
 import '../day/day.css';
 import '../components/list.css';
 import './tracked.css';
@@ -73,6 +76,9 @@ export function ConditionPage({
   const ids = photos.map((x) => x.photo.id);
   const view = (photoId: string) => setOverlay({ kind: 'viewer', ids, index: Math.max(0, ids.indexOf(photoId)) });
   const addPhoto = () => open({ kind: 'photo', date: today, linkTo: id });
+  // Documents (JCB-76): newest first, with the date of the event each one is on.
+  const documents = conditionDocs(id, records.events, records.documents);
+  const addDocument = () => open({ kind: 'document', date: today, condition: id });
   const renderGroup = (g: (typeof groups)[number]) => (
     <div key={g.date}>
       <p className="cond__group">{relDate(g.date)}</p>
@@ -82,6 +88,7 @@ export function ConditionPage({
           event={e}
           tags={conditionsOf(e, records.conditions).filter((c) => c.id !== id)}
           photos={photosOf(e.id, records.photos)}
+          docs={docsOf(e.id, records.documents)}
           smallPhotos
           onEdit={editEvent(e)}
           onOpenCondition={onOpenCondition}
@@ -133,6 +140,43 @@ export function ConditionPage({
               <p className="strip-empty__text">{t('photoNone')}</p>
             </div>
           )
+        )}
+        {(documents.length > 0 || !condition.resolvedOn) && (
+          <>
+            <div className="day__section">
+              <h3 className="day__caption">{documents.length ? `${t('docsHead')} · ${documents.length}` : t('docsHead')}</h3>
+              {documents.length > 0 && (
+                <button type="button" className="day__link" onClick={addDocument}>
+                  <PlusIcon size={12} />
+                  {t('docAdd')}
+                </button>
+              )}
+            </div>
+            {documents.length > 0 ? (
+              <div className="day-card day-card--files">
+                <FileList variant="page">
+                  {documents.map(({ doc, event }) => (
+                    <StoredFileRow key={doc.id} doc={doc} mode="page" date={f.dayMonth(event.date)} />
+                  ))}
+                </FileList>
+              </div>
+            ) : (
+              <article className="day-card day-empty">
+                <span className="day-empty__icon" aria-hidden="true">
+                  <DocIcon size={16} />
+                </span>
+                <div>
+                  <p className="day-empty__text">{t('docNone')}</p>
+                  <button type="button" className="btn btn--ghost btn--md list-empty__btn" onClick={addDocument}>
+                    <span className="btn__icon" aria-hidden="true">
+                      <PlusIcon size={12} />
+                    </span>
+                    {t('docPdf')}
+                  </button>
+                </div>
+              </article>
+            )}
+          </>
         )}
         <div className="day__section">
           <h3 className="day__caption">{t('condHistory')}</h3>
