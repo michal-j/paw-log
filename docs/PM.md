@@ -29,7 +29,7 @@ Usage drivers, biggest first: a long session on the most expensive model (every 
 - A known-flaky CI test: rerun once; a second failure means fix the test (small fix, PM directly) rather than keep rerunning.
 
 **Docs and bookkeeping, once each:**
-- Design system (CEO 22 Oct): `docs/design-system/` in the repo is the one design system. A PR that adds or changes a component or token updates it in the same PR. There is no separate log of design-system changes: git history and `CHANGELOG.md` are the record. The published Design System artifact is a stale snapshot from 16 Oct and not maintained unless the CEO asks for it.
+- Design system (CEO 22 Oct): the design system is maintained, not optional. It is `docs/design-system/` in the repo and the published Design System artifact, and they must not disagree. A PR that adds or changes a component or token updates the repo docs in the same PR, and the published artifact is updated as part of the same outcome. To save usage the artifact may follow in a batch: then the gap is one normal deliverable issue ("Sync the published Design System artifact") that ends when it is synced. No change log is kept anywhere for this: git history and `CHANGELOG.md` already say what changed, and no running or standing issue.
 - Changelog line, test case and decision go **in the same PR as the change** (the PM adds them on the branch before merging), not in a separate docs PR.
 - Linear is the source of truth for status, backlog, what is next and what waits on the CEO. `docs/DECISIONS.md` holds only the decided log. Don't repeat Linear's state in docs or memory; point to it.
 - Short reports: agents at most 5 lines, the PM to the CEO briefly.
