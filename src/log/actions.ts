@@ -1,5 +1,5 @@
 // Writes through the repository, each returning how to undo it. The UI shows the Undo toast.
-import type { Condition, Entry, HealthEvent, Photo, PhotoFiles, PinnedNote, RemovedSlot, Repository, ScheduleSlot } from '../data';
+import type { Condition, DocFile, Entry, HealthEvent, Photo, PhotoFiles, PinnedNote, RemovedSlot, Repository, ScheduleSlot } from '../data';
 import { DuplicateSlotEntryError } from '../data/errors';
 import type { SlotChange } from './plan';
 
@@ -98,11 +98,35 @@ export interface PhotoChanges {
   remove?: Photo[];
 }
 
+/** A PDF to send with an event (JCB-76): its row, the file, and what the form wants to know while it goes. */
+export interface DocumentUpload {
+  doc: DocFile;
+  file: Blob;
+  /** Already sent by an earlier attempt of this Save: not sent again, its row is still saved. */
+  skip?: boolean;
+  /** 0 to 1 while it is sent. */
+  onProgress?: (fraction: number) => void;
+  onSent?: () => void;
+  /** This one did not go: the form marks its row (Not sent. Retry). */
+  onFail?: () => void;
+}
+
+/** PDF changes saved together with an event (JCB-76). */
+export interface DocumentChanges {
+  /** New PDFs and their files; their ids come from useDraftIds, so a retry uploads to the same paths. */
+  add?: DocumentUpload[];
+  /** PDFs renamed in place. */
+  update?: { next: DocFile; prev: DocFile }[];
+  /** PDFs taken off the event; their files are removed once Undo is no longer offered. */
+  remove?: DocFile[];
+}
+
 /**
- * Save an event, its condition links and its photo changes. `created`: conditions made with "+ New"
- * in the form, saved first so the event can link to them; Undo removes them again after restoring the
- * event. New photos' files are uploaded before anything else, so a slow or failed upload leaves
- * nothing half-saved, and a retry writes the same files and rows again.
+ * Save an event, its condition links, its photo changes and its PDF changes. `created`: conditions
+ * made with "+ New" in the form, saved first so the event can link to them; Undo removes them again
+ * after restoring the event. New photos' and PDFs' files are uploaded before anything else, so a slow
+ * or failed upload leaves nothing half-saved (one failed PDF stops the whole save), and a retry writes
+ * the same files and rows again.
  */
 export async function saveEvent(
   repo: Repository,
@@ -110,24 +134,49 @@ export async function saveEvent(
   prev: HealthEvent | null,
   created: Condition[] = [],
   photos: PhotoChanges = {},
+  documents: DocumentChanges = {},
 ): Promise<Undo> {
   const { add = [], update = [], remove = [] } = photos;
+  const { add: docAdd = [], update: docUpdate = [], remove: docRemove = [] } = documents;
   for (const a of add) await repo.uploadPhotoFiles(a.photo, a.files);
+  for (const u of docAdd) {
+    if (u.skip) continue;
+    try {
+      await repo.uploadDocumentFile(u.doc, u.file, u.onProgress);
+    } catch (err) {
+      u.onFail?.();
+      throw err;
+    }
+    u.onSent?.();
+  }
   for (const c of created) await repo.saveCondition(c);
   await repo.saveEvent(next);
   for (const a of add) await repo.savePhoto(a.photo);
   for (const u of update) await repo.savePhoto(u.next);
   for (const r of remove) await repo.deletePhoto(r.id);
+  for (const u of docAdd) await repo.saveDocument(u.doc);
+  for (const u of docUpdate) await repo.saveDocument(u.next);
+  for (const r of docRemove) await repo.deleteDocument(r.id);
   const undo = async () => {
     if (prev) await repo.saveEvent(prev);
-    else await repo.deleteEvent(next.id); // its photo rows go with it
+    else await repo.deleteEvent(next.id); // its photo and document rows go with it
     if (prev) for (const a of add) await repo.deletePhoto(a.photo.id);
     for (const u of update) await repo.savePhoto(u.prev);
     for (const r of remove) await repo.savePhoto(r);
+    if (prev) for (const u of docAdd) await repo.deleteDocument(u.doc.id);
+    for (const u of docUpdate) await repo.saveDocument(u.prev);
+    for (const r of docRemove) await repo.saveDocument(r);
     for (const c of created) await repo.deleteCondition(c.id);
     if (add.length) await repo.purgePhotoFiles(add.map((a) => a.photo));
+    if (docAdd.length) await repo.purgeDocumentFiles(docAdd.map((u) => u.doc));
   };
-  return remove.length ? withCommit(undo, () => repo.purgePhotoFiles(remove)) : undo;
+  return remove.length || docRemove.length ? withCommit(undo, () => purgeFiles(repo, remove, docRemove)) : undo;
+}
+
+/** Remove the files of photos and PDFs whose rows are gone. */
+async function purgeFiles(repo: Repository, photos: Photo[], docs: DocFile[]) {
+  if (photos.length) await repo.purgePhotoFiles(photos);
+  if (docs.length) await repo.purgeDocumentFiles(docs);
 }
 
 /** Create, edit, resolve or reopen a condition. Undo puts the previous version back (or deletes a new one). */
@@ -145,14 +194,15 @@ export async function deleteCondition(repo: Repository, condition: Condition, ev
   };
 }
 
-/** Delete an event with its photos (`photos`: its rows, which go with it). Undo brings both back. */
-export async function deleteEvent(repo: Repository, event: HealthEvent, photos: Photo[] = []): Promise<Undo> {
+/** Delete an event with its photos and PDFs (`photos`, `docs`: their rows, which go with it). Undo brings all back. */
+export async function deleteEvent(repo: Repository, event: HealthEvent, photos: Photo[] = [], docs: DocFile[] = []): Promise<Undo> {
   await repo.deleteEvent(event.id);
   const undo = async () => {
     await repo.saveEvent(event);
     for (const p of photos) await repo.savePhoto(p);
+    for (const d of docs) await repo.saveDocument(d);
   };
-  return photos.length ? withCommit(undo, () => repo.purgePhotoFiles(photos)) : undo;
+  return photos.length || docs.length ? withCommit(undo, () => purgeFiles(repo, photos, docs)) : undo;
 }
 
 /**
@@ -166,6 +216,21 @@ export async function deletePhoto(repo: Repository, photo: Photo, event: HealthE
     () => repo.savePhoto(photo),
     () => repo.purgePhotoFiles([photo]),
   );
+}
+
+/** Delete one PDF from an event (the event stays). Undo brings it back; its file goes once Undo is no longer offered. */
+export async function deleteDocument(repo: Repository, doc: DocFile): Promise<Undo> {
+  await repo.deleteDocument(doc.id);
+  return withCommit(
+    () => repo.saveDocument(doc),
+    () => repo.purgeDocumentFiles([doc]),
+  );
+}
+
+/** Rename a stored PDF. Undo puts the previous name back. */
+export async function renameDocument(repo: Repository, next: DocFile, prev: DocFile): Promise<Undo> {
+  await repo.saveDocument(next);
+  return () => repo.saveDocument(prev);
 }
 
 /** Save a pinned note (new or edited). Undo puts back the previous text, or deletes the new note. */

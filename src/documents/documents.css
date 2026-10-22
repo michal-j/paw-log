@@ -1,0 +1,92 @@
+/* Documents (JCB-76), after design/proposals/pdf-upload: FileRow, FileList, FileBar. Tokens only; the
+   tile and row sizes are the design's fixed px. */
+
+/* FileRow: a stored or picked PDF. Tile (page with "PDF"), name, one meta line, and a trailing glyph. */
+.file { position: relative; display: flex; align-items: center; gap: var(--space-2); }
+.file-row {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: 56px;
+  margin: 0;
+  padding: var(--space-2) 0;
+  border: 0;
+  background: transparent;
+  color: var(--color-ink);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.file-row:active { opacity: 0.6; }
+.file-row--static { cursor: default; }
+.file-row--static:active { opacity: 1; }
+.file-row:disabled { cursor: progress; opacity: 1; }
+.file-tile {
+  flex: none;
+  position: relative;
+  width: 34px;
+  height: 42px;
+  display: inline-flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding-bottom: 6px;
+  border: 1px solid var(--color-line-strong);
+  border-radius: var(--radius-sm);
+  background: linear-gradient(180deg, var(--color-surface), var(--color-surface-tint));
+  box-shadow: var(--shadow-badge);
+  color: var(--color-mint-deep);
+  font: var(--type-badge-weight) 10px / 12px var(--type-badge-family);
+  letter-spacing: 0.02em;
+}
+/* The folded corner. */
+.file-tile::before {
+  content: '';
+  position: absolute;
+  top: -1px;
+  right: -1px;
+  width: 11px;
+  height: 11px;
+  border-left: 1px solid var(--color-line-strong);
+  border-bottom: 1px solid var(--color-line-strong);
+  border-top-right-radius: var(--radius-sm);
+  background: linear-gradient(225deg, var(--color-ground) 50%, var(--color-line) 50%);
+}
+.file-row__text { flex: 1; min-width: 0; }
+.file-row__name {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  font: var(--type-body-strong-weight) var(--type-body-strong-size) / var(--type-body-strong-line) var(--type-body-strong-family);
+}
+.file-row__meta { display: block; margin-top: 1px; color: var(--color-ink-3); font: var(--type-small-weight) var(--type-small-size) / var(--type-small-line) var(--type-small-family); font-variant-numeric: tabular-nums; }
+.file-row__date { flex: none; align-self: flex-start; margin-top: var(--space-1); color: var(--color-ink-2); font: 600 12px / 16px var(--type-body-family); font-variant-numeric: tabular-nums; }
+.file-row__go { flex: none; display: inline-flex; color: var(--color-ink-3); }
+/* In a form the row is a target of its own; the meta line carries the state. */
+.file-row__meta--error { color: var(--color-danger); }
+.file__retry { flex: none; }
+/* FileBar: upload progress; the track is a hairline colour, the fill is mint (not text, so mint on white is fine). */
+.file-bar { display: block; height: 4px; margin-top: 7px; border-radius: var(--radius-full); background: var(--color-line); overflow: hidden; }
+.file-bar > i { display: block; height: 100%; width: var(--p, 0%); border-radius: var(--radius-full); background: var(--color-mint); transition: width 120ms linear; }
+/* FileList: rows under a card's text, divided by hairlines. Above the card's open button, like photos and tags. */
+.file-list { position: relative; z-index: 1; margin: var(--space-3) 0 0; padding: 0; list-style: none; border-top: 1px solid var(--color-line); }
+.file-list > li + li { border-top: 1px solid var(--color-line); }
+.file-list > li:last-child .file-row { padding-bottom: 0; min-height: 48px; }
+.file-list--page { margin: 0; padding: 0 13px; border-top: 0; }
+.file-list--page > li:last-child .file-row { padding-bottom: var(--space-2); }
+.file-list--page > li:first-child .file-row { padding-top: var(--space-3); min-height: 60px; }
+.file-list--form { margin: 0 0 var(--space-2); border: 1px solid var(--color-line); border-radius: var(--radius-lg); padding: 0 var(--space-3); background: var(--color-surface-tint); }
+.file-list--form > li:last-child .file-row { padding-bottom: var(--space-2); min-height: 56px; }
+.doc-add { width: 100%; }
+.doc-add .btn__icon { color: var(--color-mint-deep); }
+.doc-pick { min-height: 112px; }
+.doc-input { display: none; }
+/* The Document sheet: Open and Remove side by side under the name. */
+.doc-sheet__note { margin: calc(-1 * var(--space-2)) 0 var(--space-4); }
+/* The card of the condition page's Documents section: rows only, no padding of its own. */
+.day-card--files { padding: 0; }

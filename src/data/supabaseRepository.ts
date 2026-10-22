@@ -8,6 +8,7 @@ import type {
   DateRange,
   DayPart,
   DayPartTimes,
+  DocFile,
   Dog,
   DogSettings,
   Entry,
@@ -26,7 +27,7 @@ import type {
   ScheduleSlot,
   Unit,
 } from './types';
-import { cleanAlsoDone, photoPath } from './types';
+import { cleanAlsoDone, documentPath, photoPath } from './types';
 import { UploadError, defaultUploader, type UploadResponse, type Uploader } from './upload';
 
 export { DuplicateSlotEntryError, NoDogError, RepositoryError };
@@ -129,6 +130,15 @@ interface AttachmentRow {
   caption: string;
   position: number;
 }
+interface DocumentRow {
+  id: string;
+  dog_id: string;
+  event_id: string;
+  name: string;
+  size_bytes: number | string;
+  page_count: number | null;
+  position: number;
+}
 
 const DOG_COLUMNS = 'id, household_id, name';
 const ITEM_COLUMNS =
@@ -140,6 +150,9 @@ const EVENT_COLUMNS = 'id, dog_id, date, type, title, detail, intensity, props, 
 const CONDITION_COLUMNS = 'id, dog_id, name, started_on, description, resolved_on, position';
 const PINNED_COLUMNS = 'id, dog_id, title, body, position, created_by, updated_by, updated_at';
 const ATTACHMENT_COLUMNS = 'id, dog_id, event_id, width, height, taken_at, caption, position';
+const DOCUMENT_COLUMNS = 'id, dog_id, event_id, name, size_bytes, page_count, position';
+/** The private storage bucket of PDFs (migration 20261023120000). */
+export const DOCUMENT_BUCKET = 'documents';
 /** The private storage bucket of photos (migration 20261020120000). */
 export const PHOTO_BUCKET = 'photos';
 /** Signed photo URLs last this long; one is reused until it has less than PHOTO_URL_MARGIN_S left. */
@@ -376,6 +389,29 @@ export const fromPhoto = (p: Photo) => ({
   taken_at: p.takenAt,
   caption: p.caption,
   position: p.position,
+});
+
+export const toDocument = (r: DocumentRow): DocFile => ({
+  id: r.id,
+  dogId: r.dog_id,
+  eventId: r.event_id,
+  name: r.name,
+  sizeBytes: Number(r.size_bytes),
+  pageCount: r.page_count ?? null,
+  position: r.position ?? 0,
+});
+
+/** created_by, updated_by and the timestamps are set by the database. */
+export const fromDocument = (d: DocFile) => ({
+  id: d.id,
+  dog_id: d.dogId,
+  event_id: d.eventId,
+  kind: 'pdf',
+  storage_path: documentPath(d),
+  name: d.name,
+  size_bytes: d.sizeBytes,
+  page_count: d.pageCount,
+  position: d.position,
 });
 
 export interface SupabaseRepositoryOptions {
@@ -684,34 +720,42 @@ export class SupabaseRepository implements Repository {
    */
   async uploadPhotoFiles(photo: Photo, files: PhotoFiles): Promise<void> {
     requireUuid('uploadPhotoFiles', photo.id);
-    const bucket = this.client.storage.from(PHOTO_BUCKET);
     for (const size of ['thumb', 'full'] as const) {
-      const { data, error } = await bucket.createSignedUploadUrl(photoPath(photo, size), { upsert: true });
-      if (error || !data) throw new RepositoryError('uploadPhotoFiles', error ? storageCode(error) : undefined, error?.message ?? 'no upload URL');
-      let res: UploadResponse;
+      // A path never gets other content (a changed photo is a new attachment), so it may be cached for long.
+      await this.putFile('uploadPhotoFiles', PHOTO_BUCKET, photoPath(photo, size), files[size], 'image/jpeg');
+    }
+  }
+
+  /** One file to a signed upload URL for its path; see uploadPhotoFiles. */
+  private async putFile(
+    operation: string,
+    bucketId: string,
+    path: string,
+    body: Blob,
+    contentType: string,
+    onProgress?: (fraction: number) => void,
+  ): Promise<void> {
+    const { data, error } = await this.client.storage.from(bucketId).createSignedUploadUrl(path, { upsert: true });
+    if (error || !data) throw new RepositoryError(operation, error ? storageCode(error) : undefined, error?.message ?? 'no upload URL');
+    let res: UploadResponse;
+    try {
+      res = await this.upload({
+        url: data.signedUrl,
+        headers: { 'content-type': contentType, 'x-upsert': 'true', 'cache-control': 'max-age=31536000' },
+        body,
+        onProgress,
+      });
+    } catch (err) {
+      throw new RepositoryError(operation, err instanceof UploadError ? err.kind : undefined, String((err as Error).message));
+    }
+    if (res.status < 200 || res.status >= 300) {
+      let message = res.text;
       try {
-        res = await this.upload({
-          url: data.signedUrl,
-          headers: {
-            'content-type': 'image/jpeg',
-            'x-upsert': 'true',
-            // A path never gets other content (a changed photo is a new attachment), so it may be cached for long.
-            'cache-control': 'max-age=31536000',
-          },
-          body: files[size],
-        });
-      } catch (err) {
-        throw new RepositoryError('uploadPhotoFiles', err instanceof UploadError ? err.kind : undefined, String((err as Error).message));
+        message = (JSON.parse(res.text) as { message?: string }).message ?? message;
+      } catch {
+        /* not JSON */
       }
-      if (res.status < 200 || res.status >= 300) {
-        let message = res.text;
-        try {
-          message = (JSON.parse(res.text) as { message?: string }).message ?? message;
-        } catch {
-          /* not JSON */
-        }
-        throw new RepositoryError('uploadPhotoFiles', String(res.status), message);
-      }
+      throw new RepositoryError(operation, String(res.status), message);
     }
   }
 
@@ -733,14 +777,61 @@ export class SupabaseRepository implements Repository {
     for (const path of paths) this.signed.delete(path);
   }
 
+  async listDocuments(): Promise<DocFile[]> {
+    const dog = await this.getDog();
+    const rows = await this.pages<DocumentRow>('listDocuments', (from, to) =>
+      this.client
+        .from('attachment')
+        .select(DOCUMENT_COLUMNS)
+        .eq('dog_id', dog.id)
+        .eq('kind', 'pdf')
+        .order('event_id')
+        .order('position')
+        .order('id')
+        .range(from, to),
+    );
+    return rows.map(toDocument);
+  }
+
+  /** Upsert the PDF at its fixed path (a retry replaces it); see uploadPhotoFiles for the limits. */
+  async uploadDocumentFile(doc: DocFile, file: Blob, onProgress?: (fraction: number) => void): Promise<void> {
+    requireUuid('uploadDocumentFile', doc.id);
+    await this.putFile('uploadDocumentFile', DOCUMENT_BUCKET, documentPath(doc), file, 'application/pdf', onProgress);
+  }
+
+  async saveDocument(doc: DocFile): Promise<void> {
+    requireUuid('saveDocument', doc.id);
+    unwrap('saveDocument', await this.client.from('attachment').upsert(fromDocument(doc), { onConflict: 'id' }));
+  }
+
+  async deleteDocument(id: string): Promise<void> {
+    unwrap('deleteDocument', await this.client.from('attachment').delete().eq('id', id).eq('kind', 'pdf'));
+  }
+
+  /** The storage policy refuses files whose row still exists, so this never removes a document that is shown. */
+  async purgeDocumentFiles(docs: Pick<DocFile, 'id' | 'dogId'>[]): Promise<void> {
+    if (!docs.length) return;
+    const paths = docs.map(documentPath);
+    const { error } = await this.client.storage.from(DOCUMENT_BUCKET).remove(paths);
+    if (error) throw new RepositoryError('purgeDocumentFiles', storageCode(error), error.message);
+    for (const path of paths) this.signed.delete(path);
+  }
+
+  async documentUrls(docs: Pick<DocFile, 'id' | 'dogId'>[]): Promise<Record<string, string>> {
+    return this.signedUrls('documentUrls', DOCUMENT_BUCKET, new Map(docs.map((d) => [d.id, documentPath(d)])));
+  }
+
   /** One signing request for every path without a fresh URL; the others come from memory. */
   async photoUrls(photos: Pick<Photo, 'id' | 'dogId'>[], size: PhotoSize): Promise<Record<string, string>> {
+    return this.signedUrls('photoUrls', PHOTO_BUCKET, new Map(photos.map((p) => [p.id, photoPath(p, size)])));
+  }
+
+  private async signedUrls(operation: string, bucketId: string, pathOf: Map<string, string>): Promise<Record<string, string>> {
     const now = this.now().getTime();
-    const pathOf = new Map(photos.map((p) => [p.id, photoPath(p, size)]));
     const stale = [...new Set(pathOf.values())].filter((path) => (this.signed.get(path)?.until ?? 0) <= now);
     if (stale.length) {
-      const { data, error } = await this.client.storage.from(PHOTO_BUCKET).createSignedUrls(stale, PHOTO_URL_TTL_S);
-      if (error) throw new RepositoryError('photoUrls', storageCode(error), error.message);
+      const { data, error } = await this.client.storage.from(bucketId).createSignedUrls(stale, PHOTO_URL_TTL_S);
+      if (error) throw new RepositoryError(operation, storageCode(error), error.message);
       const until = now + (PHOTO_URL_TTL_S - PHOTO_URL_MARGIN_S) * 1000;
       for (const item of data ?? []) {
         if (!item.signedUrl || !item.path || item.error) continue;

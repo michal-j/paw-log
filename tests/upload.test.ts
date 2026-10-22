@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { MAX_UPLOAD_MS, STALL_MS, UploadError, fetchUploader, uploadLimitMs, xhrUploader } from '../src/data/upload';
 import { OWN_LIMITS, withTimeout } from '../src/data/timeout';
 
-type Listener = () => void;
+type Listener = (e?: unknown) => void;
 /** A stand-in XMLHttpRequest whose progress and end the test drives. */
 class FakeXhr {
   static last: FakeXhr | null = null;
@@ -29,8 +29,8 @@ class FakeXhr {
   abort() {
     this.aborted = true;
   }
-  progress() {
-    this.onUpload.get('progress')?.forEach((fn) => fn());
+  progress(event?: unknown) {
+    this.onUpload.get('progress')?.forEach((fn) => fn(event));
   }
   finish(status: number, text = '{}') {
     this.status = status;
@@ -56,6 +56,25 @@ describe('upload limits', () => {
     xhr.finish(200);
     await expect(upload).resolves.toEqual({ status: 200, text: '{}' });
     expect(xhr.aborted).toBe(false);
+  });
+
+  it('reports how much of the body went (0 to 1) while it is sent (PDF rows show it, JCB-76)', async () => {
+    const seen: number[] = [];
+    const upload = xhrUploader({ XHR: FakeXhr as never })({ ...request(), onProgress: (f) => seen.push(f) });
+    const xhr = FakeXhr.last!;
+    xhr.progress({ lengthComputable: true, loaded: 100, total: 400 });
+    xhr.progress({ lengthComputable: false, loaded: 0, total: 0 });
+    xhr.progress({ lengthComputable: true, loaded: 400, total: 400 });
+    xhr.finish(200);
+    await upload;
+    expect(seen).toEqual([0.25, 1]);
+  });
+
+  it('fetch uploads report done once the answer is good', async () => {
+    const seen: number[] = [];
+    await fetchUploader(async () => new Response('{}', { status: 200 }))({ ...request(), onProgress: (f) => seen.push(f) });
+    await fetchUploader(async () => new Response('{}', { status: 500 }))({ ...request(), onProgress: (f) => seen.push(f) });
+    expect(seen).toEqual([1]);
   });
 
   it(`an upload with no progress for ${STALL_MS / 1000} s gives up`, async () => {
@@ -102,6 +121,7 @@ describe('upload limits', () => {
 
   it("the repository's 15 s call limit leaves uploads to their own limits", async () => {
     expect(OWN_LIMITS.has('uploadPhotoFiles')).toBe(true);
+    expect(OWN_LIMITS.has('uploadDocumentFile')).toBe(true);
     const repo = withTimeout({ uploadPhotoFiles: () => new Promise((r) => setTimeout(() => r('done'), 60_000)), other: () => new Promise(() => {}) }, 15_000);
     const upload = repo.uploadPhotoFiles();
     const other = repo.other().catch((e: unknown) => e);

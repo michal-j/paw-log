@@ -6,12 +6,16 @@ import eventsJson from '../../data/demo/events.json';
 import conditionsJson from '../../data/demo/conditions.json';
 import pinnedJson from '../../data/demo/pinned.json';
 import photosJson from '../../data/demo/photos.json';
+import documentsJson from '../../data/demo/documents.json';
+// ?no-inline: Vite inlines files under 4 KB as data: URLs, which window.open refuses; a PDF must be a real file (QA, JCB-76).
+import ultrasoundPdf from '../../data/demo/documents/ultrasound-report.pdf?url&no-inline';
+import bloodPressurePdf from '../../data/demo/documents/blood-pressure-check.pdf?url&no-inline';
 import lumpA1 from '../../data/demo/photos/lump-a-1.svg?url';
 import lumpA2 from '../../data/demo/photos/lump-a-2.svg?url';
 import { DuplicateSlotEntryError } from './errors';
 import { DEFAULT_DAY_PART_TIMES, type Repository } from './repository';
 import { cleanAlsoDone } from './types';
-import type { Condition, DateRange, DayPart, DayPartTimes, Dog, DogSettings, Entry, EntryState, HealthEvent, Item, Photo, PhotoFiles, PhotoSize, PinnedNote, RemovedSlot, ScheduleSlot } from './types';
+import type { Condition, DateRange, DayPart, DayPartTimes, DocFile, Dog, DogSettings, Entry, EntryState, HealthEvent, Item, Photo, PhotoFiles, PhotoSize, PinnedNote, RemovedSlot, ScheduleSlot } from './types';
 
 /** v2: JCB-39 changed the shape (amounts, usual day). Changes saved under v1 are dropped. */
 export const DEMO_STORAGE_KEY = 'pawlog.demo.v2';
@@ -21,6 +25,11 @@ export const DEMO_PHOTO_FILES_KEY = 'pawlog.demo.photo-files.v1';
 /** The sample photos are bundled pictures (fictional drawings), served with the app: no network. */
 const SAMPLE_FILES: Record<string, string> = { 'photo-001': lumpA1, 'photo-002': lumpA2 };
 type StoredFiles = Record<string, Record<PhotoSize, string>>;
+
+/** Files of PDFs added in the demo (data: URLs), apart from the records and the photo files, so a full quota only loses PDFs. */
+export const DEMO_DOC_FILES_KEY = 'pawlog.demo.doc-files.v1';
+/** The sample PDFs are bundled fictional files, served with the app: no network. */
+const SAMPLE_DOCS: Record<string, string> = { 'doc-001': ultrasoundPdf, 'doc-002': bloodPressurePdf };
 
 /** Entries as stored: a usual-day item removed for a day is a row with state `removed` (as in the database). */
 type StoredEntry = Omit<Entry, 'state'> & { state: EntryState | 'removed' };
@@ -46,6 +55,8 @@ interface Persisted {
   links?: Link[];
   /** Absent in changes saved before JCB-7: the sample photos are added then. */
   photos?: Photo[];
+  /** Absent in changes saved before JCB-76: the sample PDFs are added then. */
+  documents?: DocFile[];
 }
 
 const isEntry = (e: StoredEntry): e is Entry => e.state !== 'removed';
@@ -70,6 +81,7 @@ function seed(): Persisted {
     conditions: copy(conditionsJson.conditions as Condition[]),
     links: copy(conditionsJson.links),
     photos: copy(photosJson as Photo[]),
+    documents: copy(documentsJson as DocFile[]),
   };
 }
 
@@ -87,6 +99,10 @@ export class DemoRepository implements Repository {
   private data: Persisted;
   /** Files of photos added here, by photo id (kept in localStorage while it has room, else in memory). */
   private files: StoredFiles;
+  /** Files of PDFs added here, by document id, as data: URLs (same rules as `files`). */
+  private docFiles: Record<string, string>;
+  /** blob: URLs made for documents opened here (iPhone does not open a data: URL in a new tab). */
+  private readonly docBlobs = new Map<string, string>();
 
   constructor(
     private readonly storage: Pick<Storage, 'getItem' | 'setItem' | 'removeItem'> | null = safeStorage(),
@@ -94,6 +110,7 @@ export class DemoRepository implements Repository {
   ) {
     this.data = this.load() ?? seed();
     this.files = this.loadFiles();
+    this.docFiles = this.loadDocFiles();
   }
 
   today() {
@@ -206,6 +223,7 @@ export class DemoRepository implements Repository {
     this.data.links = this.links().filter((l) => l.eventId !== id);
     // As in the database: the event's photo rows go with it (on delete cascade); files stay until purged.
     this.data.photos = this.photos().filter((p) => p.eventId !== id);
+    this.data.documents = this.documents().filter((d) => d.eventId !== id);
     this.persist();
   }
   async listPhotos(): Promise<Photo[]> {
@@ -235,6 +253,42 @@ export class DemoRepository implements Repository {
     for (const p of photos) {
       const url = this.files[p.id]?.[size] ?? SAMPLE_FILES[p.id];
       if (url) out[p.id] = url;
+    }
+    return out;
+  }
+  async listDocuments(): Promise<DocFile[]> {
+    return copy(this.documents());
+  }
+  async uploadDocumentFile(doc: DocFile, file: Blob, onProgress?: (fraction: number) => void) {
+    this.docFiles[doc.id] = await dataUrl(file, 'application/pdf');
+    this.persistDocFiles();
+    onProgress?.(1);
+  }
+  async saveDocument(doc: DocFile) {
+    // Same rule as the foreign key: the event exists.
+    if (!this.data.events.some((e) => e.id === doc.eventId)) throw new Error(`saveDocument: no event ${doc.eventId}`);
+    this.data.documents = upsert(this.documents(), copy(doc));
+    this.persist();
+  }
+  async deleteDocument(id: string) {
+    this.data.documents = this.documents().filter((d) => d.id !== id);
+    this.persist();
+  }
+  async purgeDocumentFiles(docs: Pick<DocFile, 'id' | 'dogId'>[]) {
+    const kept = new Set(this.documents().map((d) => d.id));
+    for (const d of docs) {
+      if (kept.has(d.id)) continue;
+      delete this.docFiles[d.id];
+      this.revokeDocBlob(d.id);
+    }
+    this.persistDocFiles();
+  }
+  async documentUrls(docs: Pick<DocFile, 'id' | 'dogId'>[]) {
+    const out: Record<string, string> = {};
+    for (const d of docs) {
+      const data = this.docFiles[d.id];
+      const url = SAMPLE_DOCS[d.id] ?? (data ? this.docBlobUrl(d.id, data) : undefined);
+      if (url) out[d.id] = url;
     }
     return out;
   }
@@ -300,16 +354,42 @@ export class DemoRepository implements Repository {
     return this.data.photos;
   }
 
+  /** Changes saved before JCB-76 have no PDFs: they get the sample ones whose events are still there. */
+  private documents(): DocFile[] {
+    if (!this.data.documents) {
+      const events = new Set(this.data.events.map((e) => e.id));
+      this.data.documents = copy(documentsJson as DocFile[]).filter((d) => events.has(d.eventId));
+    }
+    return this.data.documents;
+  }
+  private docBlobUrl(id: string, data: string): string {
+    let url = this.docBlobs.get(id);
+    if (!url) {
+      const bytes = Uint8Array.from(atob(data.slice(data.indexOf(',') + 1)), (c) => c.charCodeAt(0));
+      url = URL.createObjectURL(new Blob([bytes], { type: 'application/pdf' }));
+      this.docBlobs.set(id, url);
+    }
+    return url;
+  }
+  private revokeDocBlob(id: string) {
+    const url = this.docBlobs.get(id);
+    if (url) URL.revokeObjectURL(url);
+    this.docBlobs.delete(id);
+  }
+
   /** Drop the visitor's changes and return to the frozen sample data. */
   reset() {
     try {
       this.storage?.removeItem(DEMO_STORAGE_KEY);
       this.storage?.removeItem(DEMO_PHOTO_FILES_KEY);
+      this.storage?.removeItem(DEMO_DOC_FILES_KEY);
     } catch {
       /* storage unavailable */
     }
     this.data = seed();
     this.files = {};
+    for (const id of [...this.docBlobs.keys()]) this.revokeDocBlob(id);
+    this.docFiles = {};
   }
 
   /** Changes saved before JCB-6 have no conditions: they get the sample ones, linked to the events still there. */
@@ -356,6 +436,25 @@ export class DemoRepository implements Repository {
     }
   }
 
+  private loadDocFiles(): Record<string, string> {
+    try {
+      const raw = this.storage?.getItem(DEMO_DOC_FILES_KEY);
+      const parsed: unknown = raw ? JSON.parse(raw) : null;
+      return parsed && typeof parsed === 'object' ? (parsed as Record<string, string>) : {};
+    } catch {
+      return {};
+    }
+  }
+
+  /** PDFs are large too: when localStorage is full they stay in memory for this visit only. */
+  private persistDocFiles() {
+    try {
+      this.storage?.setItem(DEMO_DOC_FILES_KEY, JSON.stringify(this.docFiles));
+    } catch {
+      /* quota or private mode: keep them in memory */
+    }
+  }
+
   /** Photos are large: when localStorage is full they stay in memory for this visit only. */
   private persistFiles() {
     try {
@@ -378,12 +477,12 @@ function upsert<T extends { id: string }>(list: T[], next: T): T[] {
   return list.some((x) => x.id === next.id) ? list.map((x) => (x.id === next.id ? next : x)) : [...list, next];
 }
 
-/** A Blob as a data: URL (the demo keeps added photos as text). */
-async function dataUrl(blob: Blob): Promise<string> {
+/** A Blob as a data: URL (the demo keeps added photos and PDFs as text). */
+async function dataUrl(blob: Blob, fallbackType = 'image/jpeg'): Promise<string> {
   const bytes = new Uint8Array(await blob.arrayBuffer());
   let binary = '';
   for (let i = 0; i < bytes.length; i += 0x8000) binary += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
-  return `data:${blob.type || 'image/jpeg'};base64,${btoa(binary)}`;
+  return `data:${blob.type || fallbackType};base64,${btoa(binary)}`;
 }
 
 function safeStorage(): Storage | null {

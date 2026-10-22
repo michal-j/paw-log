@@ -19,6 +19,7 @@ import { ConditionTags } from '../tracked/ConditionTag';
 import { conditionsOf } from '../tracked/model';
 import { EventCard } from './EventCard';
 import { dayPhotos, photosOf } from '../photos/model';
+import { docsOf } from '../documents/model';
 import { PhotoThumb } from '../photos/PhotoParts';
 import { buildDay, dayBounds, inBounds, type DayEntry, type PlannedRow } from './model';
 import './day.css';
@@ -139,6 +140,7 @@ export function DayView({ date, onBack, onStep, onInvalid, onUsualDay, onOpenCon
 
   const editEntry = (e: Entry) => open({ kind: 'entry', group: itemGroup(e.itemId), date: e.date, part: e.dayPart, entry: e });
   const photosFor = (e: HealthEvent) => (records ? photosOf(e.id, records.photos) : []);
+  const docsFor = (e: HealthEvent) => (records ? docsOf(e.id, records.documents) : []);
   /** A photo event opens its photo's form; other events their own. Null: nothing to edit. */
   const editOf = (e: HealthEvent): (() => void) | null => {
     if (e.type === 'photo') {
@@ -203,6 +205,7 @@ export function DayView({ date, onBack, onStep, onInvalid, onUsualDay, onOpenCon
                 event={e}
                 tags={tagsOf(e)}
                 photos={photosFor(e)}
+                docs={docsFor(e)}
                 onEdit={() => editEvent(e)}
                 onOpenCondition={onOpenCondition}
                 onViewPhoto={viewPhoto}
@@ -250,6 +253,7 @@ export function DayView({ date, onBack, onStep, onInvalid, onUsualDay, onOpenCon
                 event={e}
                 tags={tagsOf(e)}
                 photos={photosFor(e)}
+                docs={docsFor(e)}
                 onEdit={editOf(e)}
                 onOpenCondition={onOpenCondition}
                 onViewPhoto={viewPhoto}

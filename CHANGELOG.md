@@ -4,6 +4,10 @@ Format: [Keep a Changelog](https://keepachangelog.com). "Unreleased" means not y
 
 ## Unreleased
 
+### Added
+- PDF documents on vet visits and tracked conditions: attach PDFs (up to 10 MB, 5 per entry) to a vet visit or note, or with "Add document" on a condition; they show in the Day view, the condition's Documents section and History, and open in the phone's PDF viewer. Private `documents` storage (migration `documents`, not yet applied to production); demo mode has two sample PDFs (JCB-76).
+- Design system: FileRow documented; EventBadge page brought up to date with the new badges.
+
 ### Changed
 - Saving: "Couldn't save" now shows within about 6 s instead of up to 15 s. A stuck write is sent again after 2.5 s (was 6 s) and its second try is cut off 3 s later; reads and photo uploads keep their limits (JCB-74).
 

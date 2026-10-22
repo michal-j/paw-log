@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import type { Condition, HealthEvent, Photo } from '../data';
+import type { Condition, DocFile, HealthEvent, Photo } from '../data';
 import { EventBadge } from '../components/EventBadge';
 import { DotsIcon } from '../components/icons';
 import { fill, useI18n } from '../i18n';
@@ -8,6 +8,8 @@ import { serviceLabel } from '../log/services';
 import { symptomDetail } from '../log/symptoms';
 import { ConditionTags } from '../tracked/ConditionTag';
 import { PhotoThumb } from '../photos/PhotoParts';
+import { FileList } from '../documents/FileRow';
+import { StoredFileRow } from '../documents/StoredFileRow';
 import { symptomLabel } from '../timeline/labels';
 import { BADGE_FOR } from './model';
 
@@ -16,12 +18,14 @@ import { BADGE_FOR } from './model';
  * card is the button that opens the event; with condition tags or photos the head and text open it
  * and each tag and photo is its own target (a button cannot hold buttons). `onEdit` null: nothing
  * to edit. Photos show as 72px thumbnails (52px with `smallPhotos`) that open the viewer:
- * below the text, on a vet visit to the right of it.
+ * below the text, on a vet visit to the right of it. PDFs (JCB-76) are rows under the text and photos,
+ * above the tags; a tap on a row opens the PDF in the phone's viewer.
  */
 export function EventCard({
   event: e,
   tags = [],
   photos = [],
+  docs = [],
   smallPhotos = false,
   onEdit,
   onOpenCondition,
@@ -30,6 +34,7 @@ export function EventCard({
   event: HealthEvent;
   tags?: Condition[];
   photos?: Photo[];
+  docs?: DocFile[];
   smallPhotos?: boolean;
   onEdit: (() => void) | null;
   onOpenCondition: (id: string) => void;
@@ -87,7 +92,7 @@ export function EventCard({
     );
   }
 
-  if (!tags.length && !photos.length) {
+  if (!tags.length && !photos.length && !docs.length) {
     return onEdit ? (
       <button type="button" className="day-card day-card--tap" onClick={onEdit}>
         {content}
@@ -130,6 +135,13 @@ export function EventCard({
           {open}
           {photoRow}
         </>
+      )}
+      {docs.length > 0 && (
+        <FileList variant="card">
+          {docs.map((d) => (
+            <StoredFileRow key={d.id} doc={d} mode="card" />
+          ))}
+        </FileList>
       )}
       <ConditionTags conditions={tags} onOpen={onOpenCondition} />
     </div>

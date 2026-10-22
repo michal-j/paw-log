@@ -22,6 +22,8 @@ export interface UploadRequest {
   url: string;
   headers: Record<string, string>;
   body: Blob;
+  /** Share of the body sent so far, 0 to 1, where the transport can tell (XMLHttpRequest can, fetch cannot). */
+  onProgress?: (fraction: number) => void;
 }
 export interface UploadResponse {
   status: number;
@@ -75,7 +77,10 @@ export function xhrUploader({
         stall = setTimeout(() => fail('stalled', `no upload progress for ${stallMs / 1000} s`), stallMs);
       };
       const cap = setTimeout(() => fail('timeout', `upload took longer than ${maxMs / 1000} s`), maxMs);
-      xhr.upload.addEventListener('progress', alive);
+      xhr.upload.addEventListener('progress', (e?: ProgressEvent) => {
+        alive();
+        if (e?.lengthComputable && e.total > 0) request.onProgress?.(Math.min(1, e.loaded / e.total));
+      });
       xhr.addEventListener('progress', alive);
       xhr.addEventListener('load', () => finish(() => resolve({ status: xhr.status, text: xhr.responseText })));
       xhr.addEventListener('error', () => fail('network', 'the upload failed'));
@@ -105,7 +110,9 @@ export function fetchUploader(fetchImpl: typeof fetch, limitMs: (bytes: number) 
         fetchImpl(request.url, { method: 'PUT', headers: request.headers, body: request.body, signal: controller.signal }),
         late,
       ]);
-      return { status: res.status, text: await Promise.race([res.text(), late]) };
+      const text = await Promise.race([res.text(), late]);
+      if (res.status >= 200 && res.status < 300) request.onProgress?.(1);
+      return { status: res.status, text };
     } catch (err) {
       throw err instanceof UploadError ? err : new UploadError('network', String((err as Error)?.message ?? err));
     } finally {

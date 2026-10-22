@@ -15,6 +15,8 @@ import { ConditionPicker } from '../tracked/ConditionPicker';
 import { nextPosition, photosOf } from '../photos/model';
 import { LocalThumb, PhotoPick, PhotoThumb } from '../photos/PhotoParts';
 import type { PreparedPhoto } from '../photos/resize';
+import { DocumentSheet, DocumentsField, docUploads, useDocDrafts, type DocTarget } from '../documents/DocumentsField';
+import { docsOf, nextDocPosition } from '../documents/model';
 
 type OtherType = 'frontline' | 'deworming' | 'anal_glands' | 'nails' | 'other';
 const OTHER_TYPES: readonly { type: OtherType; label: MessageKey }[] = [
@@ -104,6 +106,10 @@ export function EventSheet({
   const draft = useDraftIds();
   const [form, setForm] = useState<Form>(() => initial(kind, date, event, ctxOpen, linkTo));
   const [preparing, setPreparing] = useState(false);
+  // PDFs (JCB-76): the entry's saved ones, the ones picked here, and the Document sheet over this one.
+  const storedDocs = event && records ? docsOf(event.id, records.documents) : [];
+  const docs = useDocDrafts(storedDocs.length);
+  const [docTarget, setDocTarget] = useState<DocTarget | null>(null);
   const serviceInput = useRef<HTMLInputElement>(null);
   const addingService = form.serviceDraft !== null;
   useEffect(() => {
@@ -112,6 +118,7 @@ export function EventSheet({
   if (!records) return null;
   const photos = event ? photosOf(event.id, records.photos) : [];
   const withPhotos = kind !== 'other';
+  const withDocs = kind === 'vet' || kind === 'note';
   const set = (patch: Partial<Form>) => setForm((x) => ({ ...x, ...patch }));
 
   const clinics = [...new Set(records.events.filter((e) => e.type === 'vet' && e.title).map((e) => e.title))];
@@ -129,7 +136,8 @@ export function EventSheet({
       return { type: 'symptom', title: known ? symptomTitle(known) : title, detail, props, intensity, alsoDone: [] };
     }
     if (kind === 'vet') return title || detail ? { type: 'vet', title, detail, props: {}, intensity: null, alsoDone: form.alsoDone } : null;
-    if (kind === 'note') return detail ? { type: 'note', title: '', detail, props: {}, intensity: null, alsoDone: [] } : null;
+    // A note made with Add document on a condition has no text: the PDF is what it holds.
+    if (kind === 'note') return detail || storedDocs.length > 0 || docs.drafts.length > 0 ? { type: 'note', title: '', detail, props: {}, intensity: null, alsoDone: [] } : null;
     if (!form.type || (form.type === 'other' && !title)) return null;
     return { type: form.type, title: form.type === 'other' ? title : '', detail, props: {}, intensity: null, alsoDone: [] };
   };
@@ -148,13 +156,24 @@ export function EventSheet({
       photo: { id: photoId(), dogId: records.dogId, eventId: next.id, width: p.width, height: p.height, takenAt: p.takenAt, caption: '', position: start + i },
       files: { full: p.full, thumb: p.thumb },
     }));
-    if (await run(() => act.saveEvent(repository, next, event ?? null, created, { add }), t('toastSaved'))) {
+    // New PDFs: sent first, one failure stops the whole save (nothing half-saved) and marks its row.
+    let failed = false;
+    const uploads = docUploads(
+      docs.drafts,
+      docs.patch,
+      (d, position) => ({ id: d.id, dogId: records.dogId, eventId: next.id, name: d.name, sizeBytes: d.sizeBytes, pageCount: d.pageCount, position }),
+      nextDocPosition(storedDocs),
+    ).map((u) => ({ ...u, onFail: () => ((failed = true), u.onFail?.()) }));
+    docs.start();
+    const ok = await run(() => act.saveEvent(repository, next, event ?? null, created, { add }, { add: uploads }), t('toastSaved'));
+    docs.settle();
+    if (ok) {
       close();
       if (!linkTo) onShowDay(next.date);
-    }
+    } else if (failed) docs.setError({ kind: 'failed' });
   };
   const remove = async () => {
-    if (event && (await run(() => act.deleteEvent(repository, event, photos), t('toastEventDeleted')))) close();
+    if (event && (await run(() => act.deleteEvent(repository, event, photos, storedDocs), t('toastEventDeleted')))) close();
   };
 
   // Own services: those used in earlier visits of this dog (most recent first), after the ones typed here.
@@ -341,68 +360,95 @@ export function EventSheet({
   }
 
   return (
-    <Sheet
-      title={event ? t('editEvent') : t(ADD_TITLE[kind])}
-      onClose={close}
-      footer={
-        <>
-          {event && (
-            <button type="button" className="btn btn--ghost btn--lg btn--danger" disabled={busy} onClick={guard(remove)}>
-              {t('delete')}
+    <>
+      <Sheet
+        title={event ? t('editEvent') : t(ADD_TITLE[kind])}
+        // Escape closes the Document sheet over this one, not this one too.
+        onClose={() => !docTarget && close()}
+        footer={
+          <>
+            {event && (
+              <button type="button" className="btn btn--ghost btn--lg btn--danger" disabled={busy} onClick={guard(remove)}>
+                {t('delete')}
+              </button>
+            )}
+            <button type="button" className="btn btn--primary btn--lg" disabled={busy || preparing || docs.reading || !canSave} onClick={guard(save)}>
+              {t('save')}
             </button>
-          )}
-          <button type="button" className="btn btn--primary btn--lg" disabled={busy || preparing || !canSave} onClick={guard(save)}>
-            {t('save')}
-          </button>
-        </>
-      }
-    >
-      <DateLine
-        date={form.date}
-        open={form.ctxOpen}
-        today={records.today}
-        onOpen={() => set({ ctxOpen: true })}
-        onDate={(d) => set({ date: d })}
-      />
-      {body}
-      {withPhotos && (
-        <Field label={t('chips.109')} hint={optional} error={form.photoErr ? t('photoUnreadable') : undefined}>
-          <div className="photo-row photo-row--field">
-            {photos.map((p) => (
-              <PhotoThumb
-                key={p.id}
-                photo={p}
-                size="sm"
-                label={fill(t('photoAlt'), { d: f.shortDate(form.date) })}
-                onOpen={() => setOverlay({ kind: 'viewer', ids: photos.map((x) => x.id), index: Math.max(0, photos.indexOf(p)) })}
-              />
-            ))}
-            {form.newPhotos.map((p, i) => (
-              <LocalThumb key={i} file={p.thumb} />
-            ))}
-            <PhotoPick
-              variant="sm"
-              label={t('addPhoto')}
-              onPicked={(p) => setForm((x) => ({ ...x, newPhotos: [...x.newPhotos, p], photoErr: false }))}
-              onError={() => set({ photoErr: true })}
-              onBusy={setPreparing}
-            />
-          </div>
-        </Field>
-      )}
-      <ConditionPicker
-        conditions={records.conditions}
-        pending={form.pending}
-        selected={form.conditionIds}
-        onToggle={(id) =>
-          set({ conditionIds: form.conditionIds.includes(id) ? form.conditionIds.filter((x) => x !== id) : [...form.conditionIds, id] })
+          </>
         }
-        onAdd={(name) => {
-          const c: Condition = { id: act.newId(), dogId: records.dogId, name, startedOn: form.date, description: '', resolvedOn: null, position: 0 };
-          set({ pending: [...form.pending, c], conditionIds: [...form.conditionIds, c.id] });
-        }}
-      />
-    </Sheet>
+      >
+        <DateLine
+          date={form.date}
+          open={form.ctxOpen}
+          today={records.today}
+          onOpen={() => set({ ctxOpen: true })}
+          onDate={(d) => set({ date: d })}
+        />
+        {body}
+        {withPhotos && (
+          <Field label={t('chips.109')} hint={optional} error={form.photoErr ? t('photoUnreadable') : undefined}>
+            <div className="photo-row photo-row--field">
+              {photos.map((p) => (
+                <PhotoThumb
+                  key={p.id}
+                  photo={p}
+                  size="sm"
+                  label={fill(t('photoAlt'), { d: f.shortDate(form.date) })}
+                  onOpen={() => setOverlay({ kind: 'viewer', ids: photos.map((x) => x.id), index: Math.max(0, photos.indexOf(p)) })}
+                />
+              ))}
+              {form.newPhotos.map((p, i) => (
+                <LocalThumb key={i} file={p.thumb} />
+              ))}
+              <PhotoPick
+                variant="sm"
+                label={t('addPhoto')}
+                onPicked={(p) => setForm((x) => ({ ...x, newPhotos: [...x.newPhotos, p], photoErr: false }))}
+                onError={() => set({ photoErr: true })}
+                onBusy={setPreparing}
+              />
+            </div>
+          </Field>
+        )}
+        {withDocs && (
+          <DocumentsField
+            stored={storedDocs}
+            drafts={docs.drafts}
+            error={docs.error}
+            reading={docs.reading}
+            room={docs.room}
+            saving={busy}
+            onPick={(f) => void docs.pick(f)}
+            onOpen={setDocTarget}
+            onRetry={() => void guard(save)()}
+          />
+        )}
+        <ConditionPicker
+          conditions={records.conditions}
+          pending={form.pending}
+          selected={form.conditionIds}
+          onToggle={(id) =>
+            set({ conditionIds: form.conditionIds.includes(id) ? form.conditionIds.filter((x) => x !== id) : [...form.conditionIds, id] })
+          }
+          onAdd={(name) => {
+            const c: Condition = { id: act.newId(), dogId: records.dogId, name, startedOn: form.date, description: '', resolvedOn: null, position: 0 };
+            set({ pending: [...form.pending, c], conditionIds: [...form.conditionIds, c.id] });
+          }}
+        />
+      </Sheet>
+      {docTarget && (
+        // Over this sheet, not inside it; keyed per document so its name field starts from that document's name.
+        <DocumentSheet
+          key={docTarget.kind === 'stored' ? docTarget.doc.id : docTarget.id}
+          target={docTarget}
+          drafts={docs.drafts}
+          onRenameDraft={docs.rename}
+          onRemoveDraft={docs.remove}
+          onClose={() => setDocTarget(null)}
+        />
+      )}
+    </>
   );
 }
 
