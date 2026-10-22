@@ -37,6 +37,7 @@
 - Event badges (JCB-26, JCB-69, CEO 19 Oct): Option B (cyan vet with a heart-line glyph, white outlined page for notes) with Option A's orange "!" for symptoms; a single vet card shows the glyph without a count. Built together with busy-day "+N".
 - Way of working, tightened (CEO 19 Oct) to cut plan usage: the PM decides who does each change and does small ones itself; QA agent only for saving, data and schema changes; docs lines in the same PR; Linear holds open and next, this file only what is decided (see `docs/PM.md`).
 - Design system upkeep (CEO 22 Oct): a PR that adds or changes a component or token updates `docs/design-system/` in the same PR; the published artifact may lag but each change is logged in Linear (JCB-133) for a later sync.
+- Linear is the source of truth (CEO 22 Oct): an issue is taken, built, tested, deployed and then closed; bundles are split into one deliverable per issue, with labels (Feature, Improvement, Bug, Idea, Open question) and sub-issues for epics; the full rules are in `docs/PM.md`. Backlog cleaned up the same day.
 - Working rules: short explanations, clarifying questions first, quality over quantity, no unauthorised access (confirm with the CEO).
 
 ## Open, next, parked

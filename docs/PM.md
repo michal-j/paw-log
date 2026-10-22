@@ -38,9 +38,28 @@ Usage drivers, biggest first: a long session on the most expensive model (every 
 - One PM session per outcome or small batch, not per day. At a natural break (an outcome merged, context past ~200k tokens), write the handoff (below) and recommend the CEO start a fresh `/pm` session.
 - The CEO picks the session model; Sonnet by default, Opus for design rounds or tricky data and schema work. Subagent models are set in `.claude/agents/`.
 
+## Linear is the source of truth (CEO, 22 Oct 2026)
+Linear and the app must say the same thing. Every piece of work follows one path, and nothing is built that is not in Linear first.
+
+**Lifecycle of an issue:** Backlog (not committed) > Todo (specified and prioritised, ready to take) > In Progress (being built) > In Review (PR open or being tested; or deployed and being watched in real use) > Done. **Done means deployed to production and checked**, nothing less. Wrong or replaced issues are Canceled with a comment saying where the work went (the tool cannot set Duplicate).
+
+**One issue, one deliverable.** Take an issue, build it, test it, deploy it, close it. If the work turns out bigger, or you find something else on the way, do not stretch the issue: finish it, and file the rest as new issues. Do not close an issue that is only partly done, and close the ones already shipped the moment they ship (an issue still open for something built is a bug in Linear).
+
+**Size and kind are visible by label and parent:**
+- **Feature**: a larger piece of work (a view, a flow, a data change). A bundle is an epic: a Feature with sub-issues (parent link), closed when its children are. Each child is its own deliverable.
+- **Improvement**: a small change to something that exists (copy, spacing, a button). 
+- **Bug**: something that worked or should work and does not.
+- **Idea**: not committed, shape later. **Open question**: a decision to make before it becomes work. Both stay in Backlog until the CEO picks them up.
+- Priority orders the Backlog (Urgent/High = next, Medium = soon, Low/None = later). Backlog items that need a design first say so in the description.
+- Every issue has a description with the goal and acceptance criteria while open, and says "UNCLEAR" where something is unknown. When work ships, the description matches what was built.
+
+**New findings go in Linear immediately**, as their own issue with a label: a bug from QA or the CEO, an idea, a follow-up. The PM does not carry open items only in chat, docs or memory. `docs/DECISIONS.md` records decisions, not open items.
+
+**Check Linear against reality** at the start of every PM session and at every handoff: open issues for things already built, issues grouping several deliverables, stale descriptions, status that does not match (In Review with no PR or no watching reason). Fix them then, not later. Flag anything unclear to the CEO instead of guessing.
+
 ## Start of every PM session
 1. Read `CLAUDE.md`, `docs/AGENTS.md`, `docs/DECISIONS.md`. Read `docs/PRODUCT.md` only when the work needs it.
-2. Read the latest Linear project update (project "PawLog") and the In Progress / Todo issues. Check open PRs and `git log` on main.
+2. Read the latest Linear project update (project "PawLog") and the In Progress / In Review / Todo issues, and run the Linear check above. Check open PRs and `git log` on main.
 3. Check `get_usage`.
 4. Tell the CEO in 3 lines, in outcomes: where we are, what you recommend next. Then act.
 
