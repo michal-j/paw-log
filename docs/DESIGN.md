@@ -3,7 +3,7 @@
 ## Direction (decided, R10 "Mint Clean")
 Light and bright only; no dark theme. Mint-green primary, pastel colours for food and medication, white surfaces with hairlines, very subtle gradients and soft shadows for depth (not 3D, not glassy). Small, squarish controls (radius 8), underline tab switcher, circles for items.
 
-The single source of truth is the Design System artifact (tokens, components, README) and its exported copy in `docs/design-system/`. Read `docs/design-system/README.md` before any UI work.
+The single source of truth is `docs/design-system/` (tokens, components, README). An older published Design System artifact (16 Oct) exists but is not maintained. Read `docs/design-system/README.md` before any UI work.
 
 ## How we got here (short)
 - R1 to R4: explored layouts. The vertical lanes timeline won; calendar was first rejected, later added back as a second view; the week matrix became the third view.

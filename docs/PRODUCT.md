@@ -12,7 +12,7 @@ Two people in one household, both can edit. One dog now; the data model must not
 - Vet visits, symptoms, notes; photos and PDFs attachable.
 - Named issues (for example "Lump A") with photo history over time, searchable.
 - Pinned notes not tied to a date (allergies, standing facts, things that need to happen).
-- Backfilling past dates must be fast; adding a whole day or several days at once.
+- Past dates can be filled one day at a time and from the usual day. Bulk backfill of several days is not planned (CEO 22 Oct).
 - Editing existing entries.
 - Loose data model: free-form text over rigid enums where the household's real data is irregular.
 - Parked for later: tasks and reminders, notifications, recipes, file sharing, native app, several dogs, per-item history, data export.
@@ -44,6 +44,6 @@ Product, food and clinic names are made up. The household's real data lives only
 ## Open product questions
 - How dose changes show on the timeline (JCB-10).
 - Where per-item history lives (JCB-23).
-- Design of editing and bulk adding (JCB-25).
+- Design of editing and logging (JCB-25): done.
 - Whether an entry can belong to several issues, and whether an issue can be closed (JCB-6).
 - Real-time sync between the two users: how much is needed (JCB-11).
