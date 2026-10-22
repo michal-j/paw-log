@@ -4,7 +4,12 @@ Format: [Keep a Changelog](https://keepachangelog.com). "Unreleased" means not y
 
 ## Unreleased
 
+### Added
+- Timeline: a note badge (white page) on days with any note, and on busy days one line of badges with the rest folded into a neutral "+N"; the Key explains both. New draft copy in `docs/copy/copy-proposal-event-badges.csv` (JCB-26, JCB-69).
+
 ### Changed
+- Event badges: vet is now cyan with a heart-line glyph, symptoms are orange; the refused tag in the Day view keeps its red through its own tokens. Note events show the note badge in the Day view (JCB-26).
+- Timeline: the Events column has no side padding, so a vet badge with a count plus "+N" fits at its 60px minimum (JCB-69).
 - Database tests: the local test database no longer grants new tables to the app on its own, matching Supabase from 30 Oct 2026, and a check fails if a table has no explicit grant. The developer checklist asks for grants in the same migration as the table (JCB-128).
 
 ## 2026-10-19 (merged to main)

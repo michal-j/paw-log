@@ -189,6 +189,7 @@ export const EVENT_ORDER: readonly EventType[] = ['vet', 'symptom', 'frontline',
 export const BADGE_FOR: Partial<Record<EventType, BadgeKind>> = {
   vet: 'vet',
   symptom: 'sym',
+  note: 'note',
   photo: 'photo',
   frontline: 'front',
   deworming: 'worm',

@@ -1,0 +1,4 @@
+#,Where (code name),English,Polish,EN chars,PL chars,Fit note,Your notes
+B1,kSymN,Symptoms (number),Objawy (liczba),17,15,Key legend row,JCB-26; DRAFT pending CEO review
+B2,kNote,Note on the day,Notatka z dnia,15,14,Key legend row; screen-reader word for the note badge,JCB-26; DRAFT pending CEO review
+B3,kMore,More kinds that day,Więcej rodzajów tego dnia,19,25,Key legend row for the +N chip,JCB-69; DRAFT pending CEO review

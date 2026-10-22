@@ -33,10 +33,14 @@
 }
 .event-badge--mini { height: 13px; min-width: 13px; padding: 0 2px; border-radius: var(--radius-xs); font-size: 9px; line-height: 11px; gap: 1px; }
 .event-badge__glyph { width: 10px; height: 10px; flex: none; }
-.event-badge__glyph--photo { width: 12px; height: 12px; }
+.event-badge__glyph--lg, .event-badge__glyph--photo { width: 12px; height: 12px; }
 .event-badge--mini .event-badge__glyph { width: 8px; height: 8px; }
+.event-badge--mini .event-badge__glyph--lg, .event-badge--mini .event-badge__glyph--photo { width: 9px; height: 9px; }
 .event-badge--vet { background: linear-gradient(180deg, var(--color-badge-vet-top), var(--color-badge-vet-bottom)); color: var(--color-badge-vet-ink); border: 1px solid var(--color-badge-vet-line); }
 .event-badge--sym { background: linear-gradient(180deg, var(--color-badge-sym-top), var(--color-badge-sym-bottom)); color: var(--color-badge-sym-ink); border: 1px solid var(--color-badge-sym-line); }
+.event-badge--note { background: linear-gradient(180deg, var(--color-badge-note-top), var(--color-badge-note-bottom)); color: var(--color-badge-note-ink); border: 1px solid var(--color-badge-note-line); }
+/* "+N": the badges that did not fit on a busy day (neutral, from existing tokens). */
+.event-badge--more { background: var(--color-surface-tint); color: var(--color-ink-2); border: 1px solid var(--color-line-strong); box-shadow: none; }
 .event-badge--photo { background: linear-gradient(180deg, var(--color-badge-photo-top), var(--color-badge-photo-bottom)); color: var(--color-badge-photo-ink); border: 1px solid var(--color-badge-photo-line); }
 .event-badge--front { background: linear-gradient(180deg, var(--color-badge-front-top), var(--color-badge-front-bottom)); color: var(--color-badge-front-ink); border: 1px solid var(--color-badge-front-line); }
 .event-badge--worm { background: linear-gradient(180deg, var(--color-badge-worm-top), var(--color-badge-worm-bottom)); color: var(--color-badge-worm-ink); border: 1px solid var(--color-badge-worm-line); }

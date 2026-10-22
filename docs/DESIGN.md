@@ -14,7 +14,9 @@ The single source of truth is the Design System artifact (tokens, components, RE
 Do not change without re-deriving scroll positions: day rows 44px; month bands 28/44px; calendar cells 66px high; matrix rows 30px, day columns 34px; tick rail 20px wide. Touch targets 44px minimum (small controls extend their hit area).
 
 ## Event badges
-Vet "+N", symptoms "!N", photo (camera), Frontline "F", deworming "D". One component, five pastel kinds, two sizes (18px, mini 13px). Known issue: the badges still differ slightly between places (JCB-26). The prototype generates them from one shared style set in `design/prototype/script.js` (`BTONE`, `bdg`); the build should do the same with one component.
+Vet (cyan, heart-line glyph, with a count on the Timeline row and in the Key), symptoms (orange "!" or "!N"), note (white outlined page, once a day for any note, never a count), photo (camera), Frontline "F", deworming "D", plus the neutral "+N" chip. One component (`EventBadge`), pastel kinds, two sizes (18px, mini 13px). The glyph is identical everywhere; a number appears only where the badge stands for several events (Timeline row, Key sample). A single vet card shows the glyph alone. Decided 19 Oct (JCB-26, JCB-69): Option B's cyan vet and white note with Option A's orange symptoms; red is only for refused or skipped (`tag-skipped-*` tokens).
+Busy days: the Timeline row is one line. Badges show whole, in priority order (vet, symptoms, note, photo, F, D); those that do not fit fold into one "+N" chip (`fitBadges`, `src/timeline/model.ts`, widths from a table, not measured). The Events column is never narrower than 60px: a vet badge with a count plus "+N". The row still opens the Day view, which lists everything, and its screen-reader summary names every kind.
+Watch on device: orange symptoms next to amber deworming. Not built: the note badge on each food or medication note in the Day view, Calendar and Matrix mini badges.
 
 ## Known gaps and deviations
 - Prototype focus ring uses `mint`; the system says `mint-deep` (contrast).

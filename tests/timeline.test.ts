@@ -3,10 +3,13 @@ import { DemoRepository } from '../src/data';
 import type { Entry, HealthEvent, Item } from '../src/data';
 import {
   activeTickOffset,
+  badgeWidth,
   badgesFor,
   buildColumns,
   buildTimeline,
   datesNewestFirst,
+  eventsWidth,
+  fitBadges,
   markSize,
   markState,
   railFraction,
@@ -158,16 +161,50 @@ describe('lanes and columns', () => {
 });
 
 describe('badges', () => {
-  it('orders vet, symptoms, photo, Frontline, deworming and counts', () => {
-    expect(badgesFor([ev('d', 'deworming'), ev('d', 'photo'), ev('d', 'symptom'), ev('d', 'vet'), ev('d', 'frontline')])).toEqual([
+  it('orders vet, symptoms, note, photo, Frontline, deworming and counts', () => {
+    expect(badgesFor([ev('d', 'deworming'), ev('d', 'photo'), ev('d', 'symptom'), ev('d', 'vet'), ev('d', 'frontline'), ev('d', 'note')])).toEqual([
       { kind: 'vet', text: '1' },
       { kind: 'sym', text: '!' },
+      { kind: 'note', text: '' },
       { kind: 'photo', text: '' },
       { kind: 'front', text: 'F' },
       { kind: 'worm', text: 'D' },
     ]);
     expect(badgesFor([ev('d', 'symptom'), ev('d', 'symptom'), ev('d', 'symptom')])).toEqual([{ kind: 'sym', text: '!3' }]);
     expect(badgesFor([ev('d', 'nails'), ev('d', 'other')])).toEqual([]);
+  });
+
+  it('shows one note badge, never a count, for a note event or a note on an entry', () => {
+    expect(badgesFor([ev('d', 'note'), ev('d', 'note')])).toEqual([{ kind: 'note', text: '' }]);
+    expect(badgesFor([], new Set(), true)).toEqual([{ kind: 'note', text: '' }]);
+    expect(badgesFor([ev('d', 'note')], new Set(), true)).toHaveLength(1);
+  });
+});
+
+describe('fitBadges (busy days, JCB-26/69)', () => {
+  const six = badgesFor([ev('d', 'vet'), ev('d', 'symptom'), ev('d', 'note'), ev('d', 'photo'), ev('d', 'frontline'), ev('d', 'deworming')]);
+
+  it('shows everything when it fits on one line', () => {
+    expect(fitBadges(six, 400)).toEqual(six);
+    expect(fitBadges([], 56)).toEqual([]);
+  });
+
+  it('keeps whole badges in priority order and folds the rest into +N', () => {
+    const shown = fitBadges(six, 100);
+    expect(shown.at(-1)).toEqual({ kind: 'more', text: `+${six.length - (shown.length - 1)}` });
+    expect(shown.slice(0, -1)).toEqual(six.slice(0, shown.length - 1));
+    const widths = shown.reduce((w, b, i) => w + badgeWidth(b) + (i ? 3 : 0), 0);
+    expect(widths).toBeLessThanOrEqual(100);
+  });
+
+  it('at the narrowest Events column still shows the lead badge and +N', () => {
+    const room = eventsWidth({ columns: [], dateW: 44, rowW: 0, scrolls: false }, 0);
+    expect(room).toBe(60);
+    expect(fitBadges(six, room)).toEqual([six[0], { kind: 'more', text: '+5' }]);
+  });
+
+  it('never drops below a lone +N chip', () => {
+    expect(fitBadges(six, 10)).toEqual([{ kind: 'more', text: '+6' }]);
   });
 });
 

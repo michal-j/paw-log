@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import type { Condition, HealthEvent, Photo } from '../data';
 import { EventBadge } from '../components/EventBadge';
-import { DotsIcon, NoteIcon } from '../components/icons';
+import { DotsIcon } from '../components/icons';
 import { fill, useI18n } from '../i18n';
 import { useFormat } from '../log/format';
 import { serviceLabel } from '../log/services';
@@ -77,7 +77,7 @@ export function EventCard({
             <EventBadge kind={kind} text={kind === 'front' ? 'F' : kind === 'worm' ? 'D' : ''} />
           ) : (
             <span className="day-card__glyph" aria-hidden="true">
-              {e.type === 'note' ? <NoteIcon /> : <DotsIcon />}
+              <DotsIcon />
             </span>
           )}
           {f.eventTitle(e)}

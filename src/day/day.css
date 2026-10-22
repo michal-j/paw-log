@@ -292,7 +292,7 @@
   font: var(--type-badge-weight) var(--type-badge-size) / var(--type-caption-line) var(--type-badge-family);
   font-weight: 700;
 }
-.day-tag--skipped { background: var(--color-badge-sym-top); border-color: var(--color-badge-sym-line); color: var(--color-badge-sym-ink); }
+.day-tag--skipped { background: var(--color-tag-skipped-top); border-color: var(--color-tag-skipped-line); color: var(--color-tag-skipped-ink); }
 .day-tag--partial { background: var(--color-badge-worm-top); border-color: var(--color-badge-worm-line); color: var(--color-badge-worm-ink); }
 
 /* ---------- Usual day screen ---------- */
