@@ -7,8 +7,9 @@ import conditionsJson from '../../data/demo/conditions.json';
 import pinnedJson from '../../data/demo/pinned.json';
 import photosJson from '../../data/demo/photos.json';
 import documentsJson from '../../data/demo/documents.json';
-import ultrasoundPdf from '../../data/demo/documents/ultrasound-report.pdf?url';
-import bloodPressurePdf from '../../data/demo/documents/blood-pressure-check.pdf?url';
+// ?no-inline: Vite inlines files under 4 KB as data: URLs, which window.open refuses; a PDF must be a real file (QA, JCB-76).
+import ultrasoundPdf from '../../data/demo/documents/ultrasound-report.pdf?url&no-inline';
+import bloodPressurePdf from '../../data/demo/documents/blood-pressure-check.pdf?url&no-inline';
 import lumpA1 from '../../data/demo/photos/lump-a-1.svg?url';
 import lumpA2 from '../../data/demo/photos/lump-a-2.svg?url';
 import { DuplicateSlotEntryError } from './errors';
