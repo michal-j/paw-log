@@ -4,8 +4,13 @@ Format: [Keep a Changelog](https://keepachangelog.com). "Unreleased" means not y
 
 ## Unreleased
 
+## 2026-10-22 (merged to main)
+
 ### Added
 - Timeline: a note badge (white page) on days with any note, and on busy days one line of badges with the rest folded into a neutral "+N"; the Key explains both. New draft copy in `docs/copy/copy-proposal-event-badges.csv` (JCB-26, JCB-69).
+
+### Fixed
+- Timeline: the Key's columns now line up with the rows below (the Key button's default left padding pushed it 6 px right) (JCB-129).
 
 ### Changed
 - Event badges: vet is now cyan with a heart-line glyph, symptoms are orange; the refused tag in the Day view keeps its red through its own tokens. Note events show the note badge in the Day view (JCB-26).

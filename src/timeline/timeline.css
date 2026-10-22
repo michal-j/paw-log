@@ -41,6 +41,7 @@
   margin: 0;
   padding-top: 6px;
   padding-bottom: 6px;
+  padding-left: 0; /* a button has default side padding; the Key must start where the rows do */
   padding-right: 0;
   border: 0;
   background: transparent;
