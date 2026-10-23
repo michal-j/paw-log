@@ -279,6 +279,7 @@
 .day-item__name { font: var(--type-body-strong-weight) var(--type-body-strong-size) / 18px var(--type-body-strong-family); }
 .day-item__dose { color: var(--color-ink-3); }
 .day-item__sub { display: block; color: var(--color-ink-3); font: var(--type-body-weight) 12px / 15px var(--type-body-family); }
+.day-item__sub .event-badge { margin-right: 5px; vertical-align: -2px; }  /* the note marker (JCB-130) */
 .day-item--skipped .day-item__name, .day-item--skipped .day-item__dose { text-decoration: line-through; }
 .day-item--planned .day-item__name { color: var(--color-ink-2); }
 /* Removed for this day: quiet, no Given; tapping it logs the item after all. */
