@@ -32,16 +32,53 @@ export function norm(s: string): string {
   return out;
 }
 
+/** A typed word: normalized, and in Polish also its stem (so every inflected form finds every other). */
+export interface Token {
+  raw: string;
+  /** Polish only: the stem of `raw` (`stemOf`); empty otherwise. */
+  stem: string;
+}
+
+// Polish endings, longest first, as they read after `norm` (ą, ę, ó lose their marks: ów is ow, ią is ia).
+const ENDINGS = ['iem', 'ami', 'ach', 'ow', 'om', 'em', 'ie', 'ia', 'ej', 'ym', 'im', 'a', 'e', 'i', 'o', 'u', 'y'];
+const MIN_STEM = 3;
+/** A stem this long or longer is compared by prefix (the word may be typed in part); a shorter one must be the whole stem. */
+const PREFIX_STEM = 4;
+
 /**
- * The words typed, normalized. Fewer than 2 characters typed: no words (nothing is searched). In Polish a word of
- * 6+ letters loses its last 2 letters, the same for every searched field, type words and services included.
+ * A rough Polish stem of a normalized word, the same on both sides of a match: żołądek, żołądka, żołądku, żołądkiem and
+ * żołądków all give "zoladk"; lek, leki, leków, lekiem give "lek"; wizyta, wizyty, wizytę, wizytą give "wizyt"; pazur,
+ * pazury, pazurów give "pazur". One ending is removed (never below 3 letters) and a fleeting "e" before the final "k"
+ * goes. Words with digits or punctuation are left alone.
  */
-export function tokensOf(query: string, lang: Lang): string[] {
+export function stemOf(word: string): string {
+  if (!LETTERS.test(word)) return word;
+  let w = word;
+  for (const end of ENDINGS) {
+    if (w.length - end.length >= MIN_STEM && w.endsWith(end)) {
+      w = w.slice(0, -end.length);
+      break;
+    }
+  }
+  if (w.length >= 5 && w.endsWith('ek')) w = w.slice(0, -2) + 'k';
+  return w;
+}
+
+/** The stems of the words of a normalized text, joined by spaces. */
+export const stemsOf = (n: string): string => (n.match(/[\p{L}\p{N}]+/gu) ?? []).map(stemOf).join(' ');
+
+const stemMatches = (stemW: string, tok: Token): boolean =>
+  tok.stem.length >= PREFIX_STEM ? stemW.startsWith(tok.stem) : stemW === tok.stem;
+
+/**
+ * The words typed, normalized. Fewer than 2 characters typed, or only single-character words: no words (nothing is
+ * searched). A single-character word next to a longer one is ignored (it would match nearly everything).
+ */
+export function tokensOf(query: string, lang: Lang): Token[] {
   const q = nfc(query).trim();
   if (Array.from(q).length < 2) return [];
-  const words = norm(q).split(/\s+/).filter(Boolean);
-  const out = words.map((w) => (lang === 'pl' && LETTERS.test(w) && Array.from(w).length >= 6 ? Array.from(w).slice(0, -2).join('') : w));
-  return [...new Set(out)];
+  const words = norm(q).split(/\s+/).filter((w) => Array.from(w).length >= 2);
+  return [...new Set(words)].map((raw) => ({ raw, stem: lang === 'pl' && LETTERS.test(raw) ? stemOf(raw) : '' }));
 }
 
 /** Every place in the normalized text `n` where a word starts with `token`. */
@@ -55,7 +92,7 @@ export function starts(n: string, token: string): number[] {
 }
 
 /** Whether a word of the normalized text starts with `token` (stops at the first). */
-export function hasStart(n: string, token: string): boolean {
+function hasRaw(n: string, token: string): boolean {
   if (!token) return false;
   for (let i = n.indexOf(token); i !== -1; i = n.indexOf(token, i + 1)) {
     if (i === 0 || !WORD_CHAR.test(n[i - 1] ?? '')) return true;
@@ -63,22 +100,62 @@ export function hasStart(n: string, token: string): boolean {
   return false;
 }
 
-/** Every typed word starts a word of the normalized haystack. */
-export const matchesAll = (hay: string, tokens: readonly string[]): boolean => tokens.every((tk) => hasStart(hay, tk));
-
-/** Some typed word starts a word of `text` (not yet normalized): used to decide what a result shows. */
-export const hasToken = (text: string, tokens: readonly string[]): boolean => {
-  if (!tokens.length || !text) return false;
-  const n = norm(nfc(text));
-  return tokens.some((tk) => hasStart(n, tk));
+/** A normalized text with the stems of its words (Polish only), as the index keeps it. */
+export interface Hay {
+  h: string;
+  s: string;
+}
+export const makeHay = (fields: readonly string[], lang: Lang): Hay => {
+  const h = norm(fields.filter(Boolean).join(' \n '));
+  return { h, s: lang === 'pl' ? stemsOf(h) : '' };
 };
 
-/** The ranges `[start, end)` of `text` to highlight: every word start of every typed word, merged where they touch. */
-export function markRanges(text: string, tokens: readonly string[]): [number, number][] {
+function hasStem(stems: string, tok: Token): boolean {
+  if (!tok.stem || !stems) return false;
+  const whole = tok.stem.length < PREFIX_STEM;
+  for (let i = stems.indexOf(tok.stem); i !== -1; i = stems.indexOf(tok.stem, i + 1)) {
+    if (i > 0 && WORD_CHAR.test(stems[i - 1] ?? '')) continue;
+    if (whole && WORD_CHAR.test(stems[i + tok.stem.length] ?? '')) continue;
+    return true;
+  }
+  return false;
+}
+
+/** The one rule: a typed word matches a word of the text by its start, or (Polish) by its stem. */
+export const hasStart = (hay: Hay, tok: Token): boolean => hasRaw(hay.h, tok.raw) || hasStem(hay.s, tok);
+
+/** Every typed word matches somewhere in the haystack. */
+export const matchesAll = (hay: Hay, tokens: readonly Token[]): boolean => tokens.every((tk) => hasStart(hay, tk));
+
+/** Some typed word matches `text` (not yet normalized): used to decide what a result shows. */
+export const hasToken = (text: string, tokens: readonly Token[]): boolean => {
+  if (!tokens.length || !text) return false;
+  const n = norm(nfc(text));
+  const hay: Hay = { h: n, s: tokens.some((t) => t.stem) ? stemsOf(n) : '' };
+  return tokens.some((tk) => hasStart(hay, tk));
+};
+
+const commonPrefix = (a: string, b: string): number => {
+  let i = 0;
+  while (i < a.length && i < b.length && a[i] === b[i]) i++;
+  return i;
+};
+
+/** The ranges `[start, end)` of `text` to highlight: every matching word start, merged where they touch. */
+export function markRanges(text: string, tokens: readonly Token[]): [number, number][] {
   if (!tokens.length || !text) return [];
   const n = norm(text);
   const ranges: [number, number][] = [];
-  for (const tk of tokens) for (const i of starts(n, tk)) ranges.push([i, i + tk.length]);
+  for (const tk of tokens) for (const i of starts(n, tk.raw)) ranges.push([i, i + tk.raw.length]);
+  if (tokens.some((t) => t.stem)) {
+    for (const m of n.matchAll(/[\p{L}\p{N}]+/gu)) {
+      const word = m[0];
+      const stem = stemOf(word);
+      for (const tk of tokens) {
+        if (tk.stem && stemMatches(stem, tk)) ranges.push([m.index, m.index + Math.max(1, commonPrefix(word, tk.raw))]);
+      }
+    }
+  }
   ranges.sort((a, b) => a[0] - b[0] || a[1] - b[1]);
   const merged: [number, number][] = [];
   for (const r of ranges) {
@@ -95,7 +172,7 @@ export interface Piece {
 }
 
 /** `text` cut into pieces, the matched ones flagged: the one place that decides what is highlighted. */
-export function highlight(text: string, tokens: readonly string[]): Piece[] {
+export function highlight(text: string, tokens: readonly Token[]): Piece[] {
   const t = nfc(text);
   const ranges = markRanges(t, tokens);
   if (!ranges.length) return t ? [{ text: t, hit: false }] : [];
@@ -115,16 +192,11 @@ const SNIPPET_LEAD = 45;
 const SNIPPET_NEAR = 60;
 
 /** A long text cut to start shortly before the first match, so the match is visible in the card's 3 lines. */
-export function snippet(text: string, tokens: readonly string[]): string {
+export function snippet(text: string, tokens: readonly Token[]): string {
   const t = nfc(text);
   if (!tokens.length || t.length <= SNIPPET_LONG) return t;
-  const n = norm(t);
-  let at = Infinity;
-  for (const tk of tokens) {
-    const first = starts(n, tk)[0];
-    if (first !== undefined && first < at) at = first;
-  }
-  if (at === Infinity || at < SNIPPET_NEAR) return t; // no match here, or it is near the start already
+  const at = markRanges(t, tokens)[0]?.[0];
+  if (at === undefined || at < SNIPPET_NEAR) return t; // no match here, or it is near the start already
   const space = t.indexOf(' ', Math.max(0, at - SNIPPET_LEAD));
   return '…' + t.slice(space === -1 || space >= at ? at : space + 1);
 }

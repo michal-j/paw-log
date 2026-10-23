@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import type { Lang } from '../src/i18n';
 import { runSearch, type SearchIndex } from '../src/search';
 import { ALL_KINDS, KIND_GROUPS, KIND_LABEL, TYPE_WORD, type Kind } from '../src/search/kinds';
-import { highlight, markRanges, nfc, norm, snippet, starts, tokensOf } from '../src/search/text';
+import { hasToken, highlight, makeHay, markRanges, matchesAll, nfc, norm, snippet, starts, tokensOf } from '../src/search/text';
 import { indexFor as indexForMemo } from '../src/search/memory';
 import { translate } from '../src/i18n';
 import { ENTRIES, EVENTS, contextFor, indexFor, input, longLog } from './fixtures/searchLog';
@@ -32,24 +32,80 @@ describe('norm', () => {
   });
 });
 
+const raws = (q: string, lang: Lang) => tokensOf(q, lang).map((t) => t.raw);
+
 describe('tokensOf', () => {
   it('needs 2 characters in all and then splits into words', () => {
-    expect(tokensOf('', 'en')).toEqual([]);
-    expect(tokensOf(' a ', 'en')).toEqual([]);
-    expect(tokensOf('ab', 'en')).toEqual(['ab']);
-    expect(tokensOf('  Vet   VISIT ', 'en')).toEqual(['vet', 'visit']);
-    expect(tokensOf('a b', 'en')).toEqual(['a', 'b']);
+    expect(raws('', 'en')).toEqual([]);
+    expect(raws(' a ', 'en')).toEqual([]);
+    expect(raws('ab', 'en')).toEqual(['ab']);
+    expect(raws('  Vet   VISIT ', 'en')).toEqual(['vet', 'visit']);
   });
-  it('Polish: a word of 6 or more letters loses its last 2; shorter ones, digits and English stay whole', () => {
-    expect(tokensOf('żołądkiem', 'pl')).toEqual(['zoladki']);
-    expect(tokensOf('żołądek', 'pl')).toEqual(['zolad']);
-    expect(tokensOf('wizyta', 'pl')).toEqual(['wizy']);
-    expect(tokensOf('pazury', 'pl')).toEqual(['pazu']);
-    expect(tokensOf('weta', 'pl')).toEqual(['weta']);
-    expect(tokensOf('żołąd', 'pl')).toEqual(['zolad']);
-    expect(tokensOf('150-160', 'pl')).toEqual(['150-160']);
-    expect(tokensOf('stomach', 'en')).toEqual(['stomach']);
-    expect(tokensOf('wizyta', 'en')).toEqual(['wizyta']);
+  it('single-character words are ignored next to a longer word; alone they stay idle', () => {
+    expect(raws('lump a', 'en')).toEqual(['lump']);
+    expect(raws('a lump', 'en')).toEqual(['lump']);
+    expect(raws('a b', 'en')).toEqual([]);
+    expect(raws('x', 'pl')).toEqual([]);
+    expect(find(en, 'lump a').conditions.length).toBe(1);
+    expect(find(en, 'a b').idle).toBe(true);
+    expect(shown('Lump A', 'lump a')).toEqual(['Lump']);
+  });
+  it('Polish gives each word a stem; English and digits none', () => {
+    expect(tokensOf('żołądkiem', 'pl')).toEqual([{ raw: 'zoladkiem', stem: 'zoladk' }]);
+    expect(tokensOf('stomach', 'en')).toEqual([{ raw: 'stomach', stem: '' }]);
+    expect(tokensOf('150-160', 'pl')).toEqual([{ raw: '150-160', stem: '' }]);
+  });
+});
+
+describe('Polish forms find each other (stem on both sides)', () => {
+  const FORMS: Record<string, string[]> = {
+    żołądek: ['żołądek', 'żołądka', 'żołądku', 'żołądkiem', 'żołądków'],
+    lek: ['lek', 'leki', 'leków', 'lekiem'],
+    wizyta: ['wizyta', 'wizyty', 'wizytę', 'wizytą'],
+    pazur: ['pazur', 'pazury', 'pazurów'],
+  };
+  it('every form typed finds every form stored, and marks it', () => {
+    for (const [word, forms] of Object.entries(FORMS)) {
+      for (const typed of forms) {
+        for (const stored of forms) {
+          const text = `Dziś ${stored} jest gorzej`;
+          const tokens = tokensOf(typed, 'pl');
+          expect(matchesAll(makeHay([text], 'pl'), tokens), `${typed} finds ${stored}`).toBe(true);
+          expect(hasToken(text, tokens), `${typed} marks ${stored}`).toBe(true);
+          expect(highlight(text, tokens).some((p) => p.hit && norm(stored).startsWith(norm(p.text))), `${typed} highlights ${stored}`).toBe(true);
+        }
+      }
+      expect(word).toBeTruthy();
+    }
+  });
+  it('typing without diacritics or in capitals works the same', () => {
+    expect(matchesAll(makeHay(['Problemy z żołądkiem'], 'pl'), tokensOf('ZOLADEK', 'pl'))).toBe(true);
+    expect(matchesAll(makeHay(['Leków nie dostała'], 'pl'), tokensOf('LEKI', 'pl'))).toBe(true);
+    expect(matchesAll(makeHay(['Wizytę odwołano'], 'pl'), tokensOf('wizytą', 'pl'))).toBe(true);
+  });
+  it('partly typed words still match by their start', () => {
+    for (const part of ['zol', 'zolad', 'żołądk', 'wiz', 'wizy', 'paz']) expect(matchesAll(makeHay(['żołądkiem wizytę pazurów'], 'pl'), tokensOf(part, 'pl')), part).toBe(true);
+  });
+  it('no false friends: word starts are still required, and short stems must be the whole word', () => {
+    const hay = (t: string) => makeHay([t], 'pl');
+    expect(matchesAll(hay('nieistotna'), tokensOf('sto', 'pl'))).toBe(false);
+    expect(matchesAll(hay('lekarz'), tokensOf('leków', 'pl'))).toBe(false); // lek is not lekarz
+    expect(matchesAll(hay('kotlet'), tokensOf('kota', 'pl'))).toBe(false);
+    expect(matchesAll(hay('wizja'), tokensOf('wizyta', 'pl'))).toBe(false);
+    expect(matchesAll(hay('pazurek'), tokensOf('pazurów', 'pl'))).toBe(true); // a prefix of the same stem family
+    expect(matchesAll(hay('żołędź'), tokensOf('żołądek', 'pl'))).toBe(false);
+    expect(matchesAll(hay('zażołądkowy'), tokensOf('żołądek', 'pl'))).toBe(false); // not at a word start
+  });
+  it('does nothing in English', () => {
+    expect(matchesAll(makeHay(['leki'], 'en'), tokensOf('leków', 'en'))).toBe(false);
+  });
+  it('through the index: żołądkiem and żołądków find żołądek and żołądka, and the other way round', () => {
+    const idx = indexFor('pl', {
+      ...input(),
+      pinned: ['żołądek', 'żołądka', 'żołądkiem', 'żołądków'].map((w, i) => ({ id: `z${i}`, dogId: 'd', title: '', body: `Dziś ${w} boli`, position: i })),
+    });
+    for (const typed of ['żołądek', 'żołądka', 'żołądku', 'żołądkiem', 'żołądków']) expect(find(idx, typed, ['pinned'], 'pl').pinned, typed).toHaveLength(4);
+    expect(find(idx, 'leków', [], 'pl').pinned).toHaveLength(0);
   });
 });
 
@@ -66,10 +122,11 @@ describe('starts', () => {
 
 describe('highlight', () => {
   it('marks exactly the matched word starts, also the Polish stem', () => {
-    expect(shown('Wizyta u weta', 'wizyta', 'pl')).toEqual(['Wizy']);
-    expect(shown('Pazury', 'pazury', 'pl')).toEqual(['Pazu']);
+    expect(shown('Wizyta u weta', 'wizyta', 'pl')).toEqual(['Wizyta']);
+    expect(shown('Wizyta u weta', 'wizytę', 'pl')).toEqual(['Wizyt']);
+    expect(shown('Pazury', 'pazur', 'pl')).toEqual(['Pazur']);
     expect(shown('Problemy z żołądkiem', 'zoladek', 'pl')).toEqual(['żołąd']);
-    expect(shown('Problemy z żołądkiem', 'żołądka', 'pl')).toEqual(['żołąd']);
+    expect(shown('Problemy z żołądkiem', 'żołądka', 'pl')).toEqual(['żołądk']);
   });
   it('marks every occurrence of every word and merges neighbours', () => {
     expect(shown('Stomach rumbling, stomach again', 'stomach')).toEqual(['Stomach', 'stomach']);
@@ -89,7 +146,7 @@ describe('highlight', () => {
   });
   it('nothing typed, nothing marked', () => {
     expect(highlight('Maple Vet', [])).toEqual([{ text: 'Maple Vet', hit: false }]);
-    expect(highlight('', ['a'])).toEqual([]);
+    expect(highlight('', tokensOf('ab', 'en'))).toEqual([]);
   });
 });
 

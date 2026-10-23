@@ -97,3 +97,6 @@ mark.hit { background: var(--color-mint-bg); color: var(--color-ink); border-rad
 html[data-kb] .app { height: var(--vvh, 100dvh); }
 html[data-kb] .nav { display: none; }
 html[data-kb] .search-body { padding-bottom: var(--space-4); }
+
+/* A highlight inside a tag (Refused, Partly eaten) keeps the tag's colour: a light wash behind it and an underline, no ink. */
+.day-tag mark.hit { color: inherit; background: color-mix(in srgb, var(--color-surface) 65%, transparent); box-shadow: inset 0 -2px 0 currentColor; }

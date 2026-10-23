@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { Fragment, type ReactNode } from 'react';
 import { DoseMark } from '../components/DoseMark';
 import { EventBadge } from '../components/EventBadge';
 import { ChevronIcon, DotsIcon } from '../components/icons';
@@ -12,9 +12,9 @@ import type { ConditionDoc, EntryDoc, EventDoc, ItemDoc, PinnedDoc } from './ind
 import { Hl } from './Highlight';
 import type { Kind } from './kinds';
 import { TYPE_WORD } from './kinds';
-import { hasToken, snippet } from './text';
+import { hasToken, nfc, norm, snippet, type Token } from './text';
 
-type Tokens = readonly string[];
+type Tokens = readonly Token[];
 
 const ENTRIES: Record<'one' | 'few' | 'many', MessageKey> = { one: 'condYearEntries_one', few: 'condYearEntries_few', many: 'condYearEntries_many' };
 
@@ -50,8 +50,26 @@ export function EventResult({ doc, tokens, kinds, onOpen }: { doc: EventDoc; tok
   const e = doc.event;
   const docWord = t(TYPE_WORD.doc);
   const own = doc.kindWords[0]?.words[0] ?? '';
-  // A type word that matched while the title did not: the type is shown muted after the title ("Heartburn · Symptom").
-  const why = e.type === 'vet' ? undefined : doc.kindWords.filter((k) => k.kind !== 'doc').flatMap((k) => k.words).find((w) => hasToken(w, tokens) && !hasToken(doc.title, tokens));
+  // Every type word that a typed word matched through, and is not already in the head, shows muted after the title
+  // ("Heartburn · Symptom", "Vet visit · Maple Vet · Photo"): a match always lands on visible, highlighted text.
+  const headText = e.type === 'vet' ? `${own} ${doc.title}` : doc.title;
+  const why = doc.kindWords
+    .filter((k) => k.kind !== 'doc')
+    .flatMap((k) => k.words)
+    .filter((w) => hasToken(w, tokens) && !hasToken(headText, [{ raw: norm(nfc(w)), stem: '' }]));
+  const labels = why.length > 0 && (
+    <>
+      {why.map((w) => (
+        <Fragment key={w}>
+          {' '}
+          <span className="search-res__kind">
+            {'· '}
+            <Hl text={w} tokens={tokens} />
+          </span>
+        </Fragment>
+      ))}
+    </>
+  );
   const head: ReactNode =
     e.type === 'vet' ? (
       <>
@@ -62,17 +80,12 @@ export function EventResult({ doc, tokens, kinds, onOpen }: { doc: EventDoc; tok
             <Hl text={doc.title} tokens={tokens} />
           </>
         )}
+        {labels}
       </>
     ) : (
       <>
         <Hl text={doc.title} tokens={tokens} />
-        {why && ' '}
-        {why && (
-          <span className="search-res__kind">
-            {'· '}
-            <Hl text={why} tokens={tokens} />
-          </span>
-        )}
+        {labels}
       </>
     );
   const showDocs = kinds.includes('doc') || hasToken(docWord, tokens);
@@ -178,6 +191,12 @@ export function EntryRows({ docs, tokens, scoped, onOpen }: { docs: EntryDoc[]; 
                 {d.state === 'skipped' || d.state === 'partial' ? (
                   <span className={`day-tag day-tag--${d.state}`}>
                     <Hl text={d.stateWord} tokens={tokens} />
+                    {d.stateAlias && hasToken(d.stateAlias, tokens) && !hasToken(d.stateWord, tokens) && (
+                      <>
+                        {' · '}
+                        <Hl text={d.stateAlias} tokens={tokens} />
+                      </>
+                    )}
                   </span>
                 ) : (
                   mark(d.amount)

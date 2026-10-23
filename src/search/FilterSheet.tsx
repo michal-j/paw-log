@@ -6,7 +6,8 @@ const GROUPS: readonly KindGroup[] = ['events', 'items', 'off'];
 
 /**
  * The Filters sheet (the shared Sheet): all 17 kinds as toggles in three captioned groups, "Clear" in the heading and a
- * primary button whose count follows the toggles, so the effect is visible before closing. Toggles apply at once.
+ * primary button whose count follows the toggles, so the effect is visible before closing ("Done" while nothing is chosen).
+ * Toggles apply at once.
  */
 export function FilterSheet({
   kinds,
@@ -33,11 +34,10 @@ export function FilterSheet({
       }
       footer={
         <button type="button" className="btn btn--primary btn--lg" onClick={onClose}>
-          {fill(t('searchShowResults'), { n: total })}
+          {kinds.length > 0 ? fill(t('searchShowResults'), { n: total }) : t('done')}
         </button>
       }
     >
-      <p className="sheet__text">{t('searchKindsHint')}</p>
       {GROUPS.map((g) => (
         <div key={g} className="search-sheet__group">
           <h3 className="day__caption search-sheet__caption">{t(GROUP_CAPTION[g])}</h3>

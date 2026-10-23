@@ -40,3 +40,4 @@ S38,typeWord_treat,Treat,Przysmak,5,8,Item kind word.,"JCB-138 (design proposal 
 S39,typeWord_procedure,Procedure,Zabieg,9,6,Item kind word.,"JCB-138 (design proposal search, rev 2); DRAFT pending CEO review"
 S40,searchFilterSummary,"{a}, {b} +{n}","{a}, {b} +{n}",13,13,Format of the one-line summary under the field; names are the kind labels. Clear reuses 'Clear' / 'Wyczyść' (diagClear).,"JCB-138 (design proposal search, rev 3); DRAFT pending CEO review"
 S41,typeAlias_nails,Nails,Pazury,5,6,Short word that also finds the Nail trimming event; shown muted after the title when it is why the card matched.,"JCB-138 (design proposal search, rev 3); DRAFT pending CEO review"
+S42,searchItemEmpty,No entries for this item yet.,Brak wpisów dla tej pozycji.,29,28,Empty card on an item page that has no entries (same tone as S10).,"JCB-138 (QA fix); DRAFT pending CEO review"

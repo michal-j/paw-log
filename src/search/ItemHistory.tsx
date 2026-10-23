@@ -1,7 +1,7 @@
 import { Fragment, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import type { PlainDate } from '../data';
 import { DoseMark } from '../components/DoseMark';
-import { ChevronIcon } from '../components/icons';
+import { ChevronIcon, SearchIcon } from '../components/icons';
 import { fill, useI18n } from '../i18n';
 import { useFormat } from '../log/format';
 import { useLog } from '../log/LogProvider';
@@ -113,6 +113,14 @@ export function ItemHistory({
             </div>
           </Fragment>
         ))}
+        {list.length === 0 && (
+          <article className="day-card day-empty search-empty">
+            <span className="day-empty__icon" aria-hidden="true">
+              <SearchIcon size={16} />
+            </span>
+            <p className="day-empty__text">{t('searchItemEmpty')}</p>
+          </article>
+        )}
         {remaining > 0 && (
           <button
             type="button"

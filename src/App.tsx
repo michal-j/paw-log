@@ -35,6 +35,8 @@ interface HistoryState {
   /** Entries pushed from inside the app: Back can simply go back in history. */
   fromTimeline?: boolean;
   fromApp?: boolean;
+  /** A condition page opened from Search: Back says "Back" and the Search tab stays marked. */
+  from?: 'search';
   /** A Day opened from Search: the card or row to ring (JCB-138). */
   ring?: Ring;
 }
@@ -50,6 +52,7 @@ interface Location {
   ring?: Ring;
   /** The entry was pushed from inside the app, so Back goes back in history to where the visitor came from. */
   fromApp: boolean;
+  from?: 'search';
 }
 
 /** Read the address bar; anything that is not a valid route is rewritten to the Timeline. */
@@ -58,7 +61,7 @@ function readLocation(): Location {
   const path = routePath(route);
   if (path !== window.location.pathname) window.history.replaceState(null, '', path);
   const state = historyState();
-  return { route, scrollTop: state.scrollTop ?? 0, ring: route.view === 'day' ? state.ring : undefined, fromApp: !!state.fromApp };
+  return { route, scrollTop: state.scrollTop ?? 0, ring: route.view === 'day' ? state.ring : undefined, fromApp: !!state.fromApp, from: route.view === 'condition' ? state.from : undefined };
 }
 
 /**
@@ -218,11 +221,11 @@ function Shell({ repository, onSignOut }: { repository: Repository; onSignOut?: 
 
   /** A condition from the Tracked list, a tag in the Day view or another condition's page. */
   const openCondition = useCallback(
-    (id: string) => {
+    (id: string, from?: 'search') => {
       close();
       if (route.view === 'condition' && route.id === id) return;
-      window.history.pushState({ fromApp: true } satisfies HistoryState, '', conditionPath(base, id));
-      setLoc((l) => ({ ...l, route: { base, view: 'condition', id }, fromApp: true }));
+      window.history.pushState({ fromApp: true, ...(from ? { from } : {}) } satisfies HistoryState, '', conditionPath(base, id));
+      setLoc((l) => ({ ...l, route: { base, view: 'condition', id }, fromApp: true, from }));
     },
     [route, base, close],
   );
@@ -245,6 +248,7 @@ function Shell({ repository, onSignOut }: { repository: Repository; onSignOut?: 
 
   const dayHref = useCallback((date: PlainDate) => dayPath(base, date), [base]);
   const today = repository.today();
+  const searchTab = route.view === 'search' || route.view === 'item' || (route.view === 'condition' && loc.from === 'search');
   const addDate = route.view === 'day' ? route.date : today;
 
   return (
@@ -279,11 +283,11 @@ function Shell({ repository, onSignOut }: { repository: Repository; onSignOut?: 
       ) : route.view === 'tracked' ? (
         <TrackedList onOpen={openCondition} />
       ) : route.view === 'search' ? (
-        <SearchScreen memory={searchMemory} onOpenDay={openDayFromSearch} onOpenCondition={openCondition} onOpenItem={openItem} />
+        <SearchScreen memory={searchMemory} onOpenDay={openDayFromSearch} onOpenCondition={(id) => openCondition(id, 'search')} onOpenItem={openItem} />
       ) : route.view === 'item' ? (
         <ItemHistory key={route.id} id={route.id} memory={searchMemory} onBack={leaveItem} onMissing={leaveItem} onOpenDay={openDayFromSearch} />
       ) : route.view === 'condition' ? (
-        <ConditionPage key={route.id} id={route.id} onBack={leaveCondition} onMissing={leaveCondition} onOpenCondition={openCondition} />
+        <ConditionPage key={route.id} id={route.id} backLabel={loc.from === 'search' ? t('back') : undefined} onBack={leaveCondition} onMissing={leaveCondition} onOpenCondition={openCondition} />
       ) : (
         <Timeline initialScrollTop={loc.scrollTop} focusDate={loc.focusDate} dayHref={dayHref} onOpenDay={openDay} />
       )}
@@ -310,19 +314,19 @@ function Shell({ repository, onSignOut }: { repository: Repository; onSignOut?: 
         <button
           type="button"
           className="nav__item"
-          aria-current={route.view === 'tracked' || route.view === 'condition' ? 'page' : undefined}
+          aria-current={route.view === 'tracked' || (route.view === 'condition' && loc.from !== 'search') ? 'page' : undefined}
           onClick={() => route.view !== 'tracked' && openTab('tracked')}
         >
-          <TrackedIcon active={route.view === 'tracked' || route.view === 'condition'} />
+          <TrackedIcon active={route.view === 'tracked' || (route.view === 'condition' && loc.from !== 'search')} />
           {t('copy.173')}
         </button>
         <button
           type="button"
           className="nav__item"
-          aria-current={route.view === 'search' || route.view === 'item' ? 'page' : undefined}
+          aria-current={searchTab ? 'page' : undefined}
           onClick={() => route.view !== 'search' && openTab('search')}
         >
-          <SearchIcon active={route.view === 'search' || route.view === 'item'} />
+          <SearchIcon active={searchTab} />
           {t('search')}
         </button>
       </nav>

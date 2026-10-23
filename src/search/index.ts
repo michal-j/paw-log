@@ -12,7 +12,7 @@ import { photosOf } from '../photos/model';
 import { symptomLabel } from '../timeline/labels';
 import { openConditions, resolvedConditions } from '../tracked/model';
 import { isItemKind, TYPE_ALIAS, TYPE_WORD, type Kind } from './kinds';
-import { matchesAll, nfc, norm } from './text';
+import { makeHay, matchesAll, nfc, type Hay, type Token } from './text';
 
 /** The records the index reads (a subset of `Records`). */
 export interface IndexInput {
@@ -55,7 +55,7 @@ export interface EventDoc {
   docs: string[];
   conditions: Condition[];
   firstPhoto: Photo | null;
-  hay: string;
+  hay: Hay;
 }
 
 export interface EntryDoc {
@@ -74,11 +74,13 @@ export interface EntryDoc {
   state: EntryState;
   /** Refused / Partly eaten, empty for a given entry. */
   stateWord: string;
+  /** A second word that also finds the state ("Half eaten" for Partly eaten); shown after the tag when it is why it matched. */
+  stateAlias: string;
   note: string;
   /** What is searched with no item kind chosen: the state and the note. */
-  hayAlways: string;
+  hayAlways: Hay;
   /** What is searched inside an item kind or an item: also name, flavours, kind word, amount and day part. */
-  hayScoped: string;
+  hayScoped: Hay;
 }
 
 export type DatedDoc = EventDoc | EntryDoc;
@@ -91,17 +93,17 @@ export interface ItemDoc {
   flavours: string[];
   count: number;
   last: PlainDate | null;
-  hay: string;
+  hay: Hay;
 }
 export interface ConditionDoc {
   type: 'condition';
   condition: Condition;
-  hay: string;
+  hay: Hay;
 }
 export interface PinnedDoc {
   type: 'pinned';
   note: PinnedNote;
-  hay: string;
+  hay: Hay;
 }
 
 export interface SearchIndex {
@@ -116,13 +118,12 @@ export interface SearchIndex {
   itemDoc: (itemId: string) => ItemDoc | undefined;
 }
 
-const SEP = ' \n ';
 /** A built-in vet service is stored under the key of its event type (anal_glands, nails). */
 const isKind = (a: string): a is 'anal_glands' | 'nails' => a === 'anal_glands' || a === 'nails';
-const haystack = (fields: readonly string[]): string => norm(fields.filter(Boolean).join(SEP));
 
 export function buildIndex(input: IndexInput, ctx: IndexContext): SearchIndex {
   const { t, format: f, lang } = ctx;
+  const haystack = (fields: readonly string[]) => makeHay(fields, lang);
   const word = (k: Exclude<Kind, 'tracked' | 'pinned'>) => nfc(t(TYPE_WORD[k]));
   const kindWords = (k: Kind): KindWords => {
     const alias = TYPE_ALIAS[k];
@@ -171,6 +172,7 @@ export function buildIndex(input: IndexInput, ctx: IndexContext): SearchIndex {
     const amount = nfc(f.amount(e.amount, e.unit, item?.conversion, e.doseText ?? ''));
     const partLabel = nfc(f.part(e.dayPart));
     const sw = stateWord(e.state);
+    const sa = e.state === 'partial' ? nfc(t('copy.72')) : '';
     const note = nfc(e.note);
     const itemKind = item?.kind ?? null;
     return {
@@ -186,9 +188,10 @@ export function buildIndex(input: IndexInput, ctx: IndexContext): SearchIndex {
       partLabel,
       state: e.state,
       stateWord: sw,
+      stateAlias: sa,
       note,
-      hayAlways: haystack([sw, note]),
-      hayScoped: haystack([name, itemKind ? word(itemKind) : '', amount, partLabel, sw, note]),
+      hayAlways: haystack([sw, sa, note]),
+      hayScoped: haystack([name, itemKind ? word(itemKind) : '', amount, partLabel, sw, sa, note]),
     };
   });
 
@@ -264,7 +267,7 @@ export interface SearchResult {
  * item cards, tracked conditions, pinned notes and the entries that have a note or are refused / partly eaten.
  * An item kind lists that kind's entries and searches their amount and day part as well.
  */
-export function runSearch(index: SearchIndex, tokens: readonly string[], kinds: readonly Kind[]): SearchResult {
+export function runSearch(index: SearchIndex, tokens: readonly Token[], kinds: readonly Kind[]): SearchResult {
   const any = tokens.length > 0;
   const empty: SearchResult = { idle: true, scoped: false, items: [], conditions: [], pinned: [], dated: [], total: 0 };
   if (!any && kinds.length === 0) return empty;

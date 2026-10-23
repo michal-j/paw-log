@@ -1,5 +1,6 @@
 // Search (JCB-138) through the UI: the demo, and the real data path (App → SupabaseRepository → Postgres with every
 // migration). Fictional data only. The matcher itself is in tests/search.test.ts.
+import { readFileSync } from 'node:fs';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { App } from '../src/App';
@@ -127,7 +128,8 @@ describe('filters (demo)', () => {
     const sheet = within(dialog());
     expect(sheet.getAllByRole('button', { pressed: false })).toHaveLength(17);
     for (const caption of ['Events', 'Food, medication and care items', 'Not on a day']) expect(sheet.getByText(caption)).toBeTruthy();
-    expect(sheet.getByRole('button', { name: 'Show results (0)' })).toBeTruthy();
+    expect(sheet.getByRole('button', { name: 'Done' })).toBeTruthy(); // nothing chosen: no count to promise
+    expect(sheet.queryByText(/Nothing picked shows everything/)).toBeNull();
     fireEvent.click(sheet.getByRole('button', { name: 'Vet visits' }));
     expect(sheet.getByRole('button', { name: 'Show results (2)' })).toBeTruthy();
     fireEvent.click(sheet.getByRole('button', { name: 'Symptoms' }));
@@ -151,13 +153,13 @@ describe('filters (demo)', () => {
     demo();
     await type('maple');
     fireEvent.click(await screen.findByRole('button', { name: 'Filters' }));
-    expect(within(dialog()).getByRole('button', { name: 'Show results (1)' })).toBeTruthy();
+    expect(within(dialog()).getByRole('button', { name: 'Done' })).toBeTruthy();
     fireEvent.click(within(dialog()).getByRole('button', { name: 'Symptoms' }));
     expect(within(dialog()).getByRole('button', { name: 'Show results (0)' })).toBeTruthy();
     fireEvent.click(within(dialog()).getByRole('button', { name: 'Vet visits' }));
     expect(within(dialog()).getByRole('button', { name: 'Show results (1)' })).toBeTruthy();
     fireEvent.click(within(dialog()).getByRole('button', { name: 'Clear' }));
-    expect(within(dialog()).getByRole('button', { name: 'Show results (1)' })).toBeTruthy();
+    expect(within(dialog()).getByRole('button', { name: 'Done' })).toBeTruthy();
     expect((within(dialog()).getByRole('button', { name: 'Clear' }) as HTMLButtonElement).disabled).toBe(true);
   });
 
@@ -407,7 +409,7 @@ describe('Polish (demo)', () => {
     const sheet = within(dialog());
     for (const label of ['Wizyty u weta', 'Gruczoły odbytu', 'Pazury', 'Odrobaczanie', 'Suplementy', 'Zabiegi']) expect(sheet.getByRole('button', { name: label })).toBeTruthy();
     expect(sheet.getByText('Jedzenie, leki i zabiegi')).toBeTruthy();
-    expect(sheet.getByRole('button', { name: /^Pokaż wyniki \(\d+\)$/ })).toBeTruthy();
+    expect(sheet.getByRole('button', { name: 'Gotowe' })).toBeTruthy();
     fireEvent.click(sheet.getByRole('button', { name: 'Wizyty u weta' }));
     fireEvent.click(sheet.getByRole('button', { name: 'Objawy' }));
     fireEvent.click(sheet.getByRole('button', { name: 'Pazury' }));
@@ -425,6 +427,57 @@ describe('Polish (demo)', () => {
     fireEvent.click((await screen.findAllByRole('button', { name: /Wizyta u weta/ }))[0]!);
     await waitFor(() => expect(window.location.pathname).toMatch(/^\/day\//));
     expect(screen.getByRole('button', { name: 'Wstecz' })).toBeTruthy();
+  });
+});
+
+describe('QA fixes (demo)', () => {
+  it('a condition page opened from Search says Back and keeps the Search tab marked', async () => {
+    demo();
+    await type('stomach');
+    fireEvent.click(await screen.findByRole('button', { name: /Stomach trouble.*Since/ }));
+    await screen.findByRole('heading', { name: 'Stomach trouble' });
+    expect(document.querySelector('.day-btn--back')?.textContent).toBe('Back');
+    const tabs = within(screen.getByRole('navigation'));
+    expect(tabs.getByRole('button', { name: 'Search' }).getAttribute('aria-current')).toBe('page');
+    expect(tabs.getByRole('button', { name: 'Tracked' }).getAttribute('aria-current')).toBeNull();
+  });
+
+  it('a condition page from the Tracked tab still says Tracked and marks it', async () => {
+    demo('/tracked');
+    fireEvent.click(await screen.findByRole('button', { name: /Stomach trouble/ }));
+    await screen.findByRole('heading', { name: 'Stomach trouble' });
+    expect(document.querySelector('.day-btn--back')?.textContent).toBe('Tracked');
+    expect(within(screen.getByRole('navigation')).getByRole('button', { name: 'Tracked' }).getAttribute('aria-current')).toBe('page');
+  });
+
+  it('"half" finds a partly eaten entry through its alias; the tag keeps its label and shows the alias, highlighted', async () => {
+    demo();
+    await type('partly');
+    await waitFor(() => expect(results()).toMatch(/results?$/));
+    expect(document.querySelector('.day-tag--partial mark.hit')?.textContent).toBe('Partly');
+    await type('half');
+    await waitFor(() => expect(document.querySelector('.day-tag--partial')).not.toBeNull());
+    expect(document.querySelector('.day-tag--partial')?.textContent).toBe('Partly eaten · Half eaten');
+    expect(document.querySelector('.day-tag--partial mark.hit')?.textContent).toBe('Half');
+  });
+
+  it('a word with a stray single letter still finds ("lump a"), without marking the letter', async () => {
+    demo();
+    await type('lump a');
+    await waitFor(() => expect(results()).toMatch(/results?$/));
+    expect(marks().every((m) => m!.toLowerCase() === 'lump')).toBe(true);
+  });
+
+  it('an item with no entries opens its page with an empty message', async () => {
+    const repo = new DemoRepository(null, NOW);
+    const dog = await repo.getDog();
+    await repo.saveItem({ id: 'item-new', dogId: dog.id, kind: 'supplement', name: 'Newvit', colour: 'med-biomend', defaultDayPart: 2, activeFrom: '2026-10-01', activeTo: null });
+    mount(repo, '/search');
+    await type('newvit');
+    fireEvent.click(await screen.findByRole('button', { name: /Newvit.*Supplement.*0 entries/ }));
+    await screen.findByRole('heading', { name: 'Newvit' });
+    expect(screen.getByText(translate('en', 'searchItemEmpty'))).toBeTruthy();
+    expect(translate('pl', 'searchItemEmpty')).toBe('Brak wpisów dla tej pozycji.');
   });
 });
 
@@ -518,3 +571,52 @@ describe('the real data path', () => {
     await waitFor(() => expect(within(dialog()).getByRole('button', { name: /^Show results \(2\d\)$/ })).toBeTruthy());
   }, 60000);
 });
+
+const P1 = '80000000-0000-4000-8000-000000000001';
+const labels = `
+  insert into public.event (id, dog_id, date, type, title, detail) values
+    ('${E(4)}', '${SEED.dog}', '2026-10-11', 'vet', 'Riverside Vet', 'Weight check.'),
+    ('${E(5)}', '${SEED.dog}', '2026-10-10', 'symptom', 'Restlessness', ''),
+    ('${E(6)}', '${SEED.dog}', '2026-10-09', 'other', 'Bath', 'Oatmeal shampoo.');
+  insert into public.attachment (id, dog_id, event_id, storage_path, width, height) values
+    ('${P1}', '${SEED.dog}', '${E(4)}', '${SEED.dog}/${P1}.jpg', 1600, 1200);`;
+
+describe('type labels (real path)', () => {
+  it('a vet visit with a photo found by "photo" shows and highlights the label', async () => {
+    await real('/search', labels);
+    await type('photo');
+    const card = await screen.findByRole('button', { name: /Riverside Vet/ });
+    expect(card.textContent).toContain('Vet visit · Riverside Vet · Photo');
+    expect(Array.from(card.querySelectorAll('mark.hit')).map((m) => m.textContent)).toEqual(['Photo']);
+  });
+
+  it('a type word typed next to a word of the title still shows the label: "restlessness symptom", "bath other"', async () => {
+    await real('/search', labels);
+    await type('restlessness symptom');
+    const card = await screen.findByRole('button', { name: /Restlessness/ });
+    expect(card.textContent).toContain('Restlessness · Symptom');
+    expect(Array.from(card.querySelectorAll('mark.hit')).map((m) => m.textContent)).toEqual(['Restlessness', 'Symptom']);
+    await type('bath other');
+    const bath = await screen.findByRole('button', { name: /Bath/ });
+    expect(bath.textContent).toContain('Bath · Other');
+    expect(Array.from(bath.querySelectorAll('mark.hit')).map((m) => m.textContent)).toEqual(['Bath', 'Other']);
+  });
+
+  it('"vet visit" does not repeat the label already in the head', async () => {
+    await real('/search', labels);
+    await type('vet visit');
+    const card = await screen.findByRole('button', { name: /Riverside Vet/ });
+    expect(card.textContent).not.toContain('Photo');
+    expect(card.textContent?.match(/Vet visit/g)).toHaveLength(1);
+  });
+
+  it('Polish: the Odmowa tag keeps its colour when highlighted (rule in search.css, tokens only)', async () => {
+    await real('/search', `insert into public.entry (dog_id, date, day_part, item_id, amount, unit, state, note) values ('${SEED.dog}', '2026-10-12', 4, '${SEED.items.farm}', 1, 'can', 'skipped', '');`, 'pl');
+    await type('odmowa', 'pl');
+    await waitFor(() => expect(document.querySelector('.day-tag--skipped mark.hit')?.textContent).toBe('Odmowa'));
+    const css = readFileSync('src/search/search.css', 'utf8');
+    expect(css).toMatch(/\.day-tag mark\.hit \{ color: inherit;/);
+    expect(css).not.toMatch(/#[0-9a-fA-F]{3,8}\b/);
+  });
+});
+
