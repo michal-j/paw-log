@@ -10,7 +10,6 @@ Format: [Keep a Changelog](https://keepachangelog.com). "Unreleased" means not y
 
 ### Changed
 - A vet visit with only an "also done" service ticked (nails, anal glands, an own one) saves without a clinic or text (JCB-92).
-- iPhone status bar colour (`theme-color`) is now white like the app instead of mint, to remove the blurry strip under the Dynamic Island; to be confirmed on a real iPhone (JCB-94).
 
 ### Fixed
 - Sheets: the dimmed page now shows behind the rounded top corners instead of white (JCB-95).
