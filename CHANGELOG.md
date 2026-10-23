@@ -4,6 +4,13 @@ Format: [Keep a Changelog](https://keepachangelog.com). "Unreleased" means not y
 
 ## Unreleased
 
+### Added
+- Search: a fifth tab that finds anything in the log by text or filter across all days (events, entries, items, tracked conditions, pinned notes). Word-start matching ignores case and diacritics and treats Polish word forms as equal; type words ("vet visit", "wizyta") and services are searchable; a Filters sheet covers all 17 kinds; an item's full history opens from its card; Back from a Day returns to the same results (JCB-138).
+- Design system: SearchField, FilterSummary, Search and Sliders glyphs.
+
+### Changed
+- A Day opened from inside the app (Search, or after saving from Pinned or Tracked) now goes Back to where you came from, labelled "Back"; from the Timeline it is unchanged.
+
 ## 2026-10-22 later (merged to main)
 
 ### Added
