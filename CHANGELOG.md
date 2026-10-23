@@ -4,6 +4,8 @@ Format: [Keep a Changelog](https://keepachangelog.com). "Unreleased" means not y
 
 ## Unreleased
 
+## 2026-10-23 later (merged to main)
+
 ### Added
 - Sheets close with a drag: pull the grabber or heading down (past about 90px, or flick) to close; a short drag springs back; the body still scrolls (JCB-93).
 - Day view: a food or medication entry that has a note now shows the note marker (white page) in front of the note (JCB-130).
