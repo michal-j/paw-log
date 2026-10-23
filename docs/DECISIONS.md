@@ -41,6 +41,9 @@
 - Issues are deliverables, not logs; the CEO sets Todo (will do) and Backlog (parked) and priority; the PM builds from Todo in priority order (CEO 22 Oct, see `docs/PM.md`).
 - Linear is the source of truth (CEO 22 Oct): an issue is taken, built, tested, deployed and then closed; bundles are split into one deliverable per issue, with labels (Feature, Improvement, Bug, Idea, Open question) and sub-issues for epics; the full rules are in `docs/PM.md`. Backlog cleaned up the same day.
 - Search (JCB-138, CEO 23 Oct): the fifth navbar tab (Timeline, Pinned, + Add, Tracked, Search), as in the original prototype. It covers the whole data model (17 kinds: 9 event types, documents, 5 item kinds, Tracked, Pinned), is client-side over the loaded records, and matches type words, services and Polish word stems; filters are one Filters button, a one-line summary and the shared sheet; every item's full history is reachable. Dates are not searched as text; amounts and day parts only inside an item or item kind. Spec: `design/proposals/search/README.md`.
+- Sheets (CEO 23 Oct): drag the grabber or heading down to close (about 90 px or a flick; the body is not draggable); the scrim covers the screen behind the sheet so the corners show the dimmed page. A vet visit saves with only a service ticked (JCB-92). Entries with a note show the small note badge before the note on the Day view (JCB-130).
+- Status bar blur (JCB-94, 23 Oct): white `theme-color` did not change it on the installed iPhone app, so it was reverted; most likely the iOS system effect, parked in Backlog until the app is native.
+- PDF clean-up (JCB-132, 23 Oct): closing a form after a failed save removes the PDFs already sent; renaming a document in the Document sheet still applies at once (as photos do).
 - Working rules: short explanations, clarifying questions first, quality over quantity, no unauthorised access (confirm with the CEO).
 
 ## Open, next, parked
