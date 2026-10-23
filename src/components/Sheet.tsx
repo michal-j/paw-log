@@ -1,12 +1,16 @@
-import { useEffect, useId, useRef, type ReactNode } from 'react';
+import { useEffect, useId, useRef, type PointerEvent, type ReactNode } from 'react';
 import { useI18n } from '../i18n';
 import './controls.css';
 
 /**
  * Bottom sheet (docs/design-system/components/Sheet): scrim, grabber, heading with Close, a body that
- * scrolls and an action row that stays. Escape and a tap on the scrim close it. Focus moves into the
- * sheet when it opens and back to where it was when it closes.
+ * scrolls and an action row that stays. Escape, a tap on the scrim and a drag of the grabber or heading
+ * downwards close it (the body is not draggable, so it scrolls as usual). Focus moves into the sheet
+ * when it opens and back to where it was when it closes.
  */
+const DRAG_START = 6;
+const DRAG_CLOSE = 90;
+const DRAG_FLICK = 0.6; // px per ms
 export function Sheet({
   title,
   onClose,
@@ -28,6 +32,36 @@ export function Sheet({
   const titleId = useId();
   const ref = useRef<HTMLElement>(null);
 
+  // Move and release are listened for on the window: a mouse that leaves the heading would otherwise lose the drag
+  // (a touch keeps it on its own). A drag that never moves is a plain tap and leaves the heading's own buttons alone.
+  const startDrag = (e: PointerEvent<HTMLElement>) => {
+    if ((e.target as HTMLElement).closest('button') || !ref.current) return;
+    const sheet = ref.current;
+    const start = { y: e.clientY, t: e.timeStamp, moved: false };
+    const move = (m: globalThis.PointerEvent) => {
+      const dy = m.clientY - start.y;
+      if (!start.moved && Math.abs(dy) < DRAG_START) return;
+      start.moved = true;
+      sheet.style.animation = 'none';
+      sheet.style.transform = `translateY(${Math.max(0, dy)}px)`;
+    };
+    const end = (u: globalThis.PointerEvent) => {
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', end);
+      window.removeEventListener('pointercancel', end);
+      if (!start.moved) return;
+      const dy = u.clientY - start.y;
+      if (u.type === 'pointerup' && (dy > DRAG_CLOSE || (dy > DRAG_START * 6 && dy / Math.max(1, u.timeStamp - start.t) > DRAG_FLICK))) return onClose();
+      sheet.style.transition = 'transform 160ms ease-out';
+      sheet.style.transform = '';
+      window.setTimeout(() => (sheet.style.transition = ''), 180);
+    };
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', end);
+    window.addEventListener('pointercancel', end);
+  };
+  const dragHandlers = { onPointerDown: startDrag };
+
   useEffect(() => {
     const before = document.activeElement as HTMLElement | null;
     // preventScroll: the sheet starts below the fold (it rises in), and .app would scroll to it.
@@ -46,10 +80,10 @@ export function Sheet({
       {/* The scrim closes on tap; keyboard and screen-reader users have Close and Escape. */}
       <div className="sheet-scrim" aria-hidden="true" onClick={onClose} />
       <section ref={ref} className="sheet" role="dialog" aria-modal="true" aria-labelledby={titleId} tabIndex={-1}>
-        <div className="sheet__grab" aria-hidden="true">
+        <div className="sheet__grab" aria-hidden="true" {...dragHandlers}>
           <span />
         </div>
-        <header className="sheet__head">
+        <header className="sheet__head" {...dragHandlers}>
           <h2 id={titleId} className="sheet__title" onClick={onTitleTap}>
             {title}
           </h2>
