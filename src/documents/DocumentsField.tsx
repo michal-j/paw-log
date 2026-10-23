@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { DOCS_MAX, DemoRepository, type DocFile } from '../data';
 import { DocIcon, OpenOutIcon } from '../components/icons';
 import { Field, Sheet } from '../components/Sheet';
@@ -33,7 +33,12 @@ export type DocError = { kind: 'tooBig'; name: string; size: string } | { kind: 
 
 /** The PDFs picked in a form (see DraftDoc) and the error to show; `stored`: how many the entry has already. */
 export function useDocDrafts(stored: number) {
+  const { repository, records } = useLog();
   const [drafts, setDrafts] = useState<DraftDoc[]>([]);
+  const latest = useRef(drafts);
+  useEffect(() => {
+    latest.current = drafts;
+  }, [drafts]);
   const [error, setError] = useState<DocError>(null);
   const [reading, setReading] = useState(false);
   const room = DOCS_MAX - stored - drafts.length;
@@ -41,6 +46,16 @@ export function useDocDrafts(stored: number) {
   const patch = useCallback((id: string, change: Partial<DraftDoc>) => {
     setDrafts((list) => list.map((d) => (d.id === id ? { ...d, ...change } : d)));
   }, []);
+
+  /** Take the files of PDFs already sent by a failed Save out of storage again (no row points at them). Best effort. */
+  const purge = useCallback(
+    (list: DraftDoc[]) => {
+      const dogId = records?.dogId;
+      const sent = dogId ? list.filter((d) => d.sent).map((d) => ({ id: d.id, dogId })) : [];
+      if (sent.length) void repository.purgeDocumentFiles(sent).catch(() => undefined);
+    },
+    [repository, records],
+  );
 
   const pick = async (file: File) => {
     if (room <= 0) return;
@@ -72,7 +87,12 @@ export function useDocDrafts(stored: number) {
     pick,
     patch,
     rename: (id: string, name: string) => setDrafts((list) => list.map((d) => (d.id === id ? { ...d, name: cleanDocName(name, d.name) } : d))),
-    remove: (id: string) => setDrafts((list) => list.filter((d) => d.id !== id)),
+    remove: (id: string) => {
+      purge(latest.current.filter((d) => d.id === id));
+      setDrafts((list) => list.filter((d) => d.id !== id));
+    },
+    /** The form is closed without a finished Save: PDFs a failed attempt already sent are removed from storage. */
+    discard: () => purge(latest.current),
     /** After a Save that did not finish: a PDF that was still going is ready to try again (a failed one keeps its mark). */
     settle: () => setDrafts((list) => list.map((d) => (d.state === 'uploading' ? { ...d, state: 'ready' } : d))),
     /** Before a Save: every PDF not sent yet shows as waiting to go. */

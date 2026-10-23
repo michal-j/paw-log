@@ -175,6 +175,26 @@ describe('documents, real data path', () => {
     expect(fake!.backend.files()).toHaveLength(1);
   });
 
+  it('closing the form after a failed save removes the PDFs already sent, so nothing is left in storage (JCB-132)', async () => {
+    await at('/day/2026-10-15', undefined, { uploadLimitMs: 400 });
+    await screen.findAllByText('Cooked meal');
+    fireEvent.click(screen.getByRole('button', { name: 'Add' }));
+    fireEvent.click(within(dialog()).getByText('Vet visit'));
+    fireEvent.change(within(dialog()).getByLabelText('Reason and findings'), { target: { value: 'Check-up' } });
+    pick(pdfFile('First.pdf'));
+    await within(dialog()).findByRole('button', { name: /First/ });
+    pick(pdfFile('Second.pdf'));
+    await within(dialog()).findByRole('button', { name: /Second/ });
+    let puts = 0;
+    fake!.backend.hangNext(1, (method, table) => method === 'PUT' && table === 'storage' && ++puts === 2);
+    fireEvent.click(within(dialog()).getByRole('button', { name: 'Save' }));
+    expect(await within(dialog()).findByText('Not sent.')).toBeTruthy();
+    expect(fake!.backend.files()).toHaveLength(1); // the first one went; the second is held and never lands
+    fireEvent.click(within(dialog()).getByRole('button', { name: 'Close' }));
+    await waitFor(() => expect(fake!.backend.files()).toHaveLength(0));
+    expect(await rows(`select count(*)::int as n from attachment`)).toEqual([{ n: 0 }]);
+  });
+
   it('the Document sheet renames a saved document; Remove has Undo and the file goes once the toast is gone', async () => {
     await at('/day/2026-10-14', withDoc);
     const repo = fake!.repository(NOW);

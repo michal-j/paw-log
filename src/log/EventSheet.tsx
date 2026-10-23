@@ -364,7 +364,11 @@ export function EventSheet({
       <Sheet
         title={event ? t('editEvent') : t(ADD_TITLE[kind])}
         // Escape closes the Document sheet over this one, not this one too.
-        onClose={() => !docTarget && close()}
+        onClose={() => {
+          if (docTarget) return;
+          docs.discard();
+          close();
+        }}
         footer={
           <>
             {event && (
