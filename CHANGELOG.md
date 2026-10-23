@@ -4,7 +4,16 @@ Format: [Keep a Changelog](https://keepachangelog.com). "Unreleased" means not y
 
 ## Unreleased
 
+### Added
+- Sheets close with a drag: pull the grabber or heading down (past about 90px, or flick) to close; a short drag springs back; the body still scrolls (JCB-93).
+- Day view: a food or medication entry that has a note now shows the note marker (white page) in front of the note (JCB-130).
+
+### Changed
+- A vet visit with only an "also done" service ticked (nails, anal glands, an own one) saves without a clinic or text (JCB-92).
+- iPhone status bar colour (`theme-color`) is now white like the app instead of mint, to remove the blurry strip under the Dynamic Island; to be confirmed on a real iPhone (JCB-94).
+
 ### Fixed
+- Sheets: the dimmed page now shows behind the rounded top corners instead of white (JCB-95).
 - PDF upload: closing a form after a failed save now removes the PDFs that had already been sent, so no unreferenced files are left in storage (JCB-132).
 
 ## 2026-10-23 (merged to main)
