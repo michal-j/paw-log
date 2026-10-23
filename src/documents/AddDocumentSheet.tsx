@@ -59,7 +59,10 @@ export function AddDocumentSheet({ date, condition: conditionId }: { date: Plain
   return (
     <Sheet
       title={t('docAddTitle')}
-      onClose={close}
+      onClose={() => {
+        docs.discard();
+        close();
+      }}
       footer={
         <button type="button" className="btn btn--primary btn--lg" disabled={busy || !file || docs.reading} onClick={guard(save)}>
           {t('save')}
