@@ -1,0 +1,114 @@
+/* ===================== PROPOSED (JCB-138): Search. Tokens only; every other class is the app's own. ===================== */
+/* NavBar with five items: + Add is column 3 of 5, centred again (the 4-column bar put it off-centre). */
+.nav--5 { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+
+/* SearchField (new, used once): the app's .input with a leading glyph and a 44px clear target. */
+.search-head {
+  flex: none;
+  position: relative;
+  z-index: 3;
+  padding: var(--space-2) var(--space-3) var(--space-3);
+  background: var(--color-surface-tint);
+  border-bottom: 1px solid var(--color-line);
+  box-shadow: var(--shadow-bar-top);
+}
+.search-field { position: relative; }
+.search-field .input { padding-left: 42px; padding-right: 46px; border-radius: var(--radius-md); background: var(--color-surface); }
+.search-field input::-webkit-search-cancel-button, .search-field input::-webkit-search-decoration { -webkit-appearance: none; display: none; }
+.search-field__icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); display: inline-flex; color: var(--color-mint-deep); pointer-events: none; }
+.search-field__clear {
+  position: absolute; right: 0; top: 50%; transform: translateY(-50%);
+  width: 44px; height: 44px; margin: 0; padding: 0;
+  display: inline-flex; align-items: center; justify-content: center;
+  border: 0; background: transparent; color: var(--color-ink-3); cursor: pointer;
+}
+.search-field__clear > span {
+  width: 20px; height: 20px; display: inline-flex; align-items: center; justify-content: center;
+  border-radius: var(--radius-full); background: var(--color-line); color: var(--color-ink-2);
+}
+.search-field__clear:active { opacity: 0.55; }
+.search-field__clear[hidden] { display: none; }
+
+/* The scrolling part: chips, count, results. */
+.search-body { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 0 var(--space-3) var(--space-6); background: var(--color-surface); }
+/* Field and Filters button side by side; the chosen filters are one short line under them. */
+.search-row { display: flex; gap: var(--space-2); align-items: center; }
+.search-row .search-field { flex: 1; min-width: 0; }
+.filter-btn { flex: none; min-height: 50px; gap: 6px; padding: 0 var(--space-3); }
+.filter-btn__n {
+  min-width: 20px; height: 20px; padding: 0 6px; display: inline-flex; align-items: center; justify-content: center;
+  border-radius: var(--radius-full); background: var(--color-mint-bg); border: 1px solid var(--color-mint-line); color: var(--color-mint-deep);
+  font: var(--type-badge-weight) 12px / 16px var(--type-badge-family);
+}
+.filter-line { display: flex; align-items: center; gap: var(--space-2); padding: 0 var(--space-3) 0 var(--space-4); background: var(--color-surface); border-bottom: 1px solid var(--color-line); }
+.filter-line__text { flex: 1; min-width: 0; min-height: 44px; margin: 0; padding: 0; border: 0; background: transparent; text-align: left; color: var(--color-mint-deep); font: var(--type-body-strong-weight) 13px / 18px var(--type-body-family); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; cursor: pointer; }
+.filter-line__clear { flex: none; min-height: 44px; }
+#fline:empty { display: none; }
+.search-count { margin: var(--space-4) var(--space-1) 0; color: var(--color-ink-2); font: var(--type-small-weight) 13px / 18px var(--type-small-family); }
+.search-body .day__caption { margin-top: var(--space-4); }
+.search-count + .day__caption { margin-top: var(--space-2); }
+
+/* Match highlight: mint-bg behind ink text (never mint as text). */
+mark.hit { background: var(--color-mint-bg); color: var(--color-ink); border-radius: var(--radius-xs); box-shadow: inset 0 -2px 0 var(--color-mint-line); }
+
+/* Result card: the Day view's tappable card plus a date at the right of the head. */
+.res__top { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-3); }
+.res__top .day-card__head { flex: 1; min-width: 0; }
+.res__date { flex: none; padding-top: 2px; color: var(--color-ink-3); font: var(--type-small-weight) var(--type-small-size) / var(--type-small-line) var(--type-small-family); white-space: nowrap; }
+.res .day-card__text { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden; }
+.res .day-card__chips, .res .cond-tags { margin-top: var(--space-2); }
+.res .day-tag { margin-left: auto; }
+.res__tag { display: inline-flex; margin-top: var(--space-2); }
+.res__kind { color: var(--color-ink-3); font-weight: var(--type-small-weight); }
+
+/* Item card (medication or food): same Card, DoseMark, chevron as the Tracked list. */
+.item-card .dose-mark { flex: none; }
+.item-card__lead { flex: none; width: 22px; display: inline-flex; justify-content: center; }
+
+/* A result with a photo: the text column and a 52px thumbnail (PhotoThumb, small). */
+.res__withthumb { display: flex; align-items: flex-start; gap: var(--space-3); }
+.res__main { flex: 1; min-width: 0; display: block; }
+.dose-row .day-card__row-label { align-items: flex-start; padding-block: var(--space-2); }
+.dose-row .dose-mark { margin-top: 5px; }
+.dose-row .day-card__row-value { flex: none; white-space: nowrap; }
+.dose-row .day-card__row-label { flex: 1; min-width: 0; }
+
+/* Loading: three card-shaped placeholders in line and line-strong, no new colour. */
+.skel { margin: 0 0 var(--space-2); padding: 14px; border: 1px solid var(--color-line); border-radius: var(--radius-lg); background: var(--color-surface); box-shadow: var(--shadow-card); }
+.skel i { display: block; height: 10px; border-radius: var(--radius-full); background: var(--color-line); animation: pl-skel 1.2s ease-in-out infinite alternate; }
+.skel i + i { margin-top: 10px; }
+.skel i.h { width: 46%; height: 12px; background: var(--color-line-strong); }
+.skel i.s { width: 72%; }
+@keyframes pl-skel { from { opacity: 0.55; } to { opacity: 1; } }
+
+/* Day view, arriving from a result: the matched card is ringed for a moment (static ring when motion is reduced). */
+.hit-flash { animation: pl-flash 2.4s ease-out both; }
+@keyframes pl-flash { 0%, 55% { box-shadow: 0 0 0 2px var(--color-mint), var(--shadow-card); } 100% { box-shadow: 0 0 0 2px transparent, var(--shadow-card); } }
+@media (prefers-reduced-motion: reduce) { .hit-flash { animation: none !important; box-shadow: 0 0 0 2px var(--color-mint-deep), var(--shadow-card); } }
+
+/* Dose list rows inside a Card (day-card__rows): mark, date and part, dose. */
+.dose-row .day-card__row-label { display: inline-flex; align-items: center; gap: var(--space-2); min-width: 0; }
+.dose-row .dose-mark { flex: none; }
+.dose-row__sub { color: var(--color-ink-2); font-weight: var(--type-body-weight); }
+
+.search-more { display: flex; width: 100%; margin-top: var(--space-2); }
+.pinned-text { white-space: pre-line; }
+
+/* ---------- Prototype chrome (not part of the proposal) ---------- */
+.stage { display: flex; gap: 24px; justify-content: center; align-items: flex-start; padding: 24px 16px; }
+.panel { width: 270px; flex: none; position: sticky; top: 24px; font: 13px / 18px var(--type-body-family); color: var(--color-ink-2); }
+.panel h1 { margin: 0 0 4px; font: 700 17px / 22px var(--type-title-family); color: var(--color-ink); }
+.panel p { margin: 0 0 12px; }
+.panel h2 { margin: 16px 0 6px; font: var(--type-caption-weight) 11px / 14px var(--type-caption-family); letter-spacing: var(--type-caption-tracking); text-transform: uppercase; color: var(--color-ink-3); }
+.panel button.go { display: block; width: 100%; min-height: 34px; margin: 0 0 5px; padding: 0 12px; text-align: left; border: 1px solid var(--color-line-strong); border-radius: var(--radius-md); background: var(--color-surface); color: var(--color-ink); font: 600 13px / 16px var(--type-body-family); cursor: pointer; }
+.panel button.go[aria-current='true'] { border-color: var(--color-mint-line); background: var(--color-mint-bg); color: var(--color-mint-deep); }
+.panel .row { display: flex; gap: 6px; }
+.panel .row button.go { width: auto; flex: 1; }
+.phone { position: relative; flex: none; width: 390px; height: 844px; display: flex; flex-direction: column; overflow: hidden; background: var(--color-surface); border: 1px solid var(--color-line-strong); border-radius: 28px; box-shadow: var(--shadow-sheet); }
+.phone .sheet { max-height: calc(100% - 24px); }
+.screen { position: relative; flex: 1; min-height: 0; display: flex; flex-direction: column; }
+.phone .toast-root { bottom: 76px; }
+.kbd { flex: none; height: 0; background: var(--color-line); transition: height 200ms cubic-bezier(.2,.7,.2,1); display: flex; align-items: center; justify-content: center; color: var(--color-ink-3); font: 600 12px var(--type-body-family); overflow: hidden; }
+.kbd--on { height: 290px; }
+@media (max-width: 899px) { .panel { display: none; } .stage { padding: 0; } }
+@media (max-width: 430px) { .phone { width: 100vw; height: 100dvh; border: 0; border-radius: 0; box-shadow: none; } }

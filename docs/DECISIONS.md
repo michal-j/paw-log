@@ -40,6 +40,7 @@
 - Bulk add and backfill of several days (JCB-33): not planned (CEO 22 Oct: own data was entered manually, no need to build a feature around it). Past days can still be filled one at a time and from the usual day.
 - Issues are deliverables, not logs; the CEO sets Todo (will do) and Backlog (parked) and priority; the PM builds from Todo in priority order (CEO 22 Oct, see `docs/PM.md`).
 - Linear is the source of truth (CEO 22 Oct): an issue is taken, built, tested, deployed and then closed; bundles are split into one deliverable per issue, with labels (Feature, Improvement, Bug, Idea, Open question) and sub-issues for epics; the full rules are in `docs/PM.md`. Backlog cleaned up the same day.
+- Search (JCB-138, CEO 23 Oct): the fifth navbar tab (Timeline, Pinned, + Add, Tracked, Search), as in the original prototype. It covers the whole data model (17 kinds: 9 event types, documents, 5 item kinds, Tracked, Pinned), is client-side over the loaded records, and matches type words, services and Polish word stems; filters are one Filters button, a one-line summary and the shared sheet; every item's full history is reachable. Dates are not searched as text; amounts and day parts only inside an item or item kind. Spec: `design/proposals/search/README.md`.
 - Working rules: short explanations, clarifying questions first, quality over quantity, no unauthorised access (confirm with the CEO).
 
 ## Open, next, parked
