@@ -1,0 +1,102 @@
+/* Search (JCB-138), from the approved proposal (design/proposals/search/proposal.css). Colours, radii and shadows come only from tokens.css. */
+
+.search { display: flex; flex-direction: column; flex: 1; min-height: 0; background: var(--color-ground); }
+
+/* SearchField (docs/design-system/components/SearchField): the app's .input with a leading glyph and a 44px clear target. */
+.search-head {
+  flex: none;
+  position: relative;
+  z-index: 3;
+  padding: var(--space-2) var(--space-3) var(--space-3);
+  background: var(--color-surface-tint);
+  border-bottom: 1px solid var(--color-line);
+  box-shadow: var(--shadow-bar-top);
+}
+.search-row { display: flex; gap: var(--space-2); align-items: center; }
+.search-field { position: relative; flex: 1; min-width: 0; }
+.search-field .input { padding-left: 42px; padding-right: 46px; border-radius: var(--radius-md); background: var(--color-surface); }
+.search-field input::-webkit-search-cancel-button, .search-field input::-webkit-search-decoration { -webkit-appearance: none; display: none; }
+.search-field__icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); display: inline-flex; color: var(--color-mint-deep); pointer-events: none; }
+.search-field__clear {
+  position: absolute; right: 0; top: 50%; transform: translateY(-50%);
+  width: 44px; height: 44px; margin: 0; padding: 0;
+  display: inline-flex; align-items: center; justify-content: center;
+  border: 0; background: transparent; color: var(--color-ink-3); cursor: pointer;
+}
+.search-field__clear > span {
+  width: 20px; height: 20px; display: inline-flex; align-items: center; justify-content: center;
+  border-radius: var(--radius-full); background: var(--color-line); color: var(--color-ink-2);
+}
+.search-field__clear:active { opacity: 0.55; }
+
+/* Filters button with a count pill, and the one-line summary under the field. */
+.search-filter-btn { flex: none; min-height: 50px; gap: 6px; padding: 0 var(--space-3); }
+.search-filter-btn__n {
+  min-width: 20px; height: 20px; padding: 0 6px; display: inline-flex; align-items: center; justify-content: center;
+  border-radius: var(--radius-full); background: var(--color-mint-bg); border: 1px solid var(--color-mint-line); color: var(--color-mint-deep);
+  font: var(--type-badge-weight) 12px / 16px var(--type-badge-family);
+}
+.search-summary { flex: none; display: flex; align-items: center; gap: var(--space-2); padding: 0 var(--space-3) 0 var(--space-4); background: var(--color-surface); border-bottom: 1px solid var(--color-line); }
+.search-summary__text {
+  flex: 1; min-width: 0; min-height: 44px; margin: 0; padding: 0; border: 0; background: transparent; text-align: left; cursor: pointer;
+  color: var(--color-mint-deep); font: var(--type-body-strong-weight) 13px / 18px var(--type-body-family);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.search-summary__clear { flex: none; }
+
+/* The scrolling part: count, groups, results. */
+.search-body { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 0 var(--space-3) var(--space-6); background: var(--color-surface); }
+.search-count { margin: var(--space-4) var(--space-1) 0; color: var(--color-ink-2); font: var(--type-small-weight) 13px / 18px var(--type-small-family); }
+.search-body .day__caption { margin-top: var(--space-4); }
+.search-count + .day__caption { margin-top: var(--space-2); }
+.search-empty { margin-top: var(--space-4); }
+.search-none__title { margin-bottom: var(--space-1); }
+.search-more { display: flex; width: 100%; margin-top: var(--space-2); }
+
+/* Match highlight: mint-bg behind ink text (never mint as text). */
+mark.hit { background: var(--color-mint-bg); color: var(--color-ink); border-radius: var(--radius-xs); box-shadow: inset 0 -2px 0 var(--color-mint-line); }
+
+/* Result card: the Day view's tappable card plus a date at the right of the head. */
+.search-res__top { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-3); }
+.search-res__top .day-card__head { flex: 1; min-width: 0; }
+.search-res__date { flex: none; padding-top: 2px; color: var(--color-ink-3); font: var(--type-small-weight) var(--type-small-size) / var(--type-small-line) var(--type-small-family); white-space: nowrap; }
+.search-res .day-card__text, .search-clamp { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; line-clamp: 3; overflow: hidden; white-space: pre-line; overflow-wrap: anywhere; }
+.search-res .day-card__chips, .search-res .cond-tags { margin-top: var(--space-2); }
+.search-res__kind { color: var(--color-ink-3); font-weight: var(--type-small-weight); }
+.search-res__plain { font-weight: var(--type-body-weight); }
+/* A result with a photo: the text column and a 52px thumbnail (PhotoThumb, small). */
+.search-res__withthumb { display: flex; align-items: flex-start; gap: var(--space-3); }
+.search-res__main { flex: 1; min-width: 0; display: block; }
+
+/* Item card (food, medication ...): the Tracked list's card with the item's DoseMark in front. */
+.search-item__lead { flex: none; width: 22px; display: inline-flex; justify-content: center; }
+
+/* Entry rows inside one card: mark, name, day part and date, then amount or state; a note under them. */
+.search-dose__label { display: inline-flex; align-items: flex-start; gap: var(--space-2); flex: 1; min-width: 0; padding-block: var(--space-2); }
+.search-dose__label .dose-mark { flex: none; margin-top: 5px; }
+.search-dose__value { flex: none; padding-block: var(--space-2); white-space: nowrap; }
+.search-nowrap { white-space: nowrap; }
+.search-dose__sub { color: var(--color-ink-2); font-weight: var(--type-body-weight); }
+.search-dose .day-card__row-desc { padding-bottom: var(--space-2); white-space: pre-line; }
+
+/* Filters sheet groups. */
+.search-sheet__group { margin: 0; }
+.search-sheet__caption { margin: var(--space-4) 0 var(--space-2); }
+.sheet__close:disabled { opacity: 0.45; cursor: default; }
+
+/* Loading: three card-shaped placeholders in line and line-strong, no new colour. */
+.search-skel { margin: var(--space-4) 0 var(--space-2); padding: 14px; border: 1px solid var(--color-line); border-radius: var(--radius-lg); background: var(--color-surface); box-shadow: var(--shadow-card); }
+.search-skel + .search-skel { margin-top: 0; }
+.search-skel i { display: block; height: 10px; border-radius: var(--radius-full); background: var(--color-line); animation: pl-skel 1.2s ease-in-out infinite alternate; }
+.search-skel i + i { margin-top: 10px; }
+.search-skel i.h { width: 46%; height: 12px; background: var(--color-line-strong); }
+.search-skel i.s { width: 72%; }
+@keyframes pl-skel { from { opacity: 0.55; } to { opacity: 1; } }
+
+/* iPhone keyboard up (src/search/keyboard.ts): the page is as tall as what is visible, the tab bar is out of the way. */
+html[data-kb] .app { height: var(--vvh, 100dvh); }
+html[data-kb] .nav { display: none; }
+html[data-kb] .search-body { padding-bottom: var(--space-4); }
+
+/* A highlight inside a tag (Refused, Partly eaten) keeps the tag's colour: a light wash behind it and an underline, no ink. */
+.day-tag mark.hit { color: inherit; background: color-mix(in srgb, var(--color-surface) 65%, transparent); box-shadow: inset 0 -2px 0 currentColor; }

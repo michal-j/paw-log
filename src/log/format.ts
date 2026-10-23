@@ -40,27 +40,31 @@ export function makeDateFormat(lang: Lang, currentYear: number) {
   };
 }
 
+/** Formatting for a language: dates, amounts, day parts, event titles. Pure; `useFormat` memoises it for the UI. */
+export function makeFormat(lang: Lang, t: (k: MessageKey) => string, year: number) {
+  return {
+    ...makeDateFormat(lang, year),
+    part: (p: DayPart) => t(PART_NAME[p]),
+    /** "½ can", "0,15 ml (1,5 bars)"; falls back to the free-text dose of old rows. */
+    amount: (amount: number | null, unit: Unit | null, conversion?: Item['conversion'], doseText = '') =>
+      amount !== null && unit ? formatAmount(amount, unit, lang, t, conversion) : doseText,
+    /** "Ocean Blend, salmon" */
+    name: (name: string, flavour: string) => (flavour ? `${name}, ${flavour}` : name),
+    /** The heading of an event card or row. */
+    eventTitle: (e: Pick<HealthEvent, 'type' | 'title'>) => {
+      if (e.type === 'other') return e.title || t('otherEvent');
+      if (e.type === 'photo') return e.title || t('copy.103');
+      const key = EVENT_LABEL[e.type];
+      return key ? t(key) : e.title;
+    },
+  };
+}
+export type Format = ReturnType<typeof makeFormat>;
+
 /** Formatting that depends on the UI language: dates, amounts, day parts, event titles. */
-export function useFormat() {
+export function useFormat(): Format {
   const { lang, t } = useI18n();
   const today = useToday();
   const year = today ? Number(today.slice(0, 4)) : new Date().getFullYear();
-  return useMemo(() => {
-    return {
-      ...makeDateFormat(lang, year),
-      part: (p: DayPart) => t(PART_NAME[p]),
-      /** "½ can", "0,15 ml (1,5 bars)"; falls back to the free-text dose of old rows. */
-      amount: (amount: number | null, unit: Unit | null, conversion?: Item['conversion'], doseText = '') =>
-        amount !== null && unit ? formatAmount(amount, unit, lang, t, conversion) : doseText,
-      /** "Ocean Blend, salmon" */
-      name: (name: string, flavour: string) => (flavour ? `${name}, ${flavour}` : name),
-      /** The heading of an event card or row. */
-      eventTitle: (e: Pick<HealthEvent, 'type' | 'title'>) => {
-        if (e.type === 'other') return e.title || t('otherEvent');
-        if (e.type === 'photo') return e.title || t('copy.103');
-        const key = EVENT_LABEL[e.type];
-        return key ? t(key) : e.title;
-      },
-    };
-  }, [lang, t, year]);
+  return useMemo(() => makeFormat(lang, t, year), [lang, t, year]);
 }

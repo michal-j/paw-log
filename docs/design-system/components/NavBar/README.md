@@ -1,3 +1,3 @@
 The bottom bar: Timeline, Pinned, + Add, Tracked, Search.
 
-Fixed to the bottom, white to `surface-tint` gradient, 1px `line` top border, `shadow-bar-bottom`, safe-area padding underneath. Items are icon over 11px label; active uses `mint-deep` and a 28px `mint` indicator on the top edge that slides between items. The centre item is the primary Add button. Five items maximum. The consumer provides the items and the active index.
+Fixed to the bottom, white to `surface-tint` gradient, 1px `line` top border, `shadow-bar-bottom`, safe-area padding underneath. Items are icon over 11px label; active uses `mint-deep` and a 28px `mint` indicator on the top edge that slides between items. The centre item is the primary Add button. Five items maximum. The consumer provides the items and the active index. With five items the grid has five equal columns and the Add button is column 3, centred.

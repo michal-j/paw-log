@@ -33,10 +33,13 @@ const YEAR_ENTRIES: Record<'one' | 'few' | 'many', MessageKey> = {
 export function ConditionPage({
   id,
   onBack,
+  backLabel,
   onMissing,
   onOpenCondition,
 }: {
   id: string;
+  /** Label of Back when the page was opened from Search ("Back"); default: Tracked. */
+  backLabel?: string;
   onBack: () => void;
   /** The condition does not exist (deleted, or a stale link). */
   onMissing: () => void;
@@ -106,7 +109,7 @@ export function ConditionPage({
       <div className="day__top cond__top">
         <button type="button" className="day-btn day-btn--back" onClick={onBack}>
           <ChevronIcon dir="left" size={18} />
-          {t('copy.173')}
+          {backLabel ?? t('copy.173')}
         </button>
         <button type="button" className="link-btn cond__edit" onClick={() => open({ kind: 'condition', condition })}>
           {t('condEdit')}

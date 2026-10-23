@@ -18,11 +18,12 @@ PawLog is a light, bright, mint-green app for logging a dog's meals, medication 
 
 ## Iconography
 - Glyphs are inline SVG, 1.9 to 2.4px round strokes, drawn on a 24px grid, coloured with `currentColor` and a token. Event glyphs: vet is a heart-line, note is a page, photo is a camera, symptoms is the text "!", Frontline "F", deworming "D".
+- Search and Sliders (two sliders, the Filters button) are 24px-grid glyphs like the others: Search is a circle with a handle (NavBar tab, SearchField, empty states), 1.8px stroke in the tab bar and 2px elsewhere.
 - Event badges come only from the `EventBadge` component. The timeline, calendar, matrix, key legend and day view must all render the same badge; a new place copies the component, it does not restyle it.
 - No logo or brand mark exists yet. The app name "PawLog" is set in `title`, beside a mint rounded square holding a paw glyph.
 
 ## Components
-`Button`, `ViewTabs`, `Chip`, `Card`, `EventBadge`, `DoseMark`, `NavBar`, `Sheet` and `FileRow` (documents) cover the current prototype. New flows (edit, bulk add, history, export) reuse them; add a component here before using a new pattern twice.
+`Button`, `ViewTabs`, `Chip`, `Card`, `EventBadge`, `DoseMark`, `NavBar`, `Sheet`, `FileRow` (documents), `SearchField` (with the count pill on its Filters button and the search highlight) and `FilterSummary` cover the current prototype. New flows (edit, bulk add, history, export) reuse them; add a component here before using a new pattern twice.
 
 ## Open items
 - Event icons still differ slightly between screens (JCB-26): audit each placement against `EventBadge`.

@@ -146,7 +146,7 @@ describe('Pinned screen (demo)', () => {
     expect(cardTitles()).toEqual(['Allergies', 'Bellavet dose', 'Gastrelle: mix the sachet into a spoon of wet food, not into the whole bowl.', 'Next deworming']);
     expect(screen.getByText('Edited 25 Sept')).toBeTruthy();
     const nav = within(screen.getByRole('navigation'));
-    expect(nav.getAllByRole('button').map((b) => b.textContent)).toEqual(['Timeline', 'Pinned', 'Add', 'Tracked']);
+    expect(nav.getAllByRole('button').map((b) => b.textContent)).toEqual(['Timeline', 'Pinned', 'Add', 'Tracked', 'Search']);
     expect(nav.getByRole('button', { name: 'Pinned' }).getAttribute('aria-current')).toBe('page');
     expect(nav.getByRole('button', { name: 'Timeline' }).getAttribute('aria-current')).toBeNull();
   });

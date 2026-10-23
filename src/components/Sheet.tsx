@@ -13,6 +13,7 @@ export function Sheet({
   children,
   footer,
   onTitleTap,
+  headAction,
 }: {
   title: string;
   onClose: () => void;
@@ -20,6 +21,8 @@ export function Sheet({
   footer?: ReactNode;
   /** A tap on the heading (no visible affordance; the Menu uses it for a hidden switch). */
   onTitleTap?: () => void;
+  /** Replaces Close in the heading (Search Filters: "Clear"); the sheet still closes on the scrim, Escape and its action row. */
+  headAction?: ReactNode;
 }) {
   const { t } = useI18n();
   const titleId = useId();
@@ -50,9 +53,11 @@ export function Sheet({
           <h2 id={titleId} className="sheet__title" onClick={onTitleTap}>
             {title}
           </h2>
-          <button type="button" className="sheet__close" onClick={onClose}>
-            {t('close')}
-          </button>
+          {headAction ?? (
+            <button type="button" className="sheet__close" onClick={onClose}>
+              {t('close')}
+            </button>
+          )}
         </header>
         <div className="sheet__body">{children}</div>
         {footer && <div className="sheet__foot">{footer}</div>}
