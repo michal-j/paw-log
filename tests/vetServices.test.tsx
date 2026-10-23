@@ -67,6 +67,18 @@ describe('own "also done" services', () => {
     expect(await screen.findByText('Ear cleaning', { selector: '.day-card__chip' })).toBeTruthy();
   });
 
+  it('a visit with only a service ticked saves without clinic or text; with nothing at all it still asks for text (JCB-92)', async () => {
+    await newVisit();
+    fireEvent.click(within(dialog()).getByRole('button', { name: 'Save' }));
+    expect(await within(dialog()).findByRole('alert')).toBeTruthy();
+    expect(await alsoDone()).toEqual([]);
+    fireEvent.click(within(dialog()).getByRole('button', { name: 'Nail trimming' }));
+    await save();
+    expect(await alsoDone()).toEqual([['nails']]);
+    expect(await rows(`select title, detail from event where type = 'vet'`)).toEqual([{ title: '', detail: '' }]);
+    expect(await screen.findByText('Nail trimming', { selector: '.day-card__chip' })).toBeTruthy();
+  });
+
   it('the Add button works too; empty or blank text is ignored', async () => {
     await newVisit();
     addService('   ', 'button');
