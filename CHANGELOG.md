@@ -4,6 +4,9 @@ Format: [Keep a Changelog](https://keepachangelog.com). "Unreleased" means not y
 
 ## Unreleased
 
+### Fixed
+- PDF upload: closing a form after a failed save now removes the PDFs that had already been sent, so no unreferenced files are left in storage (JCB-132).
+
 ## 2026-10-23 (merged to main)
 
 ### Added
