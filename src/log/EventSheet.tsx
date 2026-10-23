@@ -135,7 +135,8 @@ export function EventSheet({
       const intensity = defs.some((d) => d.name === 'intensity') && isIntensity(form.intensity) ? form.intensity : null;
       return { type: 'symptom', title: known ? symptomTitle(known) : title, detail, props, intensity, alsoDone: [] };
     }
-    if (kind === 'vet') return title || detail ? { type: 'vet', title, detail, props: {}, intensity: null, alsoDone: form.alsoDone } : null;
+    // A visit with only an "also done" service ticked (nails, anal glands, an own one) needs no clinic or text (JCB-92).
+    if (kind === 'vet') return title || detail || form.alsoDone.length > 0 ? { type: 'vet', title, detail, props: {}, intensity: null, alsoDone: form.alsoDone } : null;
     // A note made with Add document on a condition has no text: the PDF is what it holds.
     if (kind === 'note') return detail || storedDocs.length > 0 || docs.drafts.length > 0 ? { type: 'note', title: '', detail, props: {}, intensity: null, alsoDone: [] } : null;
     if (!form.type || (form.type === 'other' && !title)) return null;

@@ -38,7 +38,9 @@
 /* ---------- Sheet ---------- */
 .sheet-root { position: absolute; inset: 0; z-index: 20; display: flex; flex-direction: column; justify-content: flex-end; }
 .sheet-scrim {
-  flex: 1;
+  /* Covers the whole root, behind the sheet too, so the rounded top corners show the dimmed page (JCB-95). */
+  position: absolute;
+  inset: 0;
   margin: 0;
   padding: 0;
   border: 0;
@@ -48,6 +50,7 @@
   animation: pl-fade 180ms ease-out both;
 }
 .sheet {
+  position: relative; /* above the scrim */
   display: flex;
   flex-direction: column;
   max-height: min(640px, calc(100% - 24px));
@@ -57,7 +60,7 @@
   animation: pl-rise 220ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
   outline: none;
 }
-.sheet__grab { flex: none; display: flex; justify-content: center; padding-top: var(--space-2); }
+.sheet__grab { flex: none; display: flex; justify-content: center; padding-top: var(--space-2); touch-action: none; }
 .sheet__grab span { width: 36px; height: 4px; border-radius: var(--radius-full); background: var(--color-line-strong); }
 .sheet__head {
   flex: none;
@@ -67,6 +70,7 @@
   gap: var(--space-2);
   padding: var(--space-1) var(--space-2) var(--space-2) 20px;
   border-bottom: 1px solid var(--color-line);
+  touch-action: none; /* a drag down closes the sheet (JCB-93) */
 }
 .sheet__title {
   margin: 0;

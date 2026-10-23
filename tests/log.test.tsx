@@ -162,6 +162,17 @@ describe('add and edit', () => {
     expect((await repo.listEntries({ from: '2026-10-15' })).length).toBe(before + 1);
   });
 
+  it('an entry with a note shows the note marker (white page) before its note on the Day view; one without does not (JCB-130)', async () => {
+    at('/demo/day/2026-10-14');
+    fireEvent.click(await screen.findByText('Cooked meal'));
+    fireEvent.change(within(dialog()).getByLabelText(/Note/), { target: { value: 'Ate slowly' } });
+    click('Save');
+    const note = await screen.findByText('Ate slowly', { selector: '.day-item__sub' });
+    expect(note.querySelector('.event-badge--note')).toBeTruthy();
+    const marked = document.querySelectorAll('.day-item__sub .event-badge--note');
+    expect(marked.length).toBe(1);
+  });
+
   it('edits an entry, including changing the item, and deletes it with Undo', async () => {
     const repo = at('/demo/day/2026-10-14');
     fireEvent.click(await screen.findByText('Cooked meal'));

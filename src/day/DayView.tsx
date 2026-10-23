@@ -363,7 +363,7 @@ export function DayView({ date, onBack, onStep, onInvalid, onUsualDay, onOpenCon
                         );
                       }
                       const tag = STATE_TAG[r.state];
-                      const subText = [course, r.note].filter(Boolean).join(' · ');
+                      const hasSub = Boolean(course || r.note);
                       return (
                         <li key={r.id} className={`day-item day-item--${r.state}`} data-ring={`entry:${r.id}`}>
                           <button type="button" className="day-item__open" onClick={() => editEntry(r.entry)}>
@@ -373,7 +373,18 @@ export function DayView({ date, onBack, onStep, onInvalid, onUsualDay, onOpenCon
                             <span className="day-item__text">
                               <span className="day-item__name">{name}</span>
                               {amount && <span className="day-item__dose"> · {amount}</span>}
-                              {subText && <span className="day-item__sub">{subText}</span>}
+                              {hasSub && (
+                                <span className="day-item__sub">
+                                  {course}
+                                  {course && r.note && ' · '}
+                                  {r.note && (
+                                    <>
+                                      <EventBadge kind="note" text="" mini />
+                                      {r.note}
+                                    </>
+                                  )}
+                                </span>
+                              )}
                             </span>
                             {tag && <span className={`day-tag day-tag--${r.state}`}>{t(tag)}</span>}
                           </button>
