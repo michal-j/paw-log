@@ -311,3 +311,8 @@
 
 /* The heading takes focus when the day opens or changes; it is not a control, so no ring. */
 .day__title:focus { outline: none; }
+
+/* A card or row found by Search: ringed for a moment (JCB-138). */
+[data-ring] { transition: box-shadow 400ms ease-out, background-color 400ms ease-out; }
+[data-ring].ring { box-shadow: 0 0 0 2px var(--color-mint-deep), var(--shadow-card); }
+li[data-ring].ring { border-radius: var(--radius-md); background: var(--color-mint-bg); box-shadow: 0 0 0 2px var(--color-mint-deep); }

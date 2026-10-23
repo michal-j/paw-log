@@ -120,3 +120,18 @@ export const OpenOutIcon = ({ size = 16 }: { size?: number }) => (
     <path d="M14 4h6v6M20 4l-9 9M18 14v5H5V6h5" />
   </svg>
 );
+/** Search: NavBar tab, the SearchField and the empty states (JCB-138). */
+export const SearchIcon = ({ active = false, size = 22 }: { active?: boolean; size?: number }) => (
+  <svg {...stroke(size, active ? 2.1 : 1.8)}>
+    <circle cx="11" cy="11" r="7" />
+    <path d="M20 20l-4-4" />
+  </svg>
+);
+/** Two sliders: the Filters button of Search. */
+export const SlidersIcon = ({ size = 15 }: { size?: number }) => (
+  <svg {...stroke(size, 2.1)}>
+    <path d="M4 7h9M17 7h3M4 17h3M11 17h9" />
+    <circle cx="15" cy="7" r="2" />
+    <circle cx="9" cy="17" r="2" />
+  </svg>
+);

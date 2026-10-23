@@ -1,6 +1,7 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import type { DayPart, Entry, HealthEvent, PlainDate } from '../data';
 import { fill, useI18n, type MessageKey } from '../i18n';
+import type { Ring } from '../search/SearchScreen';
 import { DoseMark } from '../components/DoseMark';
 import { EventBadge } from '../components/EventBadge';
 import { CheckIcon, ChevronIcon, PlusIcon, RoutineIcon } from '../components/icons';
@@ -24,6 +25,9 @@ import { PhotoThumb } from '../photos/PhotoParts';
 import { buildDay, dayBounds, inBounds, type DayEntry, type PlannedRow } from './model';
 import './day.css';
 
+/** How long the card or row found by Search stays ringed. */
+const RING_MS = 2000;
+
 /** Tag after an item that was not simply given: "Refused" and "Half eaten". */
 const STATE_TAG: Partial<Record<DayEntry['state'], MessageKey>> = { skipped: 'tagR', partial: 'name.98' };
 
@@ -36,13 +40,17 @@ interface Props {
   onUsualDay: (date: PlainDate) => void;
   /** A condition tag on an event was tapped. */
   onOpenCondition: (id: string) => void;
+  /** Label of the Back button when the Day was opened from inside the app (Search): "Back". Default: "Timeline". */
+  backLabel?: string;
+  /** Arriving from Search: scroll to this card or row and ring it for a moment. */
+  ring?: Ring;
 }
 
 /**
  * Day view: what was logged on one date and what the usual day still has open, by day part, plus the
  * day's events. Tap a row to edit it, Given to log a planned item, Fill to log every due one.
  */
-export function DayView({ date, onBack, onStep, onInvalid, onUsualDay, onOpenCondition }: Props) {
+export function DayView({ date, onBack, onStep, onInvalid, onUsualDay, onOpenCondition, backLabel, ring }: Props) {
   const { lang, t } = useI18n();
   const f = useFormat();
   const { records, repository, open, run, version, toast, setOverlay } = useLog();
@@ -111,6 +119,23 @@ export function DayView({ date, onBack, onStep, onInvalid, onUsualDay, onOpenCon
     body.scrollTop += parts.getBoundingClientRect().top - anchor.current;
     anchor.current = null;
   }, [records]);
+  // Arriving from Search: bring the matched card or row into view and ring it for about 2 s (once per arrival).
+  const ringed = useRef<string | null>(null);
+  const hasDay = !!day;
+  useEffect(() => {
+    if (!ring || !hasDay) return;
+    const key = `${date}|${ring.kind}:${ring.id}`;
+    if (ringed.current === key) return;
+    const target = `${ring.kind}:${ring.id}`;
+    const el = Array.from(bodyRef.current?.querySelectorAll<HTMLElement>('[data-ring]') ?? []).find((x) => x.dataset.ring === target);
+    if (!el) return;
+    ringed.current = key;
+    el.scrollIntoView?.({ block: 'center' });
+    el.classList.add('ring');
+    // Not cleared on unmount: the timer only touches this element, and a development double-mount would otherwise leave the ring on.
+    setTimeout(() => el.classList.remove('ring'), RING_MS);
+  }, [ring, date, hasDay, records]);
+
   const giveGuarded = guard(async (rows: PlannedRow[]) => {
     let added = 0;
     await run(
@@ -165,7 +190,7 @@ export function DayView({ date, onBack, onStep, onInvalid, onUsualDay, onOpenCon
       <div className="day__top">
         <button type="button" className="day-btn day-btn--back" onClick={onBack}>
           <ChevronIcon dir="left" size={18} />
-          {t('timeline')}
+          {backLabel ?? t('timeline')}
         </button>
       </div>
 
@@ -202,6 +227,7 @@ export function DayView({ date, onBack, onStep, onInvalid, onUsualDay, onOpenCon
             {day.events.visits.map((e) => (
               <EventCard
                 key={e.id}
+                ringId={e.id}
                 event={e}
                 tags={tagsOf(e)}
                 photos={photosFor(e)}
@@ -219,7 +245,7 @@ export function DayView({ date, onBack, onStep, onInvalid, onUsualDay, onOpenCon
                 </h4>
                 <ul className="day-card__rows">
                   {day.events.symptoms.map((e) => (
-                    <li key={e.id}>
+                    <li key={e.id} data-ring={`event:${e.id}`}>
                       <button
                         type="button"
                         className={`day-card__row${e.detail ? ' day-card__row--desc' : ''}`}
@@ -250,6 +276,7 @@ export function DayView({ date, onBack, onStep, onInvalid, onUsualDay, onOpenCon
             {day.events.others.map((e) => (
               <EventCard
                 key={e.id}
+                ringId={e.id}
                 event={e}
                 tags={tagsOf(e)}
                 photos={photosFor(e)}
@@ -338,7 +365,7 @@ export function DayView({ date, onBack, onStep, onInvalid, onUsualDay, onOpenCon
                       const tag = STATE_TAG[r.state];
                       const subText = [course, r.note].filter(Boolean).join(' · ');
                       return (
-                        <li key={r.id} className={`day-item day-item--${r.state}`}>
+                        <li key={r.id} className={`day-item day-item--${r.state}`} data-ring={`entry:${r.id}`}>
                           <button type="button" className="day-item__open" onClick={() => editEntry(r.entry)}>
                             <span className="day-item__mark">
                               <DoseMark colour={r.colour} size={r.size} state={r.state} />

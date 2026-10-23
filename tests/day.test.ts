@@ -145,6 +145,16 @@ describe('routes', () => {
     expect(usualPath('', '2026-10-14')).toBe('/usual/2026-10-14');
   });
 
+  it('parses and builds the Search paths: no query in the address, an item history under it', () => {
+    expect(parseRoute('/search')).toEqual({ base: '', view: 'search' });
+    expect(parseRoute('/demo/search/')).toEqual({ base: '/demo', view: 'search' });
+    expect(parseRoute('/demo/search/item/item-bellavet')).toEqual({ base: '/demo', view: 'item', id: 'item-bellavet' });
+    expect(parseRoute('/search/item/bad id')).toEqual({ base: '', view: 'search' });
+    expect(parseRoute('/search/item')).toEqual({ base: '', view: 'timeline' });
+    expect(routePath(parseRoute('/demo/search'))).toBe('/demo/search');
+    expect(routePath(parseRoute('/search/item/30000000-0000-4000-8000-000000000001'))).toBe('/search/item/30000000-0000-4000-8000-000000000001');
+  });
+
   it('builds paths', () => {
     expect(dayPath('/demo', '2026-10-14')).toBe('/demo/day/2026-10-14');
     expect(timelinePath('/demo')).toBe('/demo');

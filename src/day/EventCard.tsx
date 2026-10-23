@@ -30,7 +30,10 @@ export function EventCard({
   onEdit,
   onOpenCondition,
   onViewPhoto,
+  ringId,
 }: {
+  /** The Day view marks the card so that Search can find and ring it (`data-ring`). */
+  ringId?: string;
   event: HealthEvent;
   tags?: Condition[];
   photos?: Photo[];
@@ -92,13 +95,16 @@ export function EventCard({
     );
   }
 
+  const ringAttr = ringId ? `event:${ringId}` : undefined;
   if (!tags.length && !photos.length && !docs.length) {
     return onEdit ? (
-      <button type="button" className="day-card day-card--tap" onClick={onEdit}>
+      <button type="button" className="day-card day-card--tap" data-ring={ringAttr} onClick={onEdit}>
         {content}
       </button>
     ) : (
-      <article className="day-card">{content}</article>
+      <article className="day-card" data-ring={ringAttr}>
+        {content}
+      </article>
     );
   }
   const side = e.type === 'vet';
@@ -123,7 +129,7 @@ export function EventCard({
     <div className="ev-card__static">{content}</div>
   );
   return (
-    <div className="day-card ev-card">
+    <div className="day-card ev-card" data-ring={ringAttr}>
       {/* A vet visit's photos sit to the right of its text, so a photo adds no height. */}
       {side && photoRow ? (
         <div className="ev-card__side">
