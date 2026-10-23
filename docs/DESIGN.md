@@ -23,7 +23,7 @@ Watch on device: orange symptoms next to amber deworming. Not built: the note ba
 - `ink-3` text is for white surfaces only.
 - Fonts: Onest (body) and Instrument Sans (display) from Google Fonts; they could not be checked in the sandbox renderer, verify on device.
 - No logo yet; the header uses a mint rounded square with a paw glyph.
-- Not yet designed: Pinned notes, Tracked issues, Search, add and edit flows, bulk add, empty states, loading and error states, onboarding.
+- Designed and built since the prototype: Pinned notes, Tracked conditions, add and edit flows, photos, PDFs, event badges and Search (proposals in `design/proposals/`, specs in their READMEs). Still not designed: bulk add (not planned), onboarding.
 
 ## Prototype
 `design/prototype/` holds the R10 source: `head.html` (markup), `script.js` (logic and sample data), `build.py` (assembles `R10-Mint-Clean.dc.html`). It uses Claude Design's x-dc format; it is a reference for behaviour and layout, not production code. Copy lives in `docs/copy/pawlog-copy-en-pl.csv` (181 reviewed EN/PL pairs).

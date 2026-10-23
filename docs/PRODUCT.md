@@ -27,7 +27,7 @@ Two people in one household, both can edit. One dog now; the data model must not
 - **Day view**: everything for one date, with previous and next day and add buttons.
 - **Filters sheet**: shared across views; Biomend shown by default; Treats and Calmora off by default.
 - **Jump to date** sheet, **navbar** (Timeline, Pinned, + Add, Tracked, Search).
-Only Timeline, Calendar, Matrix, Day view, Filters and Jump to date are built in the prototype. Pinned, Tracked (issues), Search and the add/edit flows are not designed yet.
+Only Timeline, Calendar, Matrix, Day view, Filters and Jump to date were in the original prototype. Pinned, Tracked, the add/edit flows and Search were designed afterwards and are built (Search live since 23 Oct 2026: `design/proposals/search/README.md` is its spec, including what is and is not searched).
 
 ## Reading the circles
 Big circle (16px) = food; small circle (11px) = medication or treat. Filled = given; hollow = skipped or refused; half-filled from the bottom = partly eaten. Colour identifies the item (see design-system tokens).
