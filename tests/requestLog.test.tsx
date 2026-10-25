@@ -91,11 +91,13 @@ describe('request log in the Menu, real data path', () => {
     expect(within(menu).queryByText('Request log')).toBeNull();
     const heading = within(menu).getByRole('heading', { name: 'Menu' });
     for (let i = 0; i < 5; i++) fireEvent.click(heading);
+    expect(await screen.findByText('Request log on: scroll to the bottom of the Menu')).toBeTruthy();
     const log = await within(menu).findByRole('list', { name: 'Request log' });
     expect(within(log).getAllByRole('listitem')[0]!.textContent).toMatch(/^\d\d:\d\d:\d\d\.\d{3} {2}GET \w+ {2}\d+ ms {2}200/);
     expect(log.textContent).not.toContain(SEED.dog);
     expect(within(menu).getByRole('button', { name: 'Copy' })).toBeTruthy();
     for (let i = 0; i < 5; i++) fireEvent.click(heading);
     await waitFor(() => expect(within(menu).queryByText('Request log')).toBeNull());
+    expect(await screen.findByText('Request log off')).toBeTruthy();
   });
 });

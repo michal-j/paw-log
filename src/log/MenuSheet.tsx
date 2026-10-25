@@ -34,7 +34,7 @@ export function MenuSheet({
 }) {
   const { t } = useI18n();
   const f = useFormat();
-  const { records, repository, run, close } = useLog();
+  const { records, repository, run, close, notify } = useLog();
   const diag = useDiagEnabled();
   const taps = useRef<number[]>([]);
   // The installed app has no address bar for ?diag=1, so five quick taps on the heading switch the log.
@@ -43,7 +43,9 @@ export function MenuSheet({
     taps.current = [...taps.current.filter((at) => now - at < DIAG_TAP_WINDOW_MS), now];
     if (taps.current.length < DIAG_TAPS) return;
     taps.current = [];
-    setDiagEnabled(!diagEnabled());
+    const on = !diagEnabled();
+    setDiagEnabled(on);
+    notify(t(on ? 'diagOnToast' : 'diagOffToast'));
   };
 
   // Saved on commit (blur, Enter, picker closed), one write at a time through `run`.

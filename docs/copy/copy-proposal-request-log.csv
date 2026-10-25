@@ -16,3 +16,5 @@ D14,diagHidden,app in background,aplikacja w tle,17,15,App event,DRAFT
 D15,diagVisible,app back,powrót do aplikacji,8,19,App event,DRAFT
 D16,diagOnline,online,online,6,6,App event,DRAFT
 D17,diagOffline,offline,offline,7,7,App event,DRAFT
+D18,diagOnToast,Request log on: scroll to the bottom of the Menu,Dziennik połączeń włączony: przewiń Menu na dół,48,47,Plain toast when the five taps switch the log on,"JCB-71 follow-up; DRAFT pending CEO review"
+D19,diagOffToast,Request log off,Dziennik połączeń wyłączony,15,25,Plain toast when the five taps switch it off,DRAFT

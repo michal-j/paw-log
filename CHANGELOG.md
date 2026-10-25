@@ -4,6 +4,9 @@ Format: [Keep a Changelog](https://keepachangelog.com). "Unreleased" means not y
 
 ## Unreleased
 
+### Changed
+- The hidden request log now says so when the five taps on the Menu heading switch it on or off (a toast; draft copy in `docs/copy/copy-proposal-request-log.csv`, pending review).
+
 ## 2026-10-23 later (merged to main)
 
 ### Added
