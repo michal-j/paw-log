@@ -67,7 +67,7 @@ const auth: AuthService = {
   signOut: async () => {},
 };
 
-startDiag(); // ?diag=1 shows the request log in the Menu (JCB-71)
+startDiag(); // the activity log (JCB-71) is always on in the real app
 const backend = await createFakeBackend({ start });
 if (params.has('long')) await seedLongLog(backend);
 const client = fakeClient(backend);

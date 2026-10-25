@@ -1,6 +1,6 @@
 #,Where (code name),English,Polish,EN chars,PL chars,Fit note,Your notes
-D1,diagTitle,Request log,Dziennik połączeń,11,16,Field label in the Menu; fits at 390,"JCB-71: diagnostic, hidden unless switched on (?diag=1, or five quick taps on the Menu heading). DRAFT pending CEO review"
-D2,diagHint,"Last 30 requests on this phone, newest first. No content or ids are kept.","Ostatnie 30 połączeń na tym telefonie, od najnowszego. Bez treści i identyfikatorów.",72,83,Wraps to two lines at 390 in both,DRAFT
+D1,diagTitle,Request log,Dziennik połączeń,11,16,Field label in the Menu; fits at 390,"JCB-71: diagnostic, always on in the real app, in the Menu. DRAFT pending CEO review"
+D2,diagHint,"Requests, taps and toasts on this phone, newest first, kept a week. No content or ids.","Połączenia, dotknięcia i komunikaty na tym telefonie, od najnowszego, przez tydzień. Bez treści i identyfikatorów.",84,102,Wraps to two lines at 390 in both,DRAFT
 D3,diagEmpty,No requests yet,Brak połączeń,15,13,,DRAFT
 D4,diagCopy,Copy,Kopiuj,4,6,Button,DRAFT
 D5,diagCopied,Copied,Skopiowano,6,10,Button after copying,DRAFT

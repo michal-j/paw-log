@@ -44,6 +44,7 @@
 - Sheets (CEO 23 Oct): drag the grabber or heading down to close (about 90 px or a flick; the body is not draggable); the scrim covers the screen behind the sheet so the corners show the dimmed page. A vet visit saves with only a service ticked (JCB-92). Entries with a note show the small note badge before the note on the Day view (JCB-130).
 - Status bar blur (JCB-94, 23 Oct): white `theme-color` did not change it on the installed iPhone app, so it was reverted; most likely the iOS system effect, parked in Backlog until the app is native.
 - PDF clean-up (JCB-132, 23 Oct): closing a form after a failed save removes the PDFs already sent; renaming a document in the Document sheet still applies at once (as photos do).
+- Activity log (JCB-71, CEO 25 Oct): the hidden request log was too thin to trust, so it is always on in the real app, always in the Menu, keeps a week (3000 rows) and records taps and toasts by interface string only; removed when the save is finally fixed.
 - Working rules: short explanations, clarifying questions first, quality over quantity, no unauthorised access (confirm with the CEO).
 
 ## Open, next, parked
