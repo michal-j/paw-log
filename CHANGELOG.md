@@ -5,7 +5,7 @@ Format: [Keep a Changelog](https://keepachangelog.com). "Unreleased" means not y
 ## Unreleased
 
 ### Changed
-- Workaround for saves that hang on the iPhone (JCB-71): the app now sends all its Supabase traffic (data, sign-in, photos and PDFs, including uploads) through its own address under `/sb`, and Vercel forwards it to Supabase, because the iPhone web app's direct connection to Supabase stalls after idle pauses. Temporary: remove when the native app is built (JCB-145, JCB-146).
+- The Supabase-through-the-app's-own-address workaround (JCB-145) was shipped and rolled back the same day because sign-in failed on the iPhone; the app talks to Supabase directly again.
 
 ### Changed
 - Activity log: when a request gets no answer, the app now also asks its own host and the Supabase host for anything at all and writes `probe app host: answered 200 in 90 ms` / `probe Supabase host: no answer in 5000 ms` (and what the browser says about being online) into the log, at most once every 20 s, so a stall can be told apart: the whole phone offline, or only the Supabase connection stuck. Only status and time are written down (JCB-144, JCB-71).
