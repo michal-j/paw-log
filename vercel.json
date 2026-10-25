@@ -1,3 +1,7 @@
 {
-  "rewrites": [{ "source": "/((?!assets/|.*\\..*).*)", "destination": "/index.html" }]
+  "rewrites": [
+    { "source": "/__echo/:path*", "destination": "https://httpbin.org/:path*" },
+    { "source": "/__file10", "destination": "https://proof.ovh.net/files/10Mb.dat" },
+    { "source": "/((?!assets/|__echo|__file10|.*\\..*).*)", "destination": "/index.html" }
+  ]
 }
