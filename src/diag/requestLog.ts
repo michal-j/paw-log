@@ -171,6 +171,10 @@ export function noteAction(text: string): void {
 }
 
 let started = false;
+/** Whether the activity log is running (real app only). */
+export function isDiagStarted(): boolean {
+  return started;
+}
 /**
  * Restores the log kept from before a restart (dropping rows older than a week), marks the start,
  * and follows taps, background/foreground and online/offline.

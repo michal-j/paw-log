@@ -5,6 +5,11 @@ Format: [Keep a Changelog](https://keepachangelog.com). "Unreleased" means not y
 ## Unreleased
 
 ### Changed
+- Activity log: when a request gets no answer, the app now also asks its own host and the Supabase host for anything at all and writes `probe app host: answered 200 in 90 ms` / `probe Supabase host: no answer in 5000 ms` (and what the browser says about being online) into the log, at most once every 20 s, so a stall can be told apart: the whole phone offline, or only the Supabase connection stuck. Only status and time are written down (JCB-144, JCB-71).
+
+## 2026-10-25 (merged to main)
+
+### Changed
 - The diagnostic log for stalled saves is now an activity log that is always on and always in the Menu (no more five taps or `?diag=1`): it keeps up to 3000 rows for a week instead of the last 30, shows date and time, and also records every tap (by its button label) and every toast, so what you did and what the app did line up. Text that is not one of the app's own interface strings is never written down. Temporary: removed together with the JCB-71 fix. Hint text is draft copy (JCB-71).
 
 ## 2026-10-23 later (merged to main)
