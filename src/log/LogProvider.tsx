@@ -6,6 +6,8 @@ import { logStartOf } from '../timeline/model';
 import type { KindGroup } from './amount';
 import type { Undo } from './actions';
 import { isItemColour, withItemColours } from './items';
+import { noteAction } from '../diag/requestLog';
+import { describeToast } from '../diag/taps';
 
 /** Everything the Day view, the Usual day and the sheets read. Reloaded after every write. */
 export interface Records {
@@ -229,6 +231,7 @@ export function LogProvider({ repository, children }: { repository: Repository; 
       if (current.current) settle(current.current.id);
       const id = ++seq.current;
       const next = { id, text, undo };
+      noteAction(describeToast(text));
       current.current = next;
       setToast(next);
       timer.current = setTimeout(() => {
