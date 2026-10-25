@@ -1,4 +1,5 @@
 import { noteRequest, type Outcome } from '../diag/requestLog';
+import { probeStall } from '../diag/probe';
 
 /** How long one HTTP request to Supabase may run before it is aborted. */
 export const REQUEST_TIMEOUT_MS = 10_000;
@@ -26,6 +27,8 @@ interface Options {
   doc?: VisibilitySource;
   /** Notes each attempt for the on-device request log (src/diag/requestLog.ts). */
   log?: typeof noteRequest;
+  /** Called with the URL of a request that got no answer: checks which hosts still answer (src/diag/probe.ts). */
+  probe?: (url: string) => void;
 }
 
 /** Why an attempt ended without an answer, carried on its error. */
@@ -83,6 +86,7 @@ export function resilientFetch(
     retryMs = WRITE_RETRY_MS,
     doc = globalThis.document as VisibilitySource | undefined,
     log = noteRequest,
+    probe = probeStall,
   }: Options = {},
 ): typeof fetch {
   const running = new Set<Running>();
@@ -123,6 +127,7 @@ export function resilientFetch(
       return response;
     } catch (err) {
       done(err instanceof Stopped ? err.why : ('network' satisfies Outcome));
+      if (err instanceof Stopped && err.why === 'timeout') probe(urlOf(input) ?? '');
       throw err;
     } finally {
       clearTimeout(timer);
