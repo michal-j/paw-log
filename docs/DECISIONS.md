@@ -45,6 +45,7 @@
 - Status bar blur (JCB-94, 23 Oct): white `theme-color` did not change it on the installed iPhone app, so it was reverted; most likely the iOS system effect, parked in Backlog until the app is native.
 - PDF clean-up (JCB-132, 23 Oct): closing a form after a failed save removes the PDFs already sent; renaming a document in the Document sheet still applies at once (as photos do).
 - Activity log (JCB-71, CEO 25 Oct): the hidden request log was too thin to trust, so it is always on in the real app, always in the Menu, keeps a week (3000 rows) and records taps and toasts by interface string only; removed when the save is finally fixed.
+- Supabase through the app's own address (JCB-145, 25 Oct): tried in production and rolled back the same evening because sign-in failed on the iPhone (CEO was logged out and could not log in again). The code, docs and removal task (JCB-146) were reverted or cancelled; the Vercel routing rule `/sb` is left in place, unused. Not to be retried until the cause is found and checked with a real sign-in.
 - Working rules: short explanations, clarifying questions first, quality over quantity, no unauthorised access (confirm with the CEO).
 
 ## Open, next, parked
